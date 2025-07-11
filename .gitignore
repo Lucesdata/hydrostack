@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+# Node
+node_modules/
+dist/
+coverage/
+# Python
+__pycache__/
+*.py[cod]
+venv/
+# Config
+.vscode/
+.env*
