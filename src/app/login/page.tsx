@@ -3,28 +3,42 @@
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
+import { createClient } from '@/utils/supabase/client';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const { login } = useAuth();
+    const [loading, setLoading] = useState(false);
+    const router = useRouter();
+    const supabase = createClient();
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!email || !password) {
             setError('Por favor complete todos los campos');
             return;
         }
-        // Mock user for login
-        const mockUser = {
-            name: 'Usuario Demo',
-            email: email,
-            role: 'Profesional Técnico'
-        };
-        login(email, mockUser);
+
+        setLoading(true);
+        setError('');
+
+        try {
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+
+            if (signInError) throw signInError;
+
+            router.push('/dashboard');
+        } catch (err: any) {
+            setError(err.message || 'Error al iniciar sesión. Verifique sus credenciales.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (

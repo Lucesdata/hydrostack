@@ -2,58 +2,59 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
+import { User as SupabaseUser } from '@supabase/supabase-js';
 
-export interface User {
-    name: string;
-    email: string;
-    role: string;
-}
+// Extend user with additional profile info if needed, but for now Supabase Object
+type User = SupabaseUser;
 
 interface AuthContextType {
     user: User | null;
-    login: (email: string, user: User) => void;
-    logout: () => void;
-    register: (user: User) => void;
-    isAuthenticated: boolean;
+    loading: boolean;
+    signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
     const router = useRouter();
+    const supabase = createClient();
 
     useEffect(() => {
-        // Check local storage on mount
-        const storedUser = localStorage.getItem('hydrostack_user');
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
-        }
-    }, []);
+        // Check active session
+        const checkSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            setUser(session?.user ?? null);
+            setLoading(false);
+        };
 
-    const login = (email: string, mockUser: User) => {
-        // In a real app, we would validate credentials against a backend.
-        // Here we just set the user state.
-        setUser(mockUser);
-        localStorage.setItem('hydrostack_user', JSON.stringify(mockUser));
-        router.push('/dashboard');
-    };
+        checkSession();
 
-    const register = (newUser: User) => {
-        setUser(newUser);
-        localStorage.setItem('hydrostack_user', JSON.stringify(newUser));
-        router.push('/dashboard');
-    };
+        // Listen for auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setUser(session?.user ?? null);
+            setLoading(false);
+            if (_event === 'SIGNED_IN') router.push('/dashboard');
+            if (_event === 'SIGNED_OUT') {
+                router.push('/');
+                router.refresh();
+            }
+        });
 
-    const logout = () => {
-        setUser(null);
-        localStorage.removeItem('hydrostack_user');
-        router.push('/');
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, [router, supabase]);
+
+    const signOut = async () => {
+        await supabase.auth.signOut();
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, register, isAuthenticated: !!user }}>
-            {children}
+        <AuthContext.Provider value={{ user, loading, signOut }}>
+            {!loading && children}
         </AuthContext.Provider>
     );
 }

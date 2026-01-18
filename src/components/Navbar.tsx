@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
-    const { user, logout } = useAuth();
+    const { user, signOut: logout } = useAuth();
     const router = useRouter();
 
     return (
@@ -27,9 +27,9 @@ export default function Navbar() {
                     {user ? (
                         <>
                             <Link href="/dashboard" style={{ fontWeight: 500, marginRight: '1rem' }}>
-                                Hola, {user.name}
+                                Hola, {user.user_metadata?.name || 'Usuario'}
                             </Link>
-                            <Button variant="secondary" onClick={logout}>Cerrar sesión</Button>
+                            <Button variant="secondary" onClick={() => logout()}>Cerrar sesión</Button>
                         </>
                     ) : (
                         <>

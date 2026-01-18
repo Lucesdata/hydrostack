@@ -3,8 +3,9 @@
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
+import { createClient } from '@/utils/supabase/client';
+import { useRouter } from 'next/navigation';
 
 export default function RegisterPage() {
     const [formData, setFormData] = useState({
@@ -14,7 +15,9 @@ export default function RegisterPage() {
         role: 'Comunidad'
     });
     const [error, setError] = useState('');
-    const { register } = useAuth();
+    const [loading, setLoading] = useState(false);
+    const router = useRouter();
+    const supabase = createClient();
 
     const userTypes = [
         'Comunidad',
@@ -28,13 +31,41 @@ export default function RegisterPage() {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.name || !formData.email || !formData.password) {
             setError('Por favor complete todos los campos');
             return;
         }
-        register(formData);
+
+        setLoading(true);
+        setError('');
+
+        try {
+            const { error: signUpError } = await supabase.auth.signUp({
+                email: formData.email,
+                password: formData.password,
+                options: {
+                    data: {
+                        name: formData.name,
+                        role: formData.role,
+                    },
+                },
+            });
+
+            if (signUpError) throw signUpError;
+
+            // Note: In Supabase, if email confirmation is enabled, user won't be signed in immediately usually.
+            // But for this MVP assume auto-confirm or handling "Check email" state if necessary.
+            // If auto-confirm is off, we should show a message. 
+            // For simplicity in MVP, we often disable confirm email or just redirect.
+
+            router.push('/dashboard');
+        } catch (err: any) {
+            setError(err.message || 'Error al registrarse');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (

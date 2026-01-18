@@ -47,10 +47,14 @@ export default function Home() {
 
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
             <Link href="/register">
-              <Button variant="primary" style={{ fontSize: '1.1rem', padding: '12px 32px' }}>Crear cuenta</Button>
+              <Button variant="primary" style={{ fontSize: '1.2rem', padding: '16px 32px' }}>
+                Comienza tu primer proyecto
+              </Button>
             </Link>
             <Link href="/login">
-              <Button variant="secondary" style={{ fontSize: '1.1rem', padding: '12px 32px' }}>Iniciar sesión</Button>
+              <Button variant="secondary" style={{ fontSize: '1.2rem', padding: '16px 32px' }}>
+                Iniciar sesión
+              </Button>
             </Link>
           </div>
         </div>
@@ -63,6 +67,50 @@ export default function Home() {
           <p style={{ fontSize: '1.25rem', lineHeight: 1.6, color: 'var(--color-foreground)' }}>
             HYDROSTACK es una plataforma digital que acompaña la formulación y desarrollo de proyectos de agua potable, saneamiento y tratamiento de aguas en distintos contextos y escalas, integrando ingeniería, gestión y tecnología.
           </p>
+        </div>
+      </section>
+
+      {/* New Section: Start First Project */}
+      <section style={{ padding: '6rem 0', backgroundColor: 'var(--color-background)' }}>
+        <div className="container">
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            textAlign: 'center',
+            maxWidth: '900px',
+            margin: '0 auto'
+          }}>
+            <h2 style={{ fontSize: '2.25rem', marginBottom: '1.5rem', color: 'var(--color-primary)', fontWeight: 700 }}>
+              Tu primer proyecto, simplificado
+            </h2>
+            <p style={{ fontSize: '1.25rem', lineHeight: 1.6, color: 'var(--color-gray-dark)', marginBottom: '3rem' }}>
+              Ya no necesitas hojas de cálculo dispersas. Con HydroStack, estructuras tu proyecto de agua potable paso a paso, desde la población hasta el diseño de la red.
+            </p>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '2rem',
+              width: '100%',
+              marginBottom: '3rem'
+            }}>
+              {[
+                { title: "1. Regístrate", desc: "Crea tu cuenta en segundos y accede al panel de control." },
+                { title: "2. Define", desc: "Ingresa los datos de población y parámetros básicos." },
+                { title: "3. Diseña", desc: "Obtén cálculos automáticos y genera reportes profesionales." }
+              ].map((step, idx) => (
+                <div key={idx} style={{ padding: '1.5rem', backgroundColor: 'var(--color-gray-light)', borderRadius: 'var(--radius-md)' }}>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--color-foreground)', marginBottom: '0.5rem' }}>{step.title}</h3>
+                  <p style={{ color: 'var(--color-gray-dark)' }}>{step.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            <Link href="/register">
+              <Button variant="primary">Empezar ahora</Button>
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -148,11 +196,11 @@ export default function Home() {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
             <Link href="/register">
               <Button variant="primary" style={{ fontSize: '1.25rem', padding: '16px 40px', backgroundColor: 'var(--color-primary)', border: 'none' }}>
-                Acceder a la plataforma
+                Suscríbete y realiza tu primer proyecto
               </Button>
             </Link>
             <p style={{ fontSize: '0.9rem', opacity: 0.7 }}>
-              Crea una cuenta para explorar todas las posibilidades.
+              Únete hoy y lleva tus proyectos de agua al siguiente nivel.
             </p>
           </div>
         </div>
