@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import Button from '@/components/ui/Button';
+import ModuleWarning from './ModuleWarning';
 
 type Criteria = {
     conventional: number;
@@ -105,6 +106,7 @@ export default function TechSelectionMatrix({ projectId }: { projectId: string }
 
     return (
         <div style={{ padding: '2rem', backgroundColor: 'white', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-md)' }}>
+            <ModuleWarning projectId={projectId} moduleKey="tech_selection" />
             <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--color-primary)' }}>Matriz de Selección de Tecnología</h2>
             <p style={{ color: 'var(--color-gray-dark)', marginBottom: '2rem' }}>Compare opciones para el sistema de tratamiento según criterios de ingeniería RAS 0330.</p>
 

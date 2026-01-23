@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import Button from '@/components/ui/Button';
+import ModuleWarning from './ModuleWarning';
 
 export default function FloatingPopulationForm({ projectId }: { projectId: string }) {
     const router = useRouter();
@@ -66,6 +67,7 @@ export default function FloatingPopulationForm({ projectId }: { projectId: strin
 
     return (
         <div style={{ backgroundColor: 'white', padding: '2.5rem', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-md)' }}>
+            <ModuleWarning projectId={projectId} moduleKey="floating_population" />
             <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-primary)', marginBottom: '1rem' }}>Población Flotante y Pico Estacional</h2>
             <p style={{ color: 'var(--color-gray-dark)', marginBottom: '2rem' }}>
                 Ajuste la demanda para contextos con alta población flotante o variaciones estacionales significativas.

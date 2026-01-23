@@ -5,6 +5,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
+import ModuleWarning from './ModuleWarning';
 import { PROJECT_TYPES, PROJECT_STATUSES } from '@/constants/project';
 
 type Project = {
@@ -72,6 +73,7 @@ export default function GeneralInfoForm({ project }: { project: Project }) {
 
     return (
         <div style={{ backgroundColor: 'white', padding: '2rem', borderRadius: 'var(--radius-lg)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+            <ModuleWarning projectId={project.id} moduleKey="general" />
             {message && <div style={{ backgroundColor: '#D1FAE5', color: 'var(--color-success)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem' }}>{message}</div>}
             {error && <div style={{ backgroundColor: '#FEE2E2', color: 'var(--color-error)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem' }}>{error}</div>}
 

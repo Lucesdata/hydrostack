@@ -22,7 +22,8 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
         { data: desarenador },
         { data: filters },
         { data: compact },
-        { data: techMatrix }
+        { data: techMatrix },
+        { data: moduleStatuses }
     ] = await Promise.all([
         supabase.from('projects').select('*').eq('id', id).single(),
         supabase.from('project_calculations').select('*').eq('project_id', id).single(),
@@ -39,6 +40,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
         supabase.from('project_filtros_lentos').select('*').eq('project_id', id).single(),
         supabase.from('project_compact_ptap').select('*').eq('project_id', id).single(),
         supabase.from('project_tech_matrix').select('*').eq('project_id', id).single(),
+        supabase.from('project_module_status').select('*').eq('project_id', id)
     ]);
 
     if (!project) {
@@ -58,7 +60,8 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
             project_desarenador: desarenador,
             project_filtros_lentos: filters,
             project_compact_ptap: compact,
-            project_tech_matrix: techMatrix
+            project_tech_matrix: techMatrix,
+            module_statuses: moduleStatuses
         },
         source,
         consumption,

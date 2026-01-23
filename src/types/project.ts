@@ -43,17 +43,16 @@ export type SystemRecommendation =
     | 'essential'                   // Crítico para este tipo de proyecto
     | 'recommended'                 // Sugerido
     | 'optional'                    // Puede aplicar según caso
-    | 'typically_not_applicable';   // Raro en este contexto
+    | 'not_applicable';             // No relevante para este proyecto
 
 /**
  * Estado de un módulo
  */
 export type ModuleStatus =
-    | 'pending'          // Pendiente
-    | 'in_progress'      // En progreso
-    | 'completed'        // Completado
-    | 'not_applicable'   // No aplica a este proyecto
-    | 'skipped';         // Omitido intencionalmente
+    | 'essential'
+    | 'recommended'
+    | 'optional'
+    | 'not_applicable';
 
 /**
  * Clave de módulo técnico
@@ -114,6 +113,7 @@ export interface ProjectModuleStatus {
     status: ModuleStatus;
     reason: string | null;
     system_recommendation: SystemRecommendation;
+    is_user_override: boolean;
     notes: string | null;
     marked_by: string | null;
     status_updated_at: string;

@@ -65,7 +65,7 @@ export class RecommendationEngine {
 
         // BLOQUE C — Fuente
         if (moduleKey === 'source') {
-            return domain === 'water_treatment' ? 'essential' : 'typically_not_applicable';
+            return domain === 'water_treatment' ? 'essential' : 'not_applicable';
         }
 
         if (moduleKey === 'quality') return 'essential';
@@ -79,7 +79,7 @@ export class RecommendationEngine {
         if (moduleKey === 'desarenador') {
             if (category === 'fime') return 'recommended';
             if (category === 'compact_plant') return 'recommended';
-            if (category === 'desalination_high_purity') return 'typically_not_applicable';
+            if (category === 'desalination_high_purity') return 'not_applicable';
             return 'optional';
         }
 
@@ -87,20 +87,20 @@ export class RecommendationEngine {
             if (category === 'compact_plant') return 'essential';
             if (category === 'specific_plant') return 'recommended';
             if (category === 'fime') return 'optional';
-            if (category === 'desalination_high_purity') return 'typically_not_applicable';
+            if (category === 'desalination_high_purity') return 'not_applicable';
             return 'recommended';
         }
 
         if (moduleKey === 'filtro_lento') {
             if (category === 'fime') return 'essential';
-            if (category === 'compact_plant') return 'typically_not_applicable';
+            if (category === 'compact_plant') return 'not_applicable';
             if (category === 'specific_plant') return 'recommended';
             return 'recommended';
         }
 
         if (moduleKey === 'compact_design') {
             if (category === 'compact_plant') return 'essential';
-            if (category === 'fime') return 'typically_not_applicable';
+            if (category === 'fime') return 'not_applicable';
             return 'recommended';
         }
 
@@ -241,16 +241,20 @@ export class RecommendationEngine {
             'tech_selection'
         ];
 
-        return moduleKeys.map(moduleKey => ({
-            project_id: projectId,
-            module_key: moduleKey,
-            status: 'pending' as const,
-            reason: null,
-            system_recommendation: this.getModuleRecommendation(
+        return moduleKeys.map(moduleKey => {
+            const recommendation = this.getModuleRecommendation(
                 moduleKey, domain, context, level, category
-            ),
-            notes: null
-        }));
+            );
+            return {
+                project_id: projectId,
+                module_key: moduleKey,
+                status: recommendation, // Inicialmente el estado es la recomendación
+                reason: null,
+                system_recommendation: recommendation,
+                is_user_override: false,
+                notes: null
+            };
+        });
     }
 
     /**
@@ -283,9 +287,9 @@ export class RecommendationEngine {
                     color: '#65A30D', // verde oliva
                     icon: '🟢'
                 };
-            case 'typically_not_applicable':
+            case 'not_applicable':
                 return {
-                    label: 'Típicamente no aplica',
+                    label: 'No aplica',
                     color: '#6B7280', // gris
                     icon: '⚪'
                 };

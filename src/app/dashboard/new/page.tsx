@@ -10,7 +10,11 @@ import {
     ProjectDomain,
     ProjectContext,
     ProjectLevel,
-    TreatmentCategory
+    TreatmentCategory,
+    DOMAIN_LABELS,
+    CONTEXT_LABELS,
+    LEVEL_LABELS,
+    CATEGORY_LABELS
 } from '@/types/project';
 import { RecommendationEngine } from '@/lib/recommendation-engine';
 
@@ -53,14 +57,22 @@ export default function NewProjectPage() {
             setStep(4);
         } else if (step === 4) {
             setStep(5);
+        } else if (step === 5) {
+            if (!formData.name) {
+                setError('El nombre del proyecto es obligatorio para continuar');
+                return;
+            }
+            setError('');
+            setStep(6);
         }
     };
 
     const handleBack = () => {
+        setError('');
         if (step > 1) setStep(step - 1);
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleFinalSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!formData.name) {
@@ -140,7 +152,7 @@ export default function NewProjectPage() {
                         Nuevo Proyecto
                     </h1>
                     <p style={{ color: 'var(--color-gray-dark)', fontSize: '0.95rem' }}>
-                        Paso {step} de 5 — Diagrama de Decisión
+                        Paso {step} de 6 — Diagrama de Decisión
                     </p>
                 </div>
 
@@ -155,7 +167,7 @@ export default function NewProjectPage() {
                     <div style={{
                         height: '100%',
                         backgroundColor: 'var(--color-primary)',
-                        width: `${(step / 5) * 100}%`,
+                        width: `${(step / 6) * 100}%`,
                         transition: 'width 0.3s ease'
                     }} />
                 </div>
@@ -172,7 +184,7 @@ export default function NewProjectPage() {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleFinalSubmit}>
 
                     {/* PASO 1: DOMINIO DEL SISTEMA */}
                     {step === 1 && (
@@ -216,6 +228,13 @@ export default function NewProjectPage() {
                         />
                     )}
 
+                    {/* PASO 6: REVISIÓN */}
+                    {step === 6 && (
+                        <StepReview
+                            formData={formData}
+                        />
+                    )}
+
                     {/* Navigation Buttons */}
                     <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem', justifyContent: 'space-between' }}>
                         <Button
@@ -226,13 +245,13 @@ export default function NewProjectPage() {
                             {step === 1 ? 'Cancelar' : '← Anterior'}
                         </Button>
 
-                        {step < 5 ? (
+                        {step < 6 ? (
                             <Button type="button" onClick={handleNext}>
                                 Continuar →
                             </Button>
                         ) : (
                             <Button type="submit" disabled={loading}>
-                                {loading ? 'Creando...' : 'Crear Proyecto'}
+                                {loading ? 'Inicializando Sistema...' : 'Confirmar e Iniciar Ingeniería'}
                             </Button>
                         )}
                     </div>
@@ -427,10 +446,36 @@ function StepTreatmentCategory({ domain, value, onChange }: {
                 <button
                     type="button"
                     onClick={() => onChange(null)}
-                    style={{ padding: '1rem', border: `2px solid ${value === null ? 'var(--color-primary)' : 'var(--color-gray-medium)'}`, borderRadius: 'var(--radius-sm)', background: value === null ? 'rgba(34, 84, 131, 0.05)' : 'white', cursor: 'pointer', textAlign: 'left' }}
+                    style={{
+                        padding: '1.5rem',
+                        border: `2px solid ${value === null ? 'var(--color-primary)' : 'var(--color-gray-medium)'}`,
+                        borderRadius: 'var(--radius-md)',
+                        background: value === null ? 'rgba(34, 84, 131, 0.05)' : 'white',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 0.2s ease',
+                        display: 'flex',
+                        gap: '1rem',
+                        alignItems: 'center',
+                        width: '100%'
+                    }}
                 >
-                    <div style={{ fontWeight: 600 }}>⏭️ Aún no lo sé</div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--color-gray-dark)' }}>Podrás definirlo después.</div>
+                    <div style={{
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '50%',
+                        border: `2px solid ${value === null ? 'var(--color-primary)' : 'var(--color-gray-dark)'}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                    }}>
+                        {value === null && <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: 'var(--color-primary)' }} />}
+                    </div>
+                    <div>
+                        <div style={{ fontWeight: 700, fontSize: '1.1rem', color: value === null ? 'var(--color-primary)' : 'var(--color-foreground)' }}>⏭️ Aún no lo sé</div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--color-gray-dark)' }}>Podrás definirlo después en los módulos técnicos.</div>
+                    </div>
                 </button>
             </div>
         </div>
@@ -458,13 +503,117 @@ function StepGeneralInfo({ formData, onChange }: { formData: any; onChange: any 
     );
 }
 
-function RadioCard({ name, value, checked, onChange, title, description }: any) {
+function StepReview({ formData }: { formData: any }) {
+    const recommendations = RecommendationEngine.initializeModuleStatuses(
+        'temp',
+        formData.project_domain,
+        formData.project_context,
+        formData.project_level,
+        formData.treatment_category
+    );
+
+    const essentialModules = recommendations.filter(r => r.system_recommendation === 'essential');
+
     return (
-        <label style={{ display: 'block', padding: '1.25rem', border: `2px solid ${checked ? 'var(--color-primary)' : 'var(--color-gray-medium)'}`, borderRadius: 'var(--radius-sm)', cursor: 'pointer', backgroundColor: checked ? 'rgba(34, 84, 131, 0.05)' : 'white' }}>
-            <input type="radio" name={name} value={value} checked={checked} onChange={onChange} style={{ marginRight: '1rem' }} />
-            <div style={{ display: 'inline-block', verticalAlign: 'top', maxWidth: 'calc(100% - 3rem)' }}>
-                <div style={{ fontWeight: 600, color: 'var(--color-foreground)' }}>{title}</div>
-                <div style={{ fontSize: '0.9rem', color: 'var(--color-gray-dark)' }}>{description}</div>
+        <div>
+            <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', color: 'var(--color-foreground)' }}>
+                6. Resumen y Configuración del Sistema
+            </h2>
+            <p style={{ marginBottom: '2rem', color: 'var(--color-gray-dark)' }}>
+                Basado en el Diagrama de Decisión, HydroStack ha configurado el siguiente entorno de ingeniería:
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+                <div style={{ backgroundColor: 'var(--color-bg-secondary)', padding: '1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-gray-medium)' }}>
+                    <p style={{ fontSize: '0.75rem', textTransform: 'uppercase', opacity: 0.7, fontWeight: 700, marginBottom: '0.5rem' }}>Perfil del Proyecto</p>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 600 }}>
+                        <div style={{ marginBottom: '0.25rem' }}>💧 {DOMAIN_LABELS[formData.project_domain as ProjectDomain]}</div>
+                        <div style={{ marginBottom: '0.25rem' }}>📍 {CONTEXT_LABELS[formData.project_context as ProjectContext]}</div>
+                        <div style={{ marginBottom: '0.25rem' }}>📐 {LEVEL_LABELS[formData.project_level as ProjectLevel]}</div>
+                        {formData.treatment_category && (
+                            <div style={{ color: 'var(--color-primary)' }}>⚙️ {CATEGORY_LABELS[formData.treatment_category as TreatmentCategory]}</div>
+                        )}
+                    </div>
+                </div>
+
+                <div style={{ backgroundColor: 'var(--color-bg-secondary)', padding: '1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-gray-medium)' }}>
+                    <p style={{ fontSize: '0.75rem', textTransform: 'uppercase', opacity: 0.7, fontWeight: 700, marginBottom: '0.5rem' }}>Módulos Críticos</p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        {essentialModules.slice(0, 6).map((m: any) => (
+                            <span key={m.module_key} style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', backgroundColor: 'white', border: '1px solid var(--color-gray-medium)', borderRadius: '1rem' }}>
+                                {m.module_key}
+                            </span>
+                        ))}
+                        {essentialModules.length > 6 && <span style={{ fontSize: '0.7rem' }}>+{essentialModules.length - 6} más</span>}
+                    </div>
+                </div>
+            </div>
+
+            <div style={{
+                padding: '1.25rem',
+                backgroundColor: 'rgba(34, 84, 131, 0.05)',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--color-primary-light)',
+                display: 'flex',
+                gap: '1rem',
+                alignItems: 'center'
+            }}>
+                <span style={{ fontSize: '1.5rem' }}>🚀</span>
+                <p style={{ fontSize: '0.9rem', color: 'var(--color-primary)', fontWeight: 600 }}>
+                    Al confirmar, se inicializarán los 16 módulos técnicos adaptados a este contexto.
+                </p>
+            </div>
+        </div>
+    );
+}
+
+function RadioCard({ name, value, checked, onChange, title, description, icon }: any) {
+    return (
+        <label style={{
+            display: 'block',
+            padding: '1.5rem',
+            border: `2px solid ${checked ? 'var(--color-primary)' : 'var(--color-gray-medium)'}`,
+            borderRadius: 'var(--radius-md)',
+            cursor: 'pointer',
+            backgroundColor: checked ? 'rgba(34, 84, 131, 0.05)' : 'white',
+            transition: 'all 0.2s ease',
+            boxShadow: checked ? '0 4px 12px rgba(34, 84, 131, 0.1)' : 'none',
+            position: 'relative'
+        }}>
+            <input
+                type="radio"
+                name={name}
+                value={value}
+                checked={checked}
+                onChange={onChange}
+                style={{ position: 'absolute', opacity: 0 }}
+            />
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                <div style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    border: `2px solid ${checked ? 'var(--color-primary)' : 'var(--color-gray-dark)'}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                }}>
+                    {checked && <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: 'var(--color-primary)' }} />}
+                </div>
+                <div style={{ flex: 1 }}>
+                    <div style={{
+                        fontWeight: 700,
+                        color: checked ? 'var(--color-primary)' : 'var(--color-foreground)',
+                        fontSize: '1.1rem',
+                        marginBottom: '0.25rem'
+                    }}>
+                        {title}
+                    </div>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--color-gray-dark)', lineHeight: 1.4 }}>
+                        {description}
+                    </div>
+                </div>
             </div>
         </label>
     );

@@ -109,8 +109,8 @@ export default function ProjectSidebar({ projectId }: { projectId: string }) {
                 <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
                     {navItems.map((item) => {
                         const isActive = pathname === item.href;
-                        const moduleStatus = moduleStatuses.get(item.moduleKey);
-                        const badge = moduleStatus ? RecommendationEngine.getRecommendationBadge(moduleStatus.system_recommendation) : null;
+                        const moduleStat = moduleStatuses.get(item.moduleKey);
+                        const badge = moduleStat ? RecommendationEngine.getRecommendationBadge(moduleStat.status) : null;
 
                         return (
                             <Link
@@ -134,8 +134,20 @@ export default function ProjectSidebar({ projectId }: { projectId: string }) {
                                     {item.label}
                                 </span>
                                 {badge && (
-                                    <span title={badge.label} style={{ fontSize: '0.75rem', flexShrink: 0 }}>
-                                        {badge.icon}
+                                    <span
+                                        title={`${badge.label}${moduleStat?.is_user_override ? ' (Decisión del Ingeniero)' : ' (Sugerido)'}`}
+                                        style={{
+                                            fontSize: '0.65rem',
+                                            flexShrink: 0,
+                                            backgroundColor: `${badge.color}20`,
+                                            color: badge.color,
+                                            padding: '0.1rem 0.4rem',
+                                            borderRadius: '0.5rem',
+                                            fontWeight: 700,
+                                            border: `1px solid ${badge.color}40`
+                                        }}
+                                    >
+                                        {badge.label.substring(0, 3)}
                                     </span>
                                 )}
                             </Link>

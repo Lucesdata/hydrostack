@@ -8,6 +8,7 @@
 import React from 'react';
 import ProjectSidebar from '@/components/ProjectSidebar';
 import ProjectSummary from '@/components/projects/ProjectSummary';
+import ProjectHero from '@/components/projects/ProjectHero';
 
 export default async function ProjectLayout({
     children,
@@ -34,6 +35,7 @@ export default async function ProjectLayout({
                 overflowY: 'auto'
             }}>
                 <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+                    <ProjectHero projectId={id} />
                     {children}
                 </div>
             </main>

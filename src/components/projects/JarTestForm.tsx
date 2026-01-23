@@ -5,6 +5,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
+import ModuleWarning from './ModuleWarning';
 
 export default function JarTestForm({
     projectId,
@@ -94,6 +95,7 @@ export default function JarTestForm({
     return (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '2rem' }}>
             <div style={{ backgroundColor: 'white', padding: '2rem', borderRadius: 'var(--radius-lg)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                <ModuleWarning projectId={projectId} moduleKey="jar_test" />
                 <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', color: 'var(--color-primary)', borderBottom: '1px solid var(--color-gray-medium)', paddingBottom: '0.5rem' }}>
                     Ensayo de Jarras y Dosificación
                 </h2>

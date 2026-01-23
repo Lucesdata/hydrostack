@@ -22,6 +22,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
+import ModuleWarning from './ModuleWarning';
 
 type FLOW_DATA = {
     net_dotation: number;
@@ -170,6 +171,7 @@ export default function CaudalesForm({ projectId, initialData }: { projectId: st
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
             {/* Form Column */}
             <div style={{ backgroundColor: 'white', padding: '2rem', borderRadius: 'var(--radius-lg)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                <ModuleWarning projectId={projectId} moduleKey="caudales" />
                 <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', color: 'var(--color-primary)', borderBottom: '1px solid var(--color-gray-medium)', paddingBottom: '0.5rem' }}>
                     Parámetros de Diseño
                 </h2>

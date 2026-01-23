@@ -5,6 +5,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
+import ModuleWarning from './ModuleWarning';
 
 type SOURCE_DATA = {
     project_id: string;
@@ -93,6 +94,7 @@ export default function SourceForm({ projectId, initialData }: { projectId: stri
 
     return (
         <div style={{ backgroundColor: 'white', padding: '2rem', borderRadius: 'var(--radius-lg)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+            <ModuleWarning projectId={projectId} moduleKey="source" />
             <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', color: 'var(--color-primary)', borderBottom: '1px solid var(--color-gray-medium)', paddingBottom: '0.5rem' }}>
                 Fuente de Agua
             </h2>

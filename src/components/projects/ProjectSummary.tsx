@@ -17,7 +17,8 @@ export default async function ProjectSummary({ projectId }: { projectId: string 
         { data: compact },
         { data: opex },
         { data: viability },
-        { data: seasonalData }
+        { data: seasonalData },
+        { data: moduleStatuses }
     ] = await Promise.all([
         supabase.from('project_calculations').select('*').eq('project_id', projectId).single(),
         supabase.from('project_sources').select('*').eq('project_id', projectId).single(),
@@ -31,8 +32,13 @@ export default async function ProjectSummary({ projectId }: { projectId: string 
         supabase.from('project_compact_ptap').select('*').eq('project_id', projectId).single(),
         supabase.from('project_opex').select('*').eq('project_id', projectId).single(),
         supabase.from('project_viability').select('*').eq('project_id', projectId).single(),
-        supabase.from('project_seasonal_data').select('*').eq('project_id', projectId).single()
+        supabase.from('project_seasonal_data').select('*').eq('project_id', projectId).single(),
+        supabase.from('project_module_status').select('*').eq('project_id', projectId)
     ]);
+
+    const essentialCount = moduleStatuses?.filter((m: any) => m.status === 'essential').length || 0;
+    const appliedCount = moduleStatuses?.filter((m: any) => m.status !== 'not_applicable').length || 0;
+    const notApplicableCount = moduleStatuses?.filter((m: any) => m.status === 'not_applicable').length || 0;
 
     return (
         <aside style={{
@@ -56,6 +62,32 @@ export default async function ProjectSummary({ projectId }: { projectId: string 
             }}>
                 Resumen del Proyecto
             </h3>
+
+            {/* Technical Status Overview */}
+            <div style={{
+                backgroundColor: 'white',
+                padding: '1rem',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--color-gray-medium)',
+                marginBottom: '2rem',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+            }}>
+                <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-gray-dark)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>Estructura Técnica</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Esenciales</span>
+                        <span style={{ fontWeight: 700, color: 'var(--color-error)' }}>{essentialCount}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Aplicados</span>
+                        <span style={{ fontWeight: 700, color: 'var(--color-primary)' }}>{appliedCount}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>No Aplican</span>
+                        <span style={{ fontWeight: 700, color: 'var(--color-gray-dark)' }}>{notApplicableCount}</span>
+                    </div>
+                </div>
+            </div>
 
             {/* Section 1: Population */}
             <div style={{ marginBottom: '2rem' }}>

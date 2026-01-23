@@ -15,6 +15,7 @@
 
 import React from 'react';
 import Button from '@/components/ui/Button';
+import { NarrativeEngine } from '@/lib/narrative-engine';
 
 type REPORT_DATA = {
     project: any;
@@ -111,6 +112,39 @@ export default function ProjectReport({ data }: { data: REPORT_DATA }) {
                     <p><strong>Comunidad:</strong> {calculations?.community_name}</p>
                     <p><strong>Fecha:</strong> {new Date().toLocaleDateString()}</p>
                 </div>
+            </div>
+
+            <div style={{
+                marginBottom: '4rem',
+                padding: '2rem',
+                backgroundColor: '#F8FAFC',
+                borderRadius: 'var(--radius-lg)',
+                borderLeft: '5px solid var(--color-primary)',
+                lineHeight: '1.8'
+            }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '1.5rem', color: 'var(--color-primary)', textTransform: 'uppercase' }}>
+                    Memoria Descriptiva y Justificación Técnica
+                </h3>
+
+                <p style={{ marginBottom: '1.5rem', textAlign: 'justify', fontSize: '1rem' }}>
+                    {NarrativeEngine.generateIntroduction(project)}
+                </p>
+
+                <p style={{ marginBottom: '1.5rem', textAlign: 'justify', fontSize: '1rem' }}>
+                    {NarrativeEngine.generateEngineeringDecisions(calculations?.module_statuses || [])}
+                </p>
+
+                <p style={{ marginBottom: '1.5rem', textAlign: 'justify', fontSize: '1rem' }}>
+                    {NarrativeEngine.generateDemandNarrative(calculations)}
+                </p>
+
+                <p style={{ marginBottom: '1.5rem', textAlign: 'justify', fontSize: '1rem' }}>
+                    {NarrativeEngine.generateTreatmentNarrative(calculations)}
+                </p>
+
+                <p style={{ textAlign: 'justify', fontSize: '1rem' }}>
+                    {NarrativeEngine.generateViabilityJustification(calculations?.project_viability)}
+                </p>
             </div>
 
             <Section title="1. Localización y Población">
@@ -231,6 +265,6 @@ export default function ProjectReport({ data }: { data: REPORT_DATA }) {
                     nav { display: none !important; }
                 }
             `}</style>
-        </div>
+        </div >
     );
 }
