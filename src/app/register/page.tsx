@@ -6,26 +6,20 @@ import Input from '@/components/ui/Input';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
+import { USER_CATEGORIES } from '@/constants/project';
 
 export default function RegisterPage() {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
         password: '',
-        role: 'Comunidad'
+        user_type: USER_CATEGORIES[0]
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
     const supabase = createClient();
 
-    const userTypes = [
-        'Comunidad',
-        'Acueducto rural',
-        'Profesional técnico',
-        'Empresa / proveedor',
-        'Entidad / ONG'
-    ];
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -48,7 +42,7 @@ export default function RegisterPage() {
                 options: {
                     data: {
                         name: formData.name,
-                        role: formData.role,
+                        user_type: formData.user_type,
                     },
                 },
             });
@@ -103,16 +97,16 @@ export default function RegisterPage() {
                     />
 
                     <div className="input-group">
-                        <label htmlFor="role" className="label">Tipo de usuario</label>
+                        <label htmlFor="user_type" className="label">Tipo de usuario</label>
                         <select
-                            id="role"
-                            name="role"
+                            id="user_type"
+                            name="user_type"
                             className="input"
-                            value={formData.role}
+                            value={formData.user_type}
                             onChange={handleChange}
                             style={{ backgroundColor: 'white' }}
                         >
-                            {userTypes.map((type) => (
+                            {USER_CATEGORIES.map((type) => (
                                 <option key={type} value={type}>{type}</option>
                             ))}
                         </select>

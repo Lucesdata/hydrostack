@@ -116,6 +116,39 @@ export default function DashboardPage() {
                                 <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: 'var(--color-foreground)' }}>{project.name}</h3>
                             </Link>
                             <p style={{ color: 'var(--color-gray-dark)', fontSize: '0.9rem' }}>{project.project_type}</p>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', borderTop: '1px solid var(--color-gray-light)', paddingTop: '1rem' }}>
+                                <Link href={`/dashboard/projects/${project.id}`} style={{ textDecoration: 'none' }}>
+                                    <Button variant="outline" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}>
+                                        Abrir / Editar
+                                    </Button>
+                                </Link>
+                                <button
+                                    onClick={async (e) => {
+                                        e.preventDefault();
+                                        if (confirm('¿Estás seguro de que deseas eliminar este proyecto? Esta acción no se puede deshacer.')) {
+                                            const { error } = await supabase.from('projects').delete().eq('id', project.id);
+                                            if (!error) {
+                                                setProjects(projects.filter(p => p.id !== project.id));
+                                            } else {
+                                                alert('Error al eliminar el proyecto');
+                                            }
+                                        }
+                                    }}
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        color: 'var(--color-error)',
+                                        fontSize: '0.85rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.3rem',
+                                        fontWeight: 600
+                                    }}
+                                >
+                                    🗑️ Eliminar
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>

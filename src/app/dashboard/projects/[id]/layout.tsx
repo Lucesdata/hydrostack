@@ -1,24 +1,43 @@
-"use client";
-
-import React, { use } from 'react';
+/**
+ * 🔒 ÁREA CRÍTICA: Layout de Proyecto
+ * Razón: Gestiona la navegación (Sidebar), el contenido principal y el panel de resumen.
+ * Riesgo: Fallos aquí desconectan al usuario del proyecto o rompen la navegación entre módulos.
+ * 
+ * Este layout envuelve todos los 16 módulos técnicos.
+ */
+import React from 'react';
 import ProjectSidebar from '@/components/ProjectSidebar';
+import ProjectSummary from '@/components/projects/ProjectSummary';
 
-export default function ProjectLayout({
+export default async function ProjectLayout({
     children,
     params,
 }: {
     children: React.ReactNode;
     params: Promise<{ id: string }>;
 }) {
-    // Unwrap params using React.use()
-    const { id } = use(params);
+    const { id } = await params;
 
     return (
-        <div className="container" style={{ display: 'flex', gap: '2rem', padding: '0', maxWidth: '100%' }}>
+        <div className="container" style={{
+            display: 'flex',
+            gap: '0',
+            padding: '0',
+            maxWidth: '100%',
+            height: 'calc(100vh - 64px)', // Navbar height
+            overflow: 'hidden'
+        }}>
             <ProjectSidebar projectId={id} />
-            <main style={{ flex: 1, padding: '2rem', maxWidth: '1000px' }}>
-                {children}
+            <main style={{
+                flex: 1,
+                padding: '2rem',
+                overflowY: 'auto'
+            }}>
+                <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+                    {children}
+                </div>
             </main>
+            <ProjectSummary projectId={id} />
         </div>
     );
 }

@@ -5,6 +5,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
+import { PROJECT_TYPES, PROJECT_STATUSES } from '@/constants/project';
 
 type Project = {
     id: string;
@@ -13,6 +14,8 @@ type Project = {
     location: string | null;
     project_type: string | null;
     status: string;
+    latitude: number | null;
+    longitude: number | null;
 };
 
 export default function GeneralInfoForm({ project }: { project: Project }) {
@@ -20,25 +23,16 @@ export default function GeneralInfoForm({ project }: { project: Project }) {
         name: project.name || '',
         description: project.description || '',
         location: project.location || '',
-        project_type: project.project_type || 'Agua potable rural',
-        status: project.status || 'Borrador'
+        project_type: project.project_type || PROJECT_TYPES[0],
+        status: project.status || PROJECT_STATUSES[0],
+        latitude: project.latitude || '',
+        longitude: project.longitude || ''
     });
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const router = useRouter();
     const supabase = createClient();
-
-    const projectTypes = [
-        'Agua potable rural',
-        'Agua potable urbano',
-        'Potabilización privada',
-        'Desalinización',
-        'Tratamiento aguas residuales',
-        'Tratamiento industrial'
-    ];
-
-    const statuses = ['Borrador', 'En diseño', 'Completado', 'Archivado'];
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -59,6 +53,8 @@ export default function GeneralInfoForm({ project }: { project: Project }) {
                     location: formData.location,
                     project_type: formData.project_type,
                     status: formData.status,
+                    latitude: formData.latitude !== '' ? Number(formData.latitude) : null,
+                    longitude: formData.longitude !== '' ? Number(formData.longitude) : null,
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', project.id);
@@ -123,7 +119,7 @@ export default function GeneralInfoForm({ project }: { project: Project }) {
                                 onChange={handleChange}
                                 style={{ backgroundColor: 'white' }}
                             >
-                                {projectTypes.map((type) => (
+                                {PROJECT_TYPES.map((type) => (
                                     <option key={type} value={type}>{type}</option>
                                 ))}
                             </select>
@@ -139,10 +135,31 @@ export default function GeneralInfoForm({ project }: { project: Project }) {
                                 onChange={handleChange}
                                 style={{ backgroundColor: 'white' }}
                             >
-                                {statuses.map((s) => (
+                                {PROJECT_STATUSES.map((s) => (
                                     <option key={s} value={s}>{s}</option>
                                 ))}
                             </select>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                            <Input
+                                id="latitude"
+                                name="latitude"
+                                label="Latitud"
+                                type="number"
+                                step="any"
+                                value={formData.latitude}
+                                onChange={handleChange}
+                            />
+                            <Input
+                                id="longitude"
+                                name="longitude"
+                                label="Longitud"
+                                type="number"
+                                step="any"
+                                value={formData.longitude}
+                                onChange={handleChange}
+                            />
                         </div>
                     </div>
                 </div>

@@ -16,7 +16,8 @@ HYDROSTACK es un entorno integral que acompaña a comunidades, acueductos rurale
 - **Framework**: [Next.js](https://nextjs.org/) (App Router)
 - **Lenguaje**: TypeScript
 - **Estilos**: Vanilla CSS (CSS Variables & Modules)
-- **Autenticación**: Context API + LocalStorage (Simulación cliente para MVP)
+- **Autenticación**: Supabase Auth
+- **Base de Datos**: Supabase (PostgreSQL) con RLS
 
 ## 🗺️ Mapa del Sitio (Sitemap)
 
@@ -46,6 +47,39 @@ graph TD
     G
     end
 ```
+
+## 🏗️ Estructura del Proyecto
+
+Cada proyecto en HydroStack sigue un flujo de trabajo técnico denominado **"Estructura del Proyecto"**, compuesto por **16 módulos** organizados en **7 bloques conceptuales**:
+
+### Bloques Técnicos
+
+| Bloque | Módulos | Propósito |
+|--------|---------|-----------|
+| **A. Contexto** | 1. Información General | Definir alcance y características del proyecto |
+| **B. Demanda** | 2-3. Población y Consumo | Cuantificar beneficiarios y demanda de agua |
+| **C. Fuente** | 4-6. Fuente, Consumo y Calidad | Caracterizar la oferta hídrica |
+| **D. Hidráulica** | 7-9. Caudales, Almacenamiento y Conducción | Diseñar infraestructura hidráulica |
+| **E. Tratamiento** | 10-13. Desarenador, Jarras, Filtros y Compacta | Dimensionar unidades de tratamiento |
+| **F. Evaluación** | 14-16. Costos, Viabilidad y Selección | Evaluar viabilidad técnica y económica |
+| **G. Documentación** | 📄 Informe Final | Consolidar memoria técnica |
+
+## 🏗️ Principios Arquitectónicos
+
+1. **Flujo Único Universal**: Un solo flujo para todos los tipos de proyecto.
+2. **Context over Configuration**: El tipo de proyecto es contexto, no configuración.
+3. **Separation of Concerns**: Perfil ≠ Dominio ≠ Contexto ≠ Flujo.
+
+## 📚 Documentación Técnica
+
+Para desarrolladores y contribuidores:
+
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** — Arquitectura general del sistema.
+- **[CONTRIBUTING.md](./CONTRIBUTING.md)** — Guía de contribución y convenciones.
+- **[SECURITY.md](./SECURITY.md)** — Política de seguridad.
+- **[CHANGELOG.md](./CHANGELOG.md)** — Registro de cambios.
+- **[docs/estructura-tecnica.md](./docs/estructura-tecnica.md)** — Clasificación de módulos técnicos.
+- **[docs/HYDROSTACK-PROMPT.md](./docs/HYDROSTACK-PROMPT.md)** — Contexto completo para IA.
 
 ## 📦 Instalación y Uso
 
