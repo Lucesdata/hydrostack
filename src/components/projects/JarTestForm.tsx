@@ -6,6 +6,7 @@ import Input from '@/components/ui/Input';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import ModuleWarning from './ModuleWarning';
+import ModuleNavigation from './ModuleNavigation';
 
 export default function JarTestForm({
     projectId,
@@ -162,11 +163,6 @@ export default function JarTestForm({
                         <Button type="submit" disabled={loading} variant={saved ? 'secondary' : 'primary'}>
                             {loading ? 'Guardando...' : 'Guardar Resultados'}
                         </Button>
-                        {saved && (
-                            <Button type="button" onClick={() => router.push(`/dashboard/projects/${projectId}/filtro-lento`)} style={{ backgroundColor: 'var(--color-success)', color: 'white' }}>
-                                Continuar a Filtros {"->"}
-                            </Button>
-                        )}
                     </div>
                 </form>
             </div>
@@ -193,6 +189,9 @@ export default function JarTestForm({
                         </div>
                     </div>
                 </div>
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+                <ModuleNavigation projectId={projectId} currentModuleKey="jar_test" />
             </div>
         </div>
     );

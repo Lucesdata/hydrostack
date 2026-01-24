@@ -5,6 +5,7 @@ import Button from '@/components/ui/Button';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import ModuleWarning from './ModuleWarning';
+import ModuleNavigation from './ModuleNavigation';
 
 export default function ViabilityForm({
     projectId,
@@ -120,13 +121,10 @@ export default function ViabilityForm({
                     <Button type="submit" disabled={loading} variant={saved ? 'secondary' : 'primary'}>
                         {loading ? 'Guardando...' : 'Guardar Información'}
                     </Button>
-                    {saved && (
-                        <Button type="button" onClick={() => router.push(`/dashboard/projects/${projectId}/tech-selection`)} style={{ backgroundColor: 'var(--color-success)', color: 'white' }}>
-                            Continuar a Selección de Tecnología →
-                        </Button>
-                    )}
                 </div>
             </form>
+
+            <ModuleNavigation projectId={projectId} currentModuleKey="viability" />
         </div>
     );
 }

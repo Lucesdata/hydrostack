@@ -40,242 +40,146 @@ export default async function ProjectSummary({ projectId }: { projectId: string 
     const appliedCount = moduleStatuses?.filter((m: any) => m.status !== 'not_applicable').length || 0;
     const notApplicableCount = moduleStatuses?.filter((m: any) => m.status === 'not_applicable').length || 0;
 
+    // Map statuses for easy lookup
+    const statusMap = new Map();
+    moduleStatuses?.forEach((s: any) => statusMap.set(s.module_key, s.status));
+
+    const isVisible = (key: string) => statusMap.get(key) !== 'not_applicable';
+
     return (
         <aside style={{
             width: '280px',
             padding: '1.5rem',
-            backgroundColor: 'var(--color-bg-secondary)', // Assuming a secondary bg or white
+            backgroundColor: 'var(--color-bg-secondary)',
             borderLeft: '1px solid var(--color-gray-medium)',
-            height: 'calc(100vh - 80px)',
+            height: 'calc(100vh - 64px)',
             position: 'sticky',
             top: '0',
             overflowY: 'auto',
-            fontSize: '0.9rem'
+            fontSize: '0.85rem'
         }}>
             <h3 style={{
-                fontSize: '1rem',
-                fontWeight: 600,
+                fontSize: '0.9rem',
+                fontWeight: 700,
                 color: 'var(--color-primary)',
                 marginBottom: '1.5rem',
                 borderBottom: '2px solid var(--color-primary)',
-                paddingBottom: '0.5rem'
+                paddingBottom: '0.5rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
             }}>
-                Resumen del Proyecto
+                Gestión del Diseño Técnico
             </h3>
 
-            {/* Technical Status Overview */}
-            <div style={{
-                backgroundColor: 'white',
-                padding: '1rem',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--color-gray-medium)',
-                marginBottom: '2rem',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-            }}>
-                <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-gray-dark)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>Estructura Técnica</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>Esenciales</span>
-                        <span style={{ fontWeight: 700, color: 'var(--color-error)' }}>{essentialCount}</span>
+            {/* BLOCK A & B — Context & Demand */}
+            <div style={{ marginBottom: '1.5rem' }}>
+                <p style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--color-gray-dark)', textTransform: 'uppercase', marginBottom: '0.75rem', letterSpacing: '0.02em' }}>🟢 Bloque A+B: Población</p>
+                {population ? (
+                    <div style={{ borderLeft: '3px solid var(--color-primary)', paddingLeft: '0.75rem' }}>
+                        <ul style={{ listStyle: 'none', padding: 0, color: 'var(--color-gray-dark)', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                            <li><strong>Futura:</strong> {population.calculated_flows?.final_population?.toLocaleString() || '-'} hab.</li>
+                            {seasonalData?.daily_tourist_count > 0 && (
+                                <li style={{ color: 'var(--color-primary)', fontWeight: 600 }}><strong>+ Estacional:</strong> {seasonalData.daily_tourist_count} hab.</li>
+                            )}
+                            {consumption && <li><strong>Disponibilidad:</strong> {consumption.daily_availability}</li>}
+                        </ul>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>Aplicados</span>
-                        <span style={{ fontWeight: 700, color: 'var(--color-primary)' }}>{appliedCount}</span>
+                ) : (
+                    <p style={{ color: 'var(--color-gray-medium)', fontStyle: 'italic' }}>Definición en proceso</p>
+                )}
+            </div>
+
+            {/* BLOCK C — Source & Quality */}
+            {isVisible('source') && (
+                <div style={{ marginBottom: '1.5rem' }}>
+                    <p style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--color-gray-dark)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>🟢 Bloque C: Fuente y Calidad</p>
+                    <div style={{ borderLeft: '3px solid #10b981', paddingLeft: '0.75rem' }}>
+                        <ul style={{ listStyle: 'none', padding: 0, color: 'var(--color-gray-dark)', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                            {source && <li><strong>Fuente:</strong> {source.source_type}</li>}
+                            {quality && (
+                                <>
+                                    <li><strong>Análisis:</strong> {quality.has_analysis}</li>
+                                    {quality.irca_score !== null && <li><strong>IRCA:</strong> {quality.irca_score.toFixed(1)}%</li>}
+                                </>
+                            )}
+                        </ul>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>No Aplican</span>
-                        <span style={{ fontWeight: 700, color: 'var(--color-gray-dark)' }}>{notApplicableCount}</span>
+                </div>
+            )}
+
+            {/* BLOCK D — Hydraulic */}
+            <div style={{ marginBottom: '1.5rem' }}>
+                <p style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--color-gray-dark)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>🟢 Bloque D: Caudales (RAS)</p>
+                {population?.calculated_flows?.qmd ? (
+                    <div style={{ borderLeft: '3px solid #f59e0b', paddingLeft: '0.75rem' }}>
+                        <ul style={{ listStyle: 'none', padding: 0, color: 'var(--color-gray-dark)', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                            <li><strong>QMD:</strong> {population.calculated_flows.qmd_max || '0'} L/s</li>
+                            <li><strong>QMH:</strong> {population.calculated_flows.qmh_max || '0'} L/s</li>
+                            {conduccion && <li><strong>Presión:</strong> {conduccion.residual_pressure} m.c.a</li>}
+                        </ul>
                     </div>
+                ) : (
+                    <p style={{ color: 'var(--color-gray-medium)', fontStyle: 'italic' }}>En modelado hidráulico</p>
+                )}
+            </div>
+
+            {/* BLOCK E — Tratamiento (Selective) */}
+            <div style={{ marginBottom: '1.5rem' }}>
+                <p style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--color-gray-dark)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>🟡 Bloque E: Ingeniería Tratamiento</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {isVisible('desarenador') && desarenador && (
+                        <div style={{ backgroundColor: 'white', padding: '0.5rem', borderRadius: '4px', border: '1px solid #eee' }}>
+                            <p style={{ fontSize: '0.7rem', fontWeight: 700 }}>DESARENADOR</p>
+                            <p>{desarenador.length}m x {desarenador.width}m</p>
+                        </div>
+                    )}
+                    {isVisible('filtro_lento') && filters && (
+                        <div style={{ backgroundColor: 'white', padding: '0.5rem', borderRadius: '4px', border: '1px solid #eee' }}>
+                            <p style={{ fontSize: '0.7rem', fontWeight: 700 }}>FILTRO LENTO</p>
+                            <p>{filters.number_of_units} unidades · {filters.unit_width * filters.unit_length}m²</p>
+                        </div>
+                    )}
+                    {isVisible('compact_design') && compact && (
+                        <div style={{ backgroundColor: 'white', padding: '0.5rem', borderRadius: '4px', border: '1px solid #eee' }}>
+                            <p style={{ fontSize: '0.7rem', fontWeight: 700 }}>PTAP COMPACTA</p>
+                            <p>Lamelas: {compact.lamellar_area}m²</p>
+                        </div>
+                    )}
+                    {isVisible('jar_test') && jarTest && (
+                        <div style={{ backgroundColor: 'white', padding: '0.5rem', borderRadius: '4px', border: '1px solid #eee' }}>
+                            <p style={{ fontSize: '0.7rem', fontWeight: 700 }}>JAR TEST</p>
+                            <p>Dosis: {jarTest.optimal_dose_alum} mg/L</p>
+                        </div>
+                    )}
+                    {!desarenador && !filters && !compact && !jarTest && (
+                        <p style={{ color: 'var(--color-gray-medium)', fontStyle: 'italic' }}>Selección tecnológica en curso</p>
+                    )}
                 </div>
             </div>
 
-            {/* Section 1: Population */}
+            {/* BLOCK F — Close */}
             <div style={{ marginBottom: '2rem' }}>
-                <h4 style={{ fontWeight: 600, color: 'var(--color-foreground)', marginBottom: '0.5rem' }}>1. Población</h4>
-                {population ? (
-                    <ul style={{ listStyle: 'none', padding: 0, color: 'var(--color-gray-dark)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <li><strong>Comunidad:</strong> {population.community_name || '-'}</li>
-                        <li><strong>Actual:</strong> {population.initial_population?.toLocaleString() || '-'} hab.</li>
-                        <li><strong>Futura:</strong> {population.calculated_flows?.final_population?.toLocaleString() || '-'} hab.</li>
-                        {seasonalData?.daily_tourist_count > 0 && (
-                            <li style={{ color: 'var(--color-primary)', fontWeight: 600 }}><strong>Adicional:</strong> +{seasonalData.daily_tourist_count} hab.</li>
-                        )}
-                    </ul>
-                ) : (
-                    <p style={{ color: 'var(--color-gray-medium)', fontStyle: 'italic' }}>Sin datos</p>
-                )}
-            </div>
-
-            {/* Section 2: Source */}
-            <div style={{ marginBottom: '2rem' }}>
-                <h4 style={{ fontWeight: 600, color: 'var(--color-foreground)', marginBottom: '0.5rem' }}>2. Fuente</h4>
-                {source ? (
-                    <ul style={{ listStyle: 'none', padding: 0, color: 'var(--color-gray-dark)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <li><strong>Tipo:</strong> {source.source_type || '-'}</li>
-                        <li><strong>Permanente:</strong> {source.is_permanent || '-'}</li>
-                        <li><strong>Distancia:</strong> {source.distance_to_community ? `${source.distance_to_community} m` : '-'}</li>
-                    </ul>
-                ) : (
-                    <p style={{ color: 'var(--color-gray-medium)', fontStyle: 'italic' }}>Sin datos</p>
-                )}
-            </div>
-
-            {/* Section 3: Consumption */}
-            <div style={{ marginBottom: '2rem' }}>
-                <h4 style={{ fontWeight: 600, color: 'var(--color-foreground)', marginBottom: '0.5rem' }}>3. Consumo</h4>
-                {consumption ? (
-                    <ul style={{ listStyle: 'none', padding: 0, color: 'var(--color-gray-dark)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <li><strong>Usos:</strong> {consumption.main_uses?.length ? consumption.main_uses.join(', ') : '-'}</li>
-                        <li><strong>Disponibilidad:</strong> {consumption.daily_availability === 'Sí' ? 'Diaria' : 'Intermitente'}</li>
-                        <li><strong>Tanque:</strong> {consumption.has_storage || '-'}</li>
-                    </ul>
-                ) : (
-                    <p style={{ color: 'var(--color-gray-medium)', fontStyle: 'italic' }}>Sin datos</p>
-                )}
-            </div>
-
-            {/* Section 4: Quality */}
-            <div style={{ marginBottom: '2rem' }}>
-                <h4 style={{ fontWeight: 600, color: 'var(--color-foreground)', marginBottom: '0.5rem' }}>4. Calidad</h4>
-                {quality ? (
-                    <ul style={{ listStyle: 'none', padding: 0, color: 'var(--color-gray-dark)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <li><strong>Análisis:</strong> {quality.has_analysis || '-'}</li>
-                        {quality.irca_score !== null && (
-                            <li><strong>IRCA:</strong> {quality.irca_score.toFixed(1)}%</li>
-                        )}
-                        <li><strong>Tratamiento:</strong> {quality.home_treatment?.length ? quality.home_treatment.join(', ') : '-'}</li>
-                    </ul>
-                ) : (
-                    <p style={{ color: 'var(--color-gray-medium)', fontStyle: 'italic' }}>Sin datos</p>
-                )}
-            </div>
-
-            {/* Section 5: Caudales */}
-            <div style={{ marginBottom: '2rem' }}>
-                <h4 style={{ fontWeight: 600, color: 'var(--color-foreground)', marginBottom: '0.5rem' }}>5. Caudales</h4>
-                {population?.calculated_flows?.qmd ? (
-                    <ul style={{ listStyle: 'none', padding: 0, color: 'var(--color-gray-dark)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <li><strong>Qmd:</strong> {population.calculated_flows.qmd} L/s</li>
-                        <li><strong>QMD:</strong> {population.calculated_flows.qmd_max} L/s</li>
-                        <li><strong>QMH:</strong> {population.calculated_flows.qmh_max} L/s</li>
-                    </ul>
-                ) : (
-                    <p style={{ color: 'var(--color-gray-medium)', fontStyle: 'italic' }}>Sin cálculos</p>
-                )}
-            </div>
-
-            {/* Section 6: Tank */}
-            <div style={{ marginBottom: '2rem' }}>
-                <h4 style={{ fontWeight: 600, color: 'var(--color-foreground)', marginBottom: '0.5rem' }}>6. Tanque</h4>
-                {population?.calculated_flows?.tank_capacity ? (
-                    <ul style={{ listStyle: 'none', padding: 0, color: 'var(--color-gray-dark)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <li><strong>Capacidad:</strong> {population.calculated_flows.tank_capacity} m³</li>
-                    </ul>
-                ) : (
-                    <p style={{ color: 'var(--color-gray-medium)', fontStyle: 'italic' }}>Sin diseño</p>
-                )}
-            </div>
-
-            {/* Section 7: Conduccion */}
-            <div style={{ marginBottom: '2rem' }}>
-                <h4 style={{ fontWeight: 600, color: 'var(--color-foreground)', marginBottom: '0.5rem' }}>7. Conducción</h4>
-                {conduccion?.residual_pressure !== undefined ? (
-                    <ul style={{ listStyle: 'none', padding: 0, color: 'var(--color-gray-dark)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <li><strong>Presión:</strong> {conduccion.residual_pressure} m.c.a</li>
-                        <li><strong>Longitud:</strong> {conduccion.length} m</li>
-                    </ul>
-                ) : (
-                    <p style={{ color: 'var(--color-gray-medium)', fontStyle: 'italic' }}>Sin diseño</p>
-                )}
-            </div>
-
-            {/* Section 8: Desarenador */}
-            <div style={{ marginBottom: '2rem' }}>
-                <h4 style={{ fontWeight: 600, color: 'var(--color-foreground)', marginBottom: '0.5rem' }}>8. Desarenador</h4>
-                {desarenador ? (
-                    <ul style={{ listStyle: 'none', padding: 0, color: 'var(--color-gray-dark)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <li><strong>Dimensiones:</strong> {desarenador.length}m x {desarenador.width}m</li>
-                        <li><strong>Cámaras:</strong> {desarenador.number_of_chambers}</li>
-                    </ul>
-                ) : (
-                    <p style={{ color: 'var(--color-gray-medium)', fontStyle: 'italic' }}>Sin diseño</p>
-                )}
-            </div>
-
-            {/* Section 9: Filtro Lento */}
-            <div style={{ marginBottom: '2rem' }}>
-                <h4 style={{ fontWeight: 600, color: 'var(--color-foreground)', marginBottom: '0.5rem' }}>9. Filtro Lento</h4>
-                {filters ? (
-                    <ul style={{ listStyle: 'none', padding: 0, color: 'var(--color-gray-dark)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <li><strong>Unidades:</strong> {filters.number_of_units}</li>
-                        <li><strong>Área Unid:</strong> {filters.unit_width * filters.unit_length} m²</li>
-                    </ul>
-                ) : (
-                    <p style={{ color: 'var(--color-gray-medium)', fontStyle: 'italic' }}>Sin diseño</p>
-                )}
-            </div>
-
-            {/* Section 10: Jar Test */}
-            <div style={{ marginBottom: '2rem' }}>
-                <h4 style={{ fontWeight: 600, color: 'var(--color-foreground)', marginBottom: '0.5rem' }}>10. Jar Test</h4>
-                {jarTest ? (
-                    <ul style={{ listStyle: 'none', padding: 0, color: 'var(--color-gray-dark)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <li><strong>Dosis Alumbre:</strong> {jarTest.optimal_dose_alum} mg/L</li>
-                        <li><strong>pH Óptimo:</strong> {jarTest.optimal_ph}</li>
-                    </ul>
-                ) : (
-                    <p style={{ color: 'var(--color-gray-medium)', fontStyle: 'italic' }}>Sin datos</p>
-                )}
-            </div>
-
-            {/* Section 11: Compact Design */}
-            <div style={{ marginBottom: '2rem' }}>
-                <h4 style={{ fontWeight: 600, color: 'var(--color-foreground)', marginBottom: '0.5rem' }}>12. PTAP Compacta</h4>
-                {compact ? (
-                    <ul style={{ listStyle: 'none', padding: 0, color: 'var(--color-gray-dark)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <li><strong>Área Lamelas:</strong> {compact.lamellar_area} m²</li>
-                        <li><strong>Vol. Contacto:</strong> {compact.tank_contact_volume} m³</li>
-                    </ul>
-                ) : (
-                    <p style={{ color: 'var(--color-gray-medium)', fontStyle: 'italic' }}>Sin diseño</p>
-                )}
-            </div>
-
-            {/* Section 13: OpEx */}
-            <div style={{ marginBottom: '2rem' }}>
-                <h4 style={{ fontWeight: 600, color: 'var(--color-foreground)', marginBottom: '0.5rem' }}>13. Costo Operativo</h4>
+                <p style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--color-gray-dark)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>🟢 Bloque F: Evaluación</p>
                 {opex ? (
-                    <div style={{ padding: '0.5rem', backgroundColor: 'var(--color-success-light, #ecfdf5)', borderRadius: '4px', border: '1px solid var(--color-success)' }}>
-                        <p style={{ fontWeight: 700, color: 'var(--color-success)', fontSize: '0.95rem' }}>
-                            Calculado conforme a RAS
-                        </p>
+                    <div style={{ padding: '0.75rem', backgroundColor: '#ecfdf5', borderRadius: 'var(--radius-sm)', border: '1px solid #10b981' }}>
+                        <p style={{ color: '#065f46', fontSize: '0.8rem', fontWeight: 700 }}>${opex.alum_price_per_kg ? 'Indicadores de Viabilidad' : 'Estructura OpEx Base'}</p>
                     </div>
                 ) : (
-                    <p style={{ color: 'var(--color-gray-medium)', fontStyle: 'italic' }}>Sin cálculos</p>
-                )}
-            </div>
-
-            {/* Section 14: Viability */}
-            <div style={{ marginBottom: '2rem' }}>
-                <h4 style={{ fontWeight: 600, color: 'var(--color-foreground)', marginBottom: '0.5rem' }}>14. Viabilidad</h4>
-                {viability ? (
-                    <ul style={{ listStyle: 'none', padding: 0, color: 'var(--color-gray-dark)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <li><strong>Gravedad:</strong> {viability.gravity_arrival ? '✓' : '✗'}</li>
-                        <li><strong>Lote:</strong> {viability.lot_stability ? '✓' : '✗'}</li>
-                    </ul>
-                ) : (
-                    <p style={{ color: 'var(--color-gray-medium)', fontStyle: 'italic' }}>Sin datos</p>
+                    <p style={{ color: 'var(--color-gray-medium)', fontStyle: 'italic' }}>Análisis de viabilidad por iniciar</p>
                 )}
             </div>
 
             <div style={{
-                marginTop: 'auto',
-                padding: '1rem',
-                backgroundColor: 'var(--color-primary-light)',
-                borderRadius: 'var(--radius-md)',
-                fontSize: '0.85rem'
+                marginTop: '1.5rem',
+                padding: '0.75rem',
+                backgroundColor: 'var(--color-primary)',
+                color: 'white',
+                borderRadius: 'var(--radius-sm)',
+                fontSize: '0.75rem',
+                textAlign: 'center'
             }}>
-                <p><strong>Estado:</strong> {opex ? 'Auditoría Técnica Completa (RAS)' : 'Ingeniería en Desarrollo'}</p>
+                <p style={{ fontWeight: 700 }}>HydroStack Assistant</p>
+                <p style={{ opacity: 0.8 }}>Normativa RAS 0330</p>
             </div>
         </aside>
     );

@@ -12,7 +12,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { Project, ProjectModuleStatus, ModuleKey } from '@/types/project';
+import { Project, ProjectModuleStatus, ModuleKey, DOMAIN_LABELS, CONTEXT_LABELS, CATEGORY_LABELS } from '@/types/project';
 import { RecommendationEngine } from '@/lib/recommendation-engine';
 
 export default function ProjectSidebar({ projectId }: { projectId: string }) {
@@ -98,66 +98,93 @@ export default function ProjectSidebar({ projectId }: { projectId: string }) {
 
                 {project && (
                     <div style={{ fontSize: '0.75rem', padding: '0.75rem', backgroundColor: 'var(--color-gray-light)', borderRadius: 'var(--radius-sm)', marginBottom: '1.5rem', border: '1px solid var(--color-gray-medium)' }}>
-                        <div style={{ marginBottom: '0.25rem' }}><strong>Dominio:</strong> {project.project_domain === 'water_treatment' ? 'Agua Potable' : 'Residuales'}</div>
-                        <div style={{ marginBottom: '0.25rem' }}><strong>Contexto:</strong> {project.project_context}</div>
+                        <div style={{ marginBottom: '0.25rem' }}><strong>Dominio:</strong> {DOMAIN_LABELS[project.project_domain] || project.project_domain}</div>
+                        <div style={{ marginBottom: '0.25rem' }}><strong>Contexto:</strong> {CONTEXT_LABELS[project.project_context] || project.project_context}</div>
                         {project.treatment_category && (
-                            <div style={{ color: 'var(--color-primary)', fontWeight: 600 }}>C: {project.treatment_category}</div>
+                            <div style={{ color: 'var(--color-primary)', fontWeight: 600 }}>T: {CATEGORY_LABELS[project.treatment_category]}</div>
                         )}
                     </div>
                 )}
 
-                <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                    {navItems.map((item) => {
-                        const isActive = pathname === item.href;
-                        const moduleStat = moduleStatuses.get(item.moduleKey);
-                        const badge = moduleStat ? RecommendationEngine.getRecommendationBadge(moduleStat.status) : null;
+                <nav style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {[
+                        { title: '🟢 BLOQUE A: CONTEXTO', items: navItems.filter(i => ['general'].includes(i.moduleKey)) },
+                        { title: '🟢 BLOQUE B: DEMANDA', items: navItems.filter(i => ['population', 'floating_population', 'consumption'].includes(i.moduleKey)) },
+                        { title: '🟢 BLOQUE C: FUENTE', items: navItems.filter(i => ['source', 'quality'].includes(i.moduleKey)) },
+                        { title: '🟢 BLOQUE D: HIDRÁULICA', items: navItems.filter(i => ['caudales', 'tank', 'conduccion'].includes(i.moduleKey)) },
+                        { title: '🟡 BLOQUE E: TRATAMIENTO', items: navItems.filter(i => ['desarenador', 'jar_test', 'filtro_lento', 'compact_design'].includes(i.moduleKey)) },
+                        { title: '🟢 BLOQUE F: EVALUACIÓN', items: navItems.filter(i => ['costs', 'viability', 'tech_selection'].includes(i.moduleKey)) }
+                    ].map((block) => {
+                        const visibleItems = block.items.filter(item => {
+                            const moduleStat = moduleStatuses.get(item.moduleKey);
+                            return moduleStat && moduleStat.status !== 'not_applicable';
+                        });
+
+                        if (visibleItems.length === 0) return null;
 
                         return (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                style={{
-                                    padding: '0.65rem 0.85rem',
-                                    borderRadius: 'var(--radius-sm)',
-                                    textDecoration: 'none',
-                                    fontSize: '0.85rem',
-                                    color: isActive ? 'white' : 'var(--color-gray-dark)',
-                                    backgroundColor: isActive ? 'var(--color-primary)' : 'transparent',
-                                    transition: 'all 0.2s ease',
-                                    fontWeight: isActive ? 600 : 400,
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center'
-                                }}
-                            >
-                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginRight: '0.5rem' }}>
-                                    {item.label}
-                                </span>
-                                {badge && (
-                                    <span
-                                        title={`${badge.label}${moduleStat?.is_user_override ? ' (Decisión del Ingeniero)' : ' (Sugerido)'}`}
-                                        style={{
-                                            fontSize: '0.65rem',
-                                            flexShrink: 0,
-                                            backgroundColor: `${badge.color}20`,
-                                            color: badge.color,
-                                            padding: '0.1rem 0.4rem',
-                                            borderRadius: '0.5rem',
-                                            fontWeight: 700,
-                                            border: `1px solid ${badge.color}40`
-                                        }}
-                                    >
-                                        {badge.label.substring(0, 3)}
-                                    </span>
-                                )}
-                            </Link>
+                            <div key={block.title} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                <p style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--color-primary)', opacity: 0.8, paddingLeft: '0.85rem', marginBottom: '0.25rem' }}>
+                                    {block.title.replace('CARACTERIZACIÓN', 'MODELADO')}
+                                </p>
+                                {visibleItems.map((item) => {
+                                    const isActive = pathname === item.href;
+                                    const moduleStat = moduleStatuses.get(item.moduleKey);
+                                    const badge = moduleStat ? RecommendationEngine.getRecommendationBadge(moduleStat.status) : null;
+
+                                    return (
+                                        <Link
+                                            key={item.href}
+                                            href={item.href}
+                                            style={{
+                                                padding: '0.5rem 0.85rem',
+                                                borderRadius: 'var(--radius-sm)',
+                                                textDecoration: 'none',
+                                                fontSize: '0.8rem',
+                                                color: isActive ? 'white' : 'var(--color-gray-dark)',
+                                                backgroundColor: isActive ? 'var(--color-primary)' : 'transparent',
+                                                transition: 'all 0.15s ease',
+                                                fontWeight: isActive ? 600 : 400,
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center',
+                                                borderLeft: isActive ? 'none' : '2px solid transparent'
+                                            }}
+                                            onMouseEnter={(e: any) => { if (!isActive) e.currentTarget.style.backgroundColor = '#f4f4f5'; }}
+                                            onMouseLeave={(e: any) => { if (!isActive) e.currentTarget.style.backgroundColor = 'transparent'; }}
+                                        >
+                                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginRight: '0.5rem' }}>
+                                                {item.label.split('. ')[1] || item.label}
+                                            </span>
+                                            {badge && (
+                                                <span
+                                                    title={`${badge.label}`}
+                                                    style={{
+                                                        fontSize: '0.55rem',
+                                                        flexShrink: 0,
+                                                        backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : `${badge.color}15`,
+                                                        color: isActive ? 'white' : badge.color,
+                                                        padding: '0.1rem 0.35rem',
+                                                        borderRadius: '0.5rem',
+                                                        fontWeight: 800,
+                                                        border: isActive ? '1px solid rgba(255,255,255,0.4)' : `1px solid ${badge.color}30`,
+                                                        textTransform: 'uppercase'
+                                                    }}
+                                                >
+                                                    {badge.label.substring(0, 3)}
+                                                </span>
+                                            )}
+                                        </Link>
+                                    );
+                                })}
+                            </div>
                         );
                     })}
                 </nav>
             </div>
 
-            <Link href={`/dashboard/projects/${projectId}/report`} style={{ display: 'block', padding: '0.75rem 1rem', borderRadius: 'var(--radius-sm)', textDecoration: 'none', fontSize: '0.9rem', color: pathname.includes('/report') ? 'white' : 'var(--color-primary)', backgroundColor: pathname.includes('/report') ? 'var(--color-primary)' : 'rgba(34, 84, 131, 0.1)', fontWeight: 600, marginBottom: '1rem', textAlign: 'center' }}>
-                📄 Informe Final
+            <Link href={`/dashboard/projects/${projectId}/report`} style={{ display: 'block', padding: '0.75rem 1rem', borderRadius: 'var(--radius-sm)', textDecoration: 'none', fontSize: '0.85rem', color: pathname.includes('/report') ? 'white' : 'var(--color-primary)', backgroundColor: pathname.includes('/report') ? 'var(--color-primary)' : 'rgba(34, 84, 131, 0.1)', fontWeight: 600, marginBottom: '1rem', textAlign: 'center' }}>
+                📂 Consolidar Memoria Técnica
             </Link>
 
             <div>

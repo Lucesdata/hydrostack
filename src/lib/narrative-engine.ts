@@ -2,10 +2,6 @@ import {
     Project,
     ProjectModuleStatus,
     ModuleKey,
-    ProjectDomain,
-    ProjectContext,
-    ProjectLevel,
-    TreatmentCategory,
     DOMAIN_LABELS,
     CONTEXT_LABELS,
     LEVEL_LABELS,
@@ -13,17 +9,34 @@ import {
 } from '@/types/project';
 
 /**
- * Motor de Narrativa Técnica de HydroStack
+ * 🧠 MOTOR DE NARRATIVA TÉCNICA (HYDROSTACK V1.5)
  * 
- * Genera informes narrativos profesionales basados en:
- * 1. Metadata del proyecto
- * 2. Estados de módulos (Decisiones del Ingeniero)
- * 3. Resultados técnicos calculados
+ * EJE 3: Generación de Memorias Descriptivas Profesionales.
+ * Transforma metadata y estados en una narrativa técnica defendible.
  */
 export class NarrativeEngine {
 
+    private static MODULE_NAMES: Record<string, string> = {
+        general: 'Información General',
+        population: 'Censo y Población',
+        floating_population: 'Población Flotante',
+        source: 'Fuente de Agua',
+        consumption: 'Consumo y Hábitos',
+        quality: 'Calidad de Agua',
+        caudales: 'Caudales de Diseño',
+        tank: 'Almacenamiento',
+        conduccion: 'Conducción',
+        desarenador: 'Desarenador',
+        jar_test: 'Ensayo de Jarras',
+        filtro_lento: 'Filtración Lenta',
+        compact_design: 'Ingeniería Compacta',
+        costs: 'Costos OpEx',
+        viability: 'Viabilidad y O&M',
+        tech_selection: 'Selección de Tecnología'
+    };
+
     /**
-     * Genera la introducción narrativa del informe
+     * BLOQUE A: Introducción y Contextualización
      */
     static generateIntroduction(project: Project): string {
         const domain = DOMAIN_LABELS[project.project_domain];
@@ -31,72 +44,74 @@ export class NarrativeEngine {
         const level = LEVEL_LABELS[project.project_level];
         const category = project.treatment_category ? CATEGORY_LABELS[project.treatment_category] : 'No definida';
 
-        return `El presente documento técnico detalla el diseño y auditoría para el proyecto "${project.name}", enmarcado en el dominio de ${domain}. 
-        El sistema se ha configurado bajo un contexto de tipo ${context}, estableciendo un alcance de ${level}. 
-        La estrategia tecnológica principal seleccionada es "${category}", buscando optimizar la eficiencia operativa y el cumplimiento de la resolución 0330 de 2017 (RAS).`;
+        return `El presente documento constituye la memoria descriptiva técnica del proyecto "${project.name}", integrado en el dominio de ${domain}. 
+        Bajo un contexto de implementación ${context}, el sistema se ha dimensionado para un alcance de ${level}. 
+        La selección tecnológica se ha centrado en el modelo de "${category}", priorizando el equilibrio entre eficiencia hidráulica, simplicidad operativa y cumplimiento riguroso de la normativa RAS 0330 colombiana.`;
     }
 
     /**
-     * Genera análisis de las decisiones de ingeniería (Module States)
+     * EJE 2 & 3: Justificación de Decisiones de Ingeniería y Exclusiones
      */
-    static generateEngineeringDecisions(moduleStatuses: ProjectModuleStatus[]): string {
-        const overrides = moduleStatuses.filter(m => m.is_user_override);
-        const essentials = moduleStatuses.filter(m => m.status === 'essential' && !m.is_user_override);
+    static generateEngineeringDecisions(moduleStatuses: ProjectModuleStatus[] = []): string {
+        if (!moduleStatuses || moduleStatuses.length === 0) return "";
 
-        let narrative = "La arquitectura técnica del proyecto se ha definido siguiendo un equilibrio entre las recomendaciones del sistema y el criterio profesional del ingeniero proyectista. ";
+        const overrides = moduleStatuses.filter(m => m.is_user_override);
+        const notApplicable = moduleStatuses.filter(m => m.status === 'not_applicable');
+
+        let narrative = "La integridad técnica de este diseño se fundamenta en la soberanía del ingeniero proyectista sobre las recomendaciones del sistema. ";
 
         if (overrides.length > 0) {
-            narrative += `Se han realizado ${overrides.length} ajustes manuales sobre la configuración base, destacando priorizaciones específicas en módulos clave como ${overrides.map(m => m.module_key).join(', ')}. `;
+            const overrideNames = overrides.map(m => this.MODULE_NAMES[m.module_key] || m.module_key);
+            narrative += `Por criterio profesional del responsable, se han realizado ajustes discrecionales sobre la configuración sugerida en los componentes de: ${overrideNames.join(', ')}. Estas decisiones responden a condiciones locales específicas y se asumen como parte integral del diseño final. `;
         }
 
-        if (essentials.length > 0) {
-            narrative += `El sistema ha identificado como componentes críticos irrenunciables para la seguridad hídrica los módulos de: ${essentials.map(m => m.module_key).join(', ')}. `;
+        if (notApplicable.length > 0) {
+            const naNames = notApplicable.map(m => this.MODULE_NAMES[m.module_key] || m.module_key);
+            narrative += `Se han excluido del alcance técnico los módulos de ${naNames.join(', ')}, dado que no son determinantes para la viabilidad de la tecnología seleccionada (${moduleStatuses[0]?.project_id ? 'según motor de recomendación' : ''}). `;
         }
 
         return narrative;
     }
 
     /**
-     * Genera narrativa sobre la demanda y caudales
+     * BLOQUE B & D: Análisis de Demanda y Régimen Hidráulico
      */
     static generateDemandNarrative(calculations: any): string {
         const pop = calculations?.calculated_flows?.final_population;
-        const qmd = calculations?.calculated_flows?.qmd;
-        const qmdMax = calculations?.calculated_flows?.qmd_max;
+        const qmdMax = calculations?.calculated_flows?.qmd_max || 0;
+        const qmhMax = calculations?.calculated_flows?.qmh_max || 0;
 
-        if (!pop || !qmd) return "Los datos de demanda se encuentran en fase de recolección.";
+        if (!pop) return "El análisis de demanda se encuentra en fase de validación primaria.";
 
-        return `Considerando una población proyectada de ${pop.toLocaleString()} habitantes al horizonte de diseño, se ha determinado un Caudal Medio Diario (Qmd) de ${qmd} L/s. 
-        Aplicando los coeficientes de consumo normativos, el sistema se dimensiona para un pico máximo diario (QMD) de ${qmdMax} L/s, garantizando la continuidad del servicio incluso en condiciones de máxima demanda diaria.`;
+        return `Con una población proyectada de ${pop.toLocaleString()} habitantes, el sistema se ha dimensionado para un Caudal Máximo Diario (QMD) de ${qmdMax} L/s. 
+        Este caudal actúa como la base de diseño para las unidades de tratamiento. Adicionalmente, el sistema considera un Caudal Máximo Horario (QMH) de ${qmhMax} L/s para el dimensionamiento de las redes de distribución y almacenamiento, garantizando la presión residual requerida en los nodos críticos durante periodos de máxima simultaneidad.`;
     }
 
     /**
-     * Genera descripción técnica del tratamiento
+     * BLOQUE E: Ingeniería de Tratamiento Seleccionada
      */
     static generateTreatmentNarrative(calculations: any): string {
-        const isCompact = !!calculations?.project_compact_ptap;
-        const isFiltro = !!calculations?.project_filtros_lentos;
+        const compact = calculations?.project_compact_ptap;
+        const filter = calculations?.project_filtros_lentos;
 
-        if (isCompact) {
-            const area = calculations.project_compact_ptap.lamellar_area;
-            return `Para la potabilización se ha optado por un sistema de clarificación de alta tasa (Plantas Compactas), utilizando sedimentación lamelar con un área efectiva de ${area} m². Esta configuración permite reducir significativamente el área de implantación manteniendo los estándares de remoción de carga coloidal.`;
+        if (compact) {
+            return `La solución de ingeniería implementada corresponde a una Planta Compacta en PRFV de alta tasa. Se destaca el uso de clarificación lamelar con un área proyectada de ${compact.lamellar_area} m² y un sistema de filtración rápida multicapa. Esta configuración es óptima para el contexto rural seleccionado por su baja huella de implantación y alta eficiencia en la remoción de turbiedad mediante procesos físico-químicos acelerados.`;
         }
 
-        if (isFiltro) {
-            const units = calculations.project_filtros_lentos.number_of_units;
-            return `El proceso de tratamiento se basa en la tecnología de Filtración Lenta en Arena (FLA), estructurado en ${units} unidades operativas. Este enfoque prioriza la simplicidad operativa y la remoción biológica, ideal para el contexto seleccionado.`;
+        if (filter) {
+            return `El tratamiento se fundamenta en la tecnología de Filtración Lenta en Arena (FLA), configurada con ${filter.number_of_units} unidades independientes. Este sistema prioriza la remoción microbiológica natural y la simplicidad de mantenimiento, siendo una solución robusta y coherente con las capacidades operativas locales identificadas.`;
         }
 
-        return "La configuración detallada del sistema de tratamiento está pendiente de dimensionamiento final.";
+        return "La descripción detallada del proceso de tratamiento se integrará una vez se consolide la validación técnica de las unidades principales.";
     }
 
     /**
-     * Genera la justificación de viabilidad
+     * BLOQUE F: Viabilidad Operativa y Cierre
      */
     static generateViabilityJustification(viability: any): string {
-        if (!viability) return "Evaluación de viabilidad en proceso.";
+        if (!viability) return "La evaluación de viabilidad operativa y mantenimiento se encuentra en etapa de diagnóstico.";
 
-        const gravity = viability.gravity_arrival ? "favorable por gravedad" : "condicionada a bombeo";
-        return `La viabilidad técnica del sitio se considera ${gravity}. El análisis de estabilidad del lote y las vías de acceso permiten una logística adecuada para el suministro de insumos químicos y la evacuación segura de lodos residuales conforme al plan de mantenimiento sugerido.`;
+        const gravity = viability.gravity_arrival ? "conducción por gravedad" : "requerimiento de bombeo";
+        return `En términos de viabilidad de sitio, el proyecto aprovecha una ${gravity}, lo que impacta positivamente en el O&M. Se han validado factores críticos como la estabilidad geológica del lote y la capacidad de evacuación de lodos. El plan de mantenimiento se ha establecido bajo una frecuencia cíclica que minimiza los periodos de fuera de servicio del sistema.`;
     }
 }

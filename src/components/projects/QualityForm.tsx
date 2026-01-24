@@ -6,6 +6,7 @@ import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import ModuleWarning from './ModuleWarning';
 import QualityAnalysisForm from './QualityAnalysisForm';
+import ModuleNavigation from './ModuleNavigation';
 
 type QUALITY_DATA = {
     project_id: string;
@@ -184,13 +185,7 @@ export default function QualityForm({ projectId, initialData }: { projectId: str
                 </div>
             )}
 
-            {!saved && formData.has_analysis === 'No' && (
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-                    <Button type="button" onClick={handleNext} style={{ backgroundColor: 'var(--color-success)', color: 'white' }}>
-                        Continuar a Caudales →
-                    </Button>
-                </div>
-            )}
+            <ModuleNavigation projectId={projectId} currentModuleKey="quality" />
         </div>
     );
 }

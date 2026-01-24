@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Button from '@/components/ui/Button';
 import ModuleWarning from './ModuleWarning';
+import ModuleNavigation from './ModuleNavigation';
 import Input from '@/components/ui/Input';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -135,11 +136,6 @@ export default function CompactDesignForm({
                         <Button type="submit" disabled={loading} variant={saved ? 'secondary' : 'primary'}>
                             {loading ? 'Guardando...' : 'Guardar Ingeniería'}
                         </Button>
-                        {saved && (
-                            <Button type="button" onClick={() => router.push(`/dashboard/projects/${projectId}/costs`)} style={{ backgroundColor: 'var(--color-success)', color: 'white' }}>
-                                Continuar a Costos OpEx {"->"}
-                            </Button>
-                        )}
                     </div>
                 </form>
             </div>
@@ -173,6 +169,9 @@ export default function CompactDesignForm({
                         </p>
                     </div>
                 </div>
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+                <ModuleNavigation projectId={projectId} currentModuleKey="compact_design" />
             </div>
         </div>
     );

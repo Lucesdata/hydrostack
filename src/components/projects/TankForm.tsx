@@ -6,6 +6,7 @@ import Input from '@/components/ui/Input';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import ModuleWarning from './ModuleWarning';
+import ModuleNavigation from './ModuleNavigation';
 
 export default function TankForm({ projectId, initialData }: { projectId: string; initialData: any }) {
     const [formData, setFormData] = useState({
@@ -162,11 +163,6 @@ export default function TankForm({ projectId, initialData }: { projectId: string
                         <Button type="submit" disabled={loading} variant={saved ? 'secondary' : 'primary'}>
                             {loading ? 'Guardando...' : 'Guardar Diseño'}
                         </Button>
-                        {saved && (
-                            <Button type="button" onClick={() => router.push(`/dashboard/projects/${projectId}/conduccion`)} style={{ backgroundColor: 'var(--color-success)', color: 'white' }}>
-                                Siguiente: Línea de Conducción →
-                            </Button>
-                        )}
                     </div>
                 </form>
             </div>
@@ -213,6 +209,9 @@ export default function TankForm({ projectId, initialData }: { projectId: string
                         </div>
                     </div>
                 </div>
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+                <ModuleNavigation projectId={projectId} currentModuleKey="tank" />
             </div>
         </div>
     );

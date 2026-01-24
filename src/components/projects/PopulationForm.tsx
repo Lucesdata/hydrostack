@@ -22,6 +22,7 @@ import Input from '@/components/ui/Input';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import ModuleWarning from './ModuleWarning';
+import ModuleNavigation from './ModuleNavigation';
 
 type CENSUS_DATA = {
     project_id: string;
@@ -230,14 +231,10 @@ export default function PopulationForm({ projectId, initialData }: { projectId: 
                     <Button type="submit" disabled={loading} variant={saved ? 'secondary' : 'primary'}>
                         {loading ? 'Guardando...' : 'Guardar y Calcular'}
                     </Button>
-
-                    {saved && (
-                        <Button type="button" onClick={handleNext} style={{ backgroundColor: 'var(--color-success)', color: 'white' }}>
-                            Siguiente: Fuente de Agua →
-                        </Button>
-                    )}
                 </div>
             </form>
+
+            <ModuleNavigation projectId={projectId} currentModuleKey="population" />
         </div>
     );
 }

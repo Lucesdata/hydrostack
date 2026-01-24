@@ -6,6 +6,7 @@ import Input from '@/components/ui/Input';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import ModuleWarning from './ModuleWarning';
+import ModuleNavigation from './ModuleNavigation';
 
 type SOURCE_DATA = {
     project_id: string;
@@ -250,14 +251,10 @@ export default function SourceForm({ projectId, initialData }: { projectId: stri
                     <Button type="submit" disabled={loading} variant={saved ? 'secondary' : 'primary'}>
                         {loading ? 'Guardando...' : 'Guardar Información'}
                     </Button>
-
-                    {saved && (
-                        <Button type="button" onClick={handleNext} style={{ backgroundColor: 'var(--color-success)', color: 'white' }}>
-                            Siguiente: Consumo de Agua →
-                        </Button>
-                    )}
                 </div>
             </form>
+
+            <ModuleNavigation projectId={projectId} currentModuleKey="source" />
         </div>
     );
 }

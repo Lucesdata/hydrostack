@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import Button from '@/components/ui/Button';
 import ModuleWarning from './ModuleWarning';
+import ModuleNavigation from './ModuleNavigation';
 
 export default function FloatingPopulationForm({ projectId }: { projectId: string }) {
     const router = useRouter();
@@ -49,7 +50,7 @@ export default function FloatingPopulationForm({ projectId }: { projectId: strin
 
     const handleSave = async () => {
         setSaving(true);
-        const { error } = await supabase
+        await supabase
             .from('project_seasonal_data')
             .upsert({
                 project_id: projectId,
@@ -58,9 +59,7 @@ export default function FloatingPopulationForm({ projectId }: { projectId: strin
             });
 
         setSaving(false);
-        if (!error) {
-            router.push(`/dashboard/projects/${projectId}/caudales`);
-        }
+        router.refresh();
     };
 
     if (loading) return <div>Cargando módulo de población...</div>;
@@ -125,11 +124,12 @@ export default function FloatingPopulationForm({ projectId }: { projectId: strin
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-                <Button onClick={() => router.back()} variant="outline">Volver</Button>
                 <Button onClick={handleSave} variant="primary" loading={saving}>
-                    Siguiente: Caudales de Diseño →
+                    {saving ? 'Guardando...' : 'Guardar Información'}
                 </Button>
             </div>
+
+            <ModuleNavigation projectId={projectId} currentModuleKey="floating_population" />
         </div>
     );
 }

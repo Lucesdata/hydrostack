@@ -20,15 +20,17 @@ export default function ModuleWarning({
     const [config, setConfig] = useState<any>(null);
     const [moduleStatus, setModuleStatus] = useState<ProjectModuleStatus | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [auditObservations, setAuditObservations] = useState<string[]>([]);
+    const [project, setProject] = useState<Project | null>(null);
     const router = useRouter();
     const supabase = createClient();
 
     useEffect(() => {
         const fetchData = async () => {
-            // Fetch project metadata for config
-            const { data: project } = await supabase
+            // Fetch project data for config and audits
+            const { data: proj } = await supabase
                 .from('projects')
-                .select('project_domain, project_context, project_level, treatment_category')
+                .select('*')
                 .eq('id', projectId)
                 .single();
 
@@ -40,15 +42,34 @@ export default function ModuleWarning({
                 .eq('module_key', moduleKey)
                 .single();
 
-            if (project) {
+            // Fetch additional data for audits
+            const { data: calc } = await supabase.from('project_calculations').select('*').eq('project_id', projectId).single();
+            const { data: cons } = await supabase.from('project_consumption').select('*').eq('project_id', projectId).single();
+            const { data: qual } = await supabase.from('project_water_quality').select('*').eq('project_id', projectId).single();
+            const { data: caud } = await supabase.from('project_caudales').select('*').eq('project_id', projectId).single();
+            const { data: tank } = await supabase.from('project_tank').select('*').eq('project_id', projectId).single();
+
+            if (proj) {
+                setProject(proj as Project);
                 const moduleConfig = RecommendationEngine.getModuleConfig(
                     moduleKey,
-                    project.project_domain,
-                    project.project_context,
-                    project.project_level,
-                    project.treatment_category
+                    proj.project_domain,
+                    proj.project_context,
+                    proj.project_level,
+                    proj.treatment_category
                 );
                 setConfig(moduleConfig);
+
+                // Perform Technical Audit Phase B
+                const auditData = {
+                    calculations: calc,
+                    consumption: cons,
+                    quality: qual,
+                    caudales: caud,
+                    tank: tank
+                };
+                const observations = RecommendationEngine.performTechnicalAudit(proj as Project, auditData);
+                setAuditObservations(observations);
             }
 
             if (status) {
@@ -120,11 +141,11 @@ export default function ModuleWarning({
                             backgroundColor: `${badge.color}15`,
                             color: badge.color,
                             borderRadius: '1rem',
-                            fontSize: '0.8rem',
+                            fontSize: '0.75rem',
                             fontWeight: 700,
                             border: `1px solid ${badge.color}30`
                         }}>
-                            {badge.icon} {badge.label}
+                            <span style={{ fontSize: '1rem' }}>{badge.icon}</span> {badge.label}
                         </div>
                     )}
                     {moduleStatus?.is_user_override && (
@@ -149,52 +170,76 @@ export default function ModuleWarning({
                             cursor: 'pointer'
                         }}
                     >
-                        <option value="essential">Aplicar: Esencial</option>
-                        <option value="recommended">Aplicar: Recomendado</option>
-                        <option value="optional">Aplicar: Opcional</option>
-                        <option value="not_applicable">No aplica al proyecto</option>
+                        <option value="essential">Definición: Crítico</option>
+                        <option value="recommended">Definición: Sugerido</option>
+                        <option value="optional">Definición: Complementario</option>
+                        <option value="not_applicable">Fuera de alcance</option>
                     </select>
                 </div>
             </div>
 
-            {/* Contextual Logic */}
-            {adaptations && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    {adaptations.warning && (
-                        <div style={{
-                            backgroundColor: '#FFFBEB',
-                            border: '1px solid #FCD34D',
-                            padding: '1rem',
-                            borderRadius: 'var(--radius-sm)',
-                            display: 'flex',
-                            gap: '0.75rem',
-                            alignItems: 'start'
-                        }}>
-                            <span style={{ fontSize: '1.25rem' }}>⚠️</span>
-                            <div style={{ fontSize: '0.9rem', color: '#92400E', lineHeight: 1.5 }}>
-                                <strong>Nota Técnica:</strong> {adaptations.warning}
-                            </div>
-                        </div>
-                    )}
+            {/* Contextual Logic & Passive Audits */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
-                    {adaptations.help_text && (
-                        <div style={{
-                            backgroundColor: '#EFF6FF',
-                            border: '1px solid #BFDBFE',
-                            padding: '1rem',
-                            borderRadius: 'var(--radius-sm)',
-                            display: 'flex',
-                            gap: '0.75rem',
-                            alignItems: 'start'
-                        }}>
-                            <span style={{ fontSize: '1.25rem' }}>💡</span>
-                            <div style={{ fontSize: '0.9rem', color: '#1E40AF', lineHeight: 1.5 }}>
-                                <strong>Sugerencia Contextual:</strong> {adaptations.help_text}
+                {/* 🅱️ FASE B: Auditorías Técnicas */}
+                {auditObservations.length > 0 && (
+                    <div style={{
+                        backgroundColor: '#F0F9FF',
+                        border: '1px solid #BAE6FD',
+                        padding: '1rem 1.25rem',
+                        borderRadius: 'var(--radius-md)'
+                    }}>
+                        <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#0369A1', textTransform: 'uppercase', marginBottom: '0.75rem', letterSpacing: '0.05em' }}>
+                            🔭 Auditoría Técnica Proyectada:
+                        </p>
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                            {auditObservations.map((obs, i) => (
+                                <li key={i} style={{ fontSize: '0.85rem', color: '#0C4A6E', display: 'flex', gap: '0.5rem' }}>
+                                    <span>🔹</span> {obs}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+
+                {adaptations && (
+                    <>
+                        {adaptations.warning && (
+                            <div style={{
+                                backgroundColor: '#FFFBEB',
+                                border: '1px solid #FCD34D',
+                                padding: '1rem',
+                                borderRadius: 'var(--radius-sm)',
+                                display: 'flex',
+                                gap: '0.75rem',
+                                alignItems: 'start'
+                            }}>
+                                <span style={{ fontSize: '1.25rem' }}>ℹ️</span>
+                                <div style={{ fontSize: '0.9rem', color: '#92400E', lineHeight: 1.5 }}>
+                                    {adaptations.warning}
+                                </div>
                             </div>
-                        </div>
-                    )}
-                </div>
-            )}
+                        )}
+
+                        {adaptations.help_text && (
+                            <div style={{
+                                backgroundColor: '#F8FAFC',
+                                border: '1px solid #E2E8F0',
+                                padding: '1rem',
+                                borderRadius: 'var(--radius-sm)',
+                                display: 'flex',
+                                gap: '0.75rem',
+                                alignItems: 'start'
+                            }}>
+                                <span style={{ fontSize: '1.25rem' }}>🎓</span>
+                                <div style={{ fontSize: '0.9rem', color: '#475569', lineHeight: 1.5 }}>
+                                    {adaptations.help_text}
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
         </div>
     );
 }

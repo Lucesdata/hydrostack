@@ -7,6 +7,7 @@ import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import ModuleWarning from './ModuleWarning';
 import { PROJECT_TYPES, PROJECT_STATUSES } from '@/constants/project';
+import ModuleNavigation from './ModuleNavigation';
 
 type Project = {
     id: string;
@@ -172,6 +173,8 @@ export default function GeneralInfoForm({ project }: { project: Project }) {
                     </Button>
                 </div>
             </form>
+
+            <ModuleNavigation projectId={project.id} currentModuleKey="general" />
         </div>
     );
 }

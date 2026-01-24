@@ -13,7 +13,7 @@
  * Este componente es el núcleo de salida (Output) del sistema.
  */
 
-import React from 'react';
+import { Project, ProjectModuleStatus, DOMAIN_LABELS, CONTEXT_LABELS, LEVEL_LABELS, CATEGORY_LABELS } from '@/types/project';
 import Button from '@/components/ui/Button';
 import { NarrativeEngine } from '@/lib/narrative-engine';
 
@@ -147,98 +147,77 @@ export default function ProjectReport({ data }: { data: REPORT_DATA }) {
                 </p>
             </div>
 
-            <Section title="1. Localización y Población">
+            <Section title="Bloque A: Contexto y Localización">
                 <DataPoint label="Municipio" value={calculations?.municipality} />
+                <DataPoint label="Dominio" value={project?.project_domain ? DOMAIN_LABELS[project.project_domain as keyof typeof DOMAIN_LABELS] : ''} />
+                <DataPoint label="Contexto" value={project?.project_context ? CONTEXT_LABELS[project.project_context as keyof typeof CONTEXT_LABELS] : ''} />
+                <DataPoint label="Nivel de Alcance" value={project?.project_level ? LEVEL_LABELS[project.project_level as keyof typeof LEVEL_LABELS] : ''} />
+            </Section>
+
+            <Section title="Bloque B: Demanda y Población">
                 <DataPoint label="Población Futura" value={calculations?.calculated_flows?.final_population ? `${calculations.calculated_flows.final_population.toLocaleString()} hab.` : null} />
                 <DataPoint label="Método Proyección" value={calculations?.calculated_flows?.method || 'Geométrico'} />
+                <DataPoint label="Afluencia Estacional (Pico)" value={calculations?.project_seasonal_data?.daily_tourist_count ? `+ ${calculations.project_seasonal_data.daily_tourist_count} hab.` : 'No aplica'} />
+                <DataPoint label="Consumo Diario (Uso)" value={consumption?.daily_availability || 'Diario'} />
             </Section>
 
-            <Section title="2. Dinámica de Población Estacional">
-                <DataPoint label="Población Adicional (Pico)" value={calculations?.project_seasonal_data?.daily_tourist_count ? `${calculations.project_seasonal_data.daily_tourist_count} personas` : 'No definido'} />
-                <DataPoint label="Factor Pico Estacional (FPE)" value={calculations?.project_seasonal_data?.seasonal_peak_factor || 1.0} />
-                <div style={{ padding: '0.8rem', backgroundColor: '#FFFBEB', borderRadius: '4px', border: '1px solid #FEF3C7', fontSize: '0.85rem' }}>
-                    <strong>Análisis de Demanda:</strong> Se ha aplicado un factor de incremento estacional para asegurar la capacidad del sistema en periodos de máxima afluencia.
-                </div>
-            </Section>
-
-            <Section title="2. Diagnóstico de la Fuente">
+            <Section title="Bloque C: Fuente y Calidad">
                 <DataPoint label="Tipo de Fuente" value={source?.source_type} />
-                <DataPoint label="Caudal Concedido" value={source?.distance_to_community ? `${source.distance_to_community} m (ref)` : null} />
                 <DataPoint label="Permanencia" value={source?.is_permanent} />
+                <DataPoint label="IRCA (Estado Actual)" value={quality?.irca_score !== null ? `${quality.irca_score.toFixed(1)}%` : 'Sin datos'} />
+                <DataPoint label="Turbiedad Máxima" value={quality?.turbidity ? `${quality.turbidity} UNT` : 'No reportado'} />
             </Section>
 
-            <Section title="3. Calidad y Hábitos">
-                <DataPoint label="Índice IRCA" value={quality?.irca_score !== null ? `${quality.irca_score.toFixed(1)}%` : 'No calculado'} />
-                <DataPoint label="Turbiedad Fuente" value={quality?.turbidity ? `${quality.turbidity} UNT` : null} />
-                <DataPoint label="Color Fuente" value={quality?.color ? `${quality.color} UPC` : null} />
-            </Section>
-
-            <div style={{ marginTop: '3rem', padding: '2rem', backgroundColor: 'var(--color-bg-secondary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-primary-light)', breakInside: 'avoid' }}>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-primary)', marginBottom: '1.5rem', textAlign: 'center' }}>
-                    CAUDALES DE DISEÑO (RAS 0330)
+            <div style={{ marginTop: '2rem', marginBottom: '3rem', padding: '2rem', backgroundColor: '#F0F9FF', borderRadius: 'var(--radius-md)', border: '1px solid #BAE6FD', breakInside: 'avoid' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#0369A1', marginBottom: '1.5rem', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Bloque D: RÉGIMEN HIDRÁULICO DE DISEÑO (RAS 0330)
                 </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', textAlign: 'center' }}>
-                    <div style={{ padding: '1rem', backgroundColor: 'white', border: '1px solid var(--color-gray-medium)' }}>
-                        <p style={{ fontSize: '0.7rem', color: 'var(--color-gray-dark)' }}>Qmd (Medio)</p>
-                        <p style={{ fontSize: '1.4rem', fontWeight: 800 }}>{calculations?.calculated_flows?.qmd || '0'} L/s</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', textAlign: 'center' }}>
+                    <div>
+                        <p style={{ fontSize: '0.65rem', color: '#0369A1', fontWeight: 700, textTransform: 'uppercase' }}>Qmd (Caudal Medio)</p>
+                        <p style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0C4A6E' }}>{calculations?.calculated_flows?.qmd || '0'} <small style={{ fontSize: '0.8rem', fontWeight: 400 }}>L/s</small></p>
                     </div>
-                    <div style={{ padding: '1rem', backgroundColor: 'white', border: '2px solid var(--color-secondary)' }}>
-                        <p style={{ fontSize: '0.7rem', color: 'var(--color-gray-dark)' }}>QMD (Máx Diario)</p>
-                        <p style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--color-secondary)' }}>{qmdMax} L/s</p>
+                    <div>
+                        <p style={{ fontSize: '0.65rem', color: '#0369A1', fontWeight: 700, textTransform: 'uppercase' }}>QMD (Máximo Diario)</p>
+                        <p style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0369A1' }}>{qmdMax} <small style={{ fontSize: '0.8rem', fontWeight: 400 }}>L/s</small></p>
                     </div>
-                    <div style={{ padding: '1rem', backgroundColor: 'white', border: '1px solid var(--color-primary-light)' }}>
-                        <p style={{ fontSize: '0.7rem', color: 'var(--color-gray-dark)' }}>QMH (Máx Horario)</p>
-                        <p style={{ fontSize: '1.4rem', fontWeight: 800 }}>{calculations?.calculated_flows?.qmh_max || '0'} L/s</p>
+                    <div>
+                        <p style={{ fontSize: '0.65rem', color: '#0369A1', fontWeight: 700, textTransform: 'uppercase' }}>QMH (Máximo Horario)</p>
+                        <p style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0C4A6E' }}>{calculations?.calculated_flows?.qmh_max || '0'} <small style={{ fontSize: '0.8rem', fontWeight: 400 }}>L/s</small></p>
                     </div>
                 </div>
             </div>
 
-            <Section title="4. Almacenamiento y Conducción">
-                <DataPoint label="Tanque Requerido" value={calculations?.calculated_flows?.tank_capacity ? `${calculations.calculated_flows.tank_capacity} m³` : null} />
-                <DataPoint label="Presión en Punto Crítico" value={calculations?.project_conduccion?.residual_pressure ? `${calculations.project_conduccion.residual_pressure} m.c.a` : null} />
+            <Section title="Bloque E: Ingeniería de Tratamiento">
+                <DataPoint label="Tecnología Seleccionada" value={project?.treatment_category ? CATEGORY_LABELS[project.treatment_category as keyof typeof CATEGORY_LABELS] : 'No definida'} />
+                {calculations.project_desarenador && <DataPoint label="Dimensiones Desarenador" value={`${calculations.project_desarenador.length}m x ${calculations.project_desarenador.width}m`} />}
+                {calculations.project_compact_ptap && <DataPoint label="Capacidad PTAP" value={`${qmdMax} L/s (Lamelas: ${calculations.project_compact_ptap.lamellar_area}m²)`} />}
+                {calculations.project_filtros_lentos && <DataPoint label="Unidades FLA" value={`${calculations.project_filtros_lentos.number_of_units} unidades`} />}
+                {calculations.project_jar_test && <DataPoint label="Dosis Coagulante" value={`${calculations.project_jar_test.optimal_dose_alum} mg/L`} />}
             </Section>
 
-            <Section title="5. Ingeniería de Detalle: Pre-tratamiento">
-                <DataPoint label="Caudal Desarenador" value={calculations?.project_desarenador?.design_flow ? `${calculations.project_desarenador.design_flow} L/s` : null} />
-                <DataPoint label="Dimensiones LxB" value={calculations?.project_desarenador?.length ? `${calculations.project_desarenador.length}m x ${calculations.project_desarenador.width}m` : null} />
+            <Section title="Bloque F: Evaluación de Sostenibilidad">
+                <DataPoint label="O&M m³ Producido" value={calculations?.project_opex ? `$${opCostPerM3.toFixed(2)} COP` : 'Pendiente'} />
+                <DataPoint label="Gasto Total Mensual" value={calculations?.project_opex ? `$${Math.round(opMonthlyTotal).toLocaleString()} COP` : null} />
+                <DataPoint label="Viabilidad de Sitio" value={calculations?.project_viability?.gravity_arrival ? 'Gravedad (Óptimo)' : 'Bombeo'} />
+                <DataPoint label="EPP Obligatorio" value={
+                    [
+                        calculations?.project_seasonal_data?.ppe_heavy_gloves && 'Guantes',
+                        calculations?.project_seasonal_data?.ppe_safety_boots && 'Botas',
+                        calculations?.project_seasonal_data?.ppe_goggles && 'Gafas'
+                    ].filter(Boolean).join(', ') || 'Equipos Básicos'
+                } />
             </Section>
 
-            <Section title="6. Coagulación y Química (Referencias Técnicas)">
-                <div style={{ gridColumn: '1 / -1', marginBottom: '1rem' }}>
-                    <p style={{ fontSize: '0.9rem', color: 'var(--color-primary)', fontWeight: 700 }}>Benchmarks de Consumo Escalados (Referencia 6.5 L/s):</p>
-                </div>
-                <DataPoint label="Alumbre (Estimado)" value={`${alumMonthlyKg.toFixed(1)} kg/mes`} />
-                <DataPoint label="Alumbre (Referencia)" value={`${alumKgBenchmark.toFixed(1)} kg/mes`} />
-                <DataPoint label="Cloro (Estimado)" value={`${chlorineMonthlyKg.toFixed(1)} kg/mes`} />
-                <DataPoint label="Cloro (Referencia)" value={`${chlorineKgBenchmark.toFixed(1)} kg/mes`} />
-            </Section>
-
-            <Section title="7. Ingeniería de Detalle: PTAP">
-                <DataPoint label="Tipo de Planta" value={calculations?.project_compact_ptap ? 'Compacta PRFV High-Rate' : 'Convencional/Filtro Lento'} />
-                <DataPoint label="Área de Filtración" value={calculations?.project_compact_ptap?.filter_area ? `${calculations.project_compact_ptap.filter_area} m²` : (calculations?.project_filtros_lentos?.number_of_units ? 'Ver Detalle Filtro Lento' : null)} />
-                <DataPoint label="Tasa de Carga Lamelar" value={calculations?.project_compact_ptap?.lamellar_loading_rate ? `${calculations.project_compact_ptap.lamellar_loading_rate} m/m2/d` : null} />
-            </Section>
-
-            <Section title="8. Evaluación Económica (OpEx)">
-                <DataPoint label="Costo Operativo por m³" value={calculations?.project_opex ? `$${opCostPerM3.toFixed(2)} COP` : 'No calculado'} />
-                <DataPoint label="Costo Total Mensual" value={calculations?.project_opex ? `$${Math.round(opMonthlyTotal).toLocaleString()} COP` : null} />
-                <DataPoint label="Producción Mensual" value={`${Math.round(prodMensualM3).toLocaleString()} m³`} />
-            </Section>
-
-            <Section title="9. Viabilidad, Mantenimiento y EPP">
-                <div style={{ gridColumn: '1 / -1' }}>
-                    <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '0.5rem' }}>EPP Obligatorio para Operario:</h4>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
-                        {calculations?.project_seasonal_data?.ppe_heavy_gloves && <span style={{ padding: '0.3rem 0.6rem', backgroundColor: '#e0f2fe', borderRadius: '4px', fontSize: '0.75rem' }}>✅ Guantes Nitrilo</span>}
-                        {calculations?.project_seasonal_data?.ppe_safety_boots && <span style={{ padding: '0.3rem 0.6rem', backgroundColor: '#e0f2fe', borderRadius: '4px', fontSize: '0.75rem' }}>✅ Botas Seguridad</span>}
-                        {calculations?.project_seasonal_data?.ppe_goggles && <span style={{ padding: '0.3rem 0.6rem', backgroundColor: '#e0f2fe', borderRadius: '4px', fontSize: '0.75rem' }}>✅ Mono-gafas</span>}
-                        {calculations?.project_seasonal_data?.ppe_mask && <span style={{ padding: '0.3rem 0.6rem', backgroundColor: '#e0f2fe', borderRadius: '4px', fontSize: '0.75rem' }}>✅ Mascarilla</span>}
-                    </div>
-                </div>
-                <DataPoint label="Crono. Mezcla Rápida" value="30 días" />
-                <DataPoint label="Crono. Desarenador" value="45 días" />
-                <DataPoint label="Crono. Filtros" value={`${calculations?.project_viability?.filter_cleaning_days || 15} días`} />
-            </Section>
+            <div style={{ padding: '1.5rem', backgroundColor: '#FEF2F2', borderRadius: '4px', border: '1px solid #FCA5A5', fontSize: '0.85rem', marginBottom: '3rem' }}>
+                <p style={{ fontWeight: 800, color: '#991B1B', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Apéndice Técnico: Mantenimiento Crítico</p>
+                <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                    <li><strong>Mezcla Rápida:</strong> Inspección cada 30 días</li>
+                    <li><strong>Desarenador:</strong> Limpieza cada 45 días</li>
+                    <li><strong>Filtros:</strong> Lavado cada {calculations?.project_viability?.filter_cleaning_days || 15} días</li>
+                    <li><strong>Dosificación:</strong> Calibración semanal</li>
+                </ul>
+            </div>
 
             <div style={{ marginTop: '5rem', textAlign: 'center', fontSize: '0.8rem', color: 'var(--color-gray-dark)', borderTop: '1px solid var(--color-gray-medium)', paddingTop: '2rem' }}>
                 <p>Este informe constituye un diagnóstico técnico basado en la resolución 0330 de 2017 (RAS).</p>

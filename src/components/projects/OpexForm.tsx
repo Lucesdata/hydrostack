@@ -6,6 +6,7 @@ import Input from '@/components/ui/Input';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import ModuleWarning from './ModuleWarning';
+import ModuleNavigation from './ModuleNavigation';
 
 export default function OpexForm({
     projectId,
@@ -123,11 +124,6 @@ export default function OpexForm({
                         <Button type="submit" disabled={loading} variant={saved ? 'secondary' : 'primary'}>
                             {loading ? 'Guardando...' : 'Guardar Costos'}
                         </Button>
-                        {saved && (
-                            <Button type="button" onClick={() => router.push(`/dashboard/projects/${projectId}/viability`)} style={{ backgroundColor: 'var(--color-success)', color: 'white' }}>
-                                Continuar a Viabilidad {"->"}
-                            </Button>
-                        )}
                     </div>
                 </form>
             </div>
@@ -154,6 +150,9 @@ export default function OpexForm({
                         </div>
                     </div>
                 </div>
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+                <ModuleNavigation projectId={projectId} currentModuleKey="costs" />
             </div>
         </div>
     );

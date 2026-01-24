@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import Button from '@/components/ui/Button';
 import ModuleWarning from './ModuleWarning';
+import ModuleNavigation from './ModuleNavigation';
 
 type Criteria = {
     conventional: number;
@@ -70,7 +71,7 @@ export default function TechSelectionMatrix({ projectId }: { projectId: string }
 
     const handleSave = async () => {
         setSaving(true);
-        const { error } = await supabase
+        await supabase
             .from('project_tech_matrix')
             .upsert({
                 project_id: projectId,
@@ -79,9 +80,7 @@ export default function TechSelectionMatrix({ projectId }: { projectId: string }
             });
 
         setSaving(false);
-        if (!error) {
-            router.push(`/dashboard/projects/${projectId}/report`);
-        }
+        router.refresh();
     };
 
     const calculateScore = (tech: 'conventional' | 'compact') => {
@@ -182,11 +181,12 @@ export default function TechSelectionMatrix({ projectId }: { projectId: string }
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-                <Button onClick={() => router.back()} variant="outline">Volver</Button>
                 <Button onClick={handleSave} variant="primary" loading={saving}>
-                    Finalizar Auditoría y Generar Informe
+                    {saving ? 'Guardando...' : 'Guardar Selección'}
                 </Button>
             </div>
+
+            <ModuleNavigation projectId={projectId} currentModuleKey="tech_selection" />
         </div>
     );
 }

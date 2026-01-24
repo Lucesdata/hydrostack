@@ -1,42 +1,12 @@
 "use client";
 
-/**
- * MÓDULO: Caudales de Diseño
- * BLOQUE: D — Caracterización Hidráulica
- * 
- * Función técnica:
- * - Cálculo de dotación bruta integrando índice de pérdidas.
- * - Determinación de caudales característicos (Qmd, QMD, QMH).
- * - Integración de población estacional / flotante en el pico horario.
- * - Aplicación de coeficientes de consumo (K1, K2).
- * 
- * Tabla de base de datos: project_calculations
- * 
- * Aplicabilidad:
- * - ✅ Agua potable: Siempre (base para dimensionar toda la infraestructura).
- * - ✅ Aguas residuales: Siempre (base para dimensionar colectores y PTAR).
- */
-
 import React, { useState, useEffect } from 'react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import ModuleWarning from './ModuleWarning';
-
-type FLOW_DATA = {
-    net_dotation: number;
-    losses_index: number;
-    k1_coef: number;
-    k2_coef: number;
-    calculated_flows: {
-        final_population: number;
-        qmd?: number;
-        qmd_max?: number;
-        qmh_max?: number;
-        gross_dotation?: number;
-    };
-};
+import ModuleNavigation from './ModuleNavigation';
 
 export default function CaudalesForm({ projectId, initialData }: { projectId: string; initialData: any }) {
     const [formData, setFormData] = useState({
@@ -63,7 +33,6 @@ export default function CaudalesForm({ projectId, initialData }: { projectId: st
     const pfutura = initialData?.calculated_flows?.final_population || 0;
     const [seasonalData, setSeasonalData] = useState<any>(null);
 
-    // Fetch Seasonal / Additional Population Data
     useEffect(() => {
         async function fetchSeasonalData() {
             const { data } = await supabase
@@ -76,7 +45,6 @@ export default function CaudalesForm({ projectId, initialData }: { projectId: st
         fetchSeasonalData();
     }, [projectId, supabase]);
 
-    // Real-time calculation effect
     useEffect(() => {
         const dneta = Number(formData.net_dotation);
         const ipp = Number(formData.losses_index);
@@ -85,23 +53,14 @@ export default function CaudalesForm({ projectId, initialData }: { projectId: st
 
         if (dneta && pfutura) {
             const dbruta = dneta / (1 - ipp / 100);
-
-            // Seasonal Population Integration
             const touristCount = seasonalData?.daily_tourist_count || 0;
             const seasonalPeak = seasonalData?.seasonal_peak_factor || 1.0;
 
-            // Caudal base (habitantes permanentes)
             const qmdBase = (pfutura * dbruta) / 86400;
-
-            // Caudal turistas (dotación neta para visitantes suele ser menor, 
-            // pero bajo RAS 100% de la neta es conservador y profesional)
             const qmdTourists = (touristCount * dneta) / 86400;
 
             const qmdTotal = qmdBase + qmdTourists;
             const qmd_max = qmdTotal * k1;
-
-            // QMH con Factor de Pico Estacional (FPE) aplicado a la carga total
-            // El FPE (fines de semana) actúa como un multiplicador adicional sobre el pico horario
             const qmh_max = qmd_max * k2 * seasonalPeak;
 
             setResults({
@@ -169,7 +128,6 @@ export default function CaudalesForm({ projectId, initialData }: { projectId: st
 
     return (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-            {/* Form Column */}
             <div style={{ backgroundColor: 'white', padding: '2rem', borderRadius: 'var(--radius-lg)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                 <ModuleWarning projectId={projectId} moduleKey="caudales" />
                 <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', color: 'var(--color-primary)', borderBottom: '1px solid var(--color-gray-medium)', paddingBottom: '0.5rem' }}>
@@ -178,45 +136,11 @@ export default function CaudalesForm({ projectId, initialData }: { projectId: st
 
                 <form onSubmit={handleSave}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '2rem' }}>
-                        <Input
-                            id="net_dotation"
-                            name="net_dotation"
-                            type="number"
-                            label="Dotación Neta (L/hab/día)"
-                            value={formData.net_dotation}
-                            onChange={handleChange}
-                            placeholder="Ej: 100"
-                        />
-                        <Input
-                            id="losses_index"
-                            name="losses_index"
-                            type="number"
-                            label="Índice de Pérdidas (%)"
-                            value={formData.losses_index}
-                            onChange={handleChange}
-                            placeholder="Ej: 25"
-                        />
+                        <Input id="net_dotation" name="net_dotation" type="number" label="Dotación Neta (L/hab/día)" value={formData.net_dotation} onChange={handleChange} />
+                        <Input id="losses_index" name="losses_index" type="number" label="Índice de Pérdidas (%)" value={formData.losses_index} onChange={handleChange} />
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                            <Input
-                                id="k1_coef"
-                                name="k1_coef"
-                                type="number"
-                                step="0.1"
-                                label="Coeficiente K1"
-                                value={formData.k1_coef}
-                                onChange={handleChange}
-                                placeholder="Ej: 1.2"
-                            />
-                            <Input
-                                id="k2_coef"
-                                name="k2_coef"
-                                type="number"
-                                step="0.1"
-                                label="Coeficiente K2"
-                                value={formData.k2_coef}
-                                onChange={handleChange}
-                                placeholder="Ej: 1.5"
-                            />
+                            <Input id="k1_coef" name="k1_coef" type="number" step="0.1" label="Coeficiente K1" value={formData.k1_coef} onChange={handleChange} />
+                            <Input id="k2_coef" name="k2_coef" type="number" step="0.1" label="Coeficiente K2" value={formData.k2_coef} onChange={handleChange} />
                         </div>
                     </div>
 
@@ -224,16 +148,10 @@ export default function CaudalesForm({ projectId, initialData }: { projectId: st
                         <Button type="submit" disabled={loading} variant={saved ? 'secondary' : 'primary'}>
                             {loading ? 'Guardando...' : 'Guardar Cálculos'}
                         </Button>
-                        {saved && (
-                            <Button type="button" onClick={() => router.push(`/dashboard/projects/${projectId}/tank`)} style={{ backgroundColor: 'var(--color-success)', color: 'white' }}>
-                                Siguiente: Tanque de Almacenamiento →
-                            </Button>
-                        )}
                     </div>
                 </form>
             </div>
 
-            {/* Results Column */}
             <div style={{ backgroundColor: 'var(--color-primary)', color: 'white', padding: '2rem', borderRadius: 'var(--radius-lg)', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
                 <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.2)', paddingBottom: '0.5rem' }}>
                     Resultados de Demanda
@@ -244,12 +162,10 @@ export default function CaudalesForm({ projectId, initialData }: { projectId: st
                         <p style={{ opacity: 0.8, fontSize: '0.9rem', marginBottom: '0.25rem' }}>Población Futura</p>
                         <p style={{ fontSize: '1.5rem', fontWeight: 700 }}>{pfutura.toLocaleString()} hab.</p>
                     </div>
-
                     <div>
                         <p style={{ opacity: 0.8, fontSize: '0.9rem', marginBottom: '0.25rem' }}>Dotación Bruta</p>
                         <p style={{ fontSize: '1.5rem', fontWeight: 700 }}>{results.gross_dotation} L/hab/d</p>
                     </div>
-
                     <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem' }}>
                         <div style={{ marginBottom: '1rem' }}>
                             <p style={{ opacity: 0.8, fontSize: '0.9rem', marginBottom: '0.25rem' }}>Caudal Medio Diario (Qmd)</p>
@@ -266,16 +182,12 @@ export default function CaudalesForm({ projectId, initialData }: { projectId: st
                     </div>
                 </div>
 
-                {message && (
-                    <div style={{ marginTop: '1.5rem', backgroundColor: 'rgba(255,255,255,0.2)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.9rem', textAlign: 'center' }}>
-                        {message}
-                    </div>
-                )}
-                {error && (
-                    <div style={{ marginTop: '1.5rem', backgroundColor: '#FEE2E2', color: '#991B1B', padding: '0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.9rem', textAlign: 'center' }}>
-                        {error}
-                    </div>
-                )}
+                {message && <div style={{ marginTop: '1.5rem', backgroundColor: 'rgba(255,255,255,0.2)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.9rem', textAlign: 'center' }}>{message}</div>}
+                {error && <div style={{ marginTop: '1.5rem', backgroundColor: '#FEE2E2', color: '#991B1B', padding: '0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.9rem', textAlign: 'center' }}>{error}</div>}
+            </div>
+
+            <div style={{ gridColumn: '1 / -1' }}>
+                <ModuleNavigation projectId={projectId} currentModuleKey="caudales" />
             </div>
         </div>
     );

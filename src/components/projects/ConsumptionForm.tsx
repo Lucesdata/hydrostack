@@ -5,6 +5,7 @@ import Button from '@/components/ui/Button';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import ModuleWarning from './ModuleWarning';
+import ModuleNavigation from './ModuleNavigation';
 
 type CONSUMPTION_DATA = {
     project_id: string;
@@ -174,14 +175,10 @@ export default function ConsumptionForm({ projectId, initialData }: { projectId:
                     <Button type="submit" disabled={loading} variant={saved ? 'secondary' : 'primary'}>
                         {loading ? 'Guardando...' : 'Guardar Información'}
                     </Button>
-
-                    {saved && (
-                        <Button type="button" onClick={handleNext} style={{ backgroundColor: 'var(--color-success)', color: 'white' }}>
-                            Finalizar Diagnostico →
-                        </Button>
-                    )}
                 </div>
             </form>
+
+            <ModuleNavigation projectId={projectId} currentModuleKey="consumption" />
         </div>
     );
 }

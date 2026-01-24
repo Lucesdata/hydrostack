@@ -6,6 +6,7 @@ import Input from '@/components/ui/Input';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import ModuleWarning from '@/components/projects/ModuleWarning';
+import ModuleNavigation from './ModuleNavigation';
 
 export default function FiltroLentoForm({
     projectId,
@@ -141,11 +142,6 @@ export default function FiltroLentoForm({
                         <Button type="submit" disabled={loading} variant={saved ? 'secondary' : 'primary'}>
                             {loading ? 'Guardando...' : 'Guardar Diseño'}
                         </Button>
-                        {saved && (
-                            <Button type="button" onClick={() => router.push(`/dashboard/projects/${projectId}/compact-design`)} style={{ backgroundColor: 'var(--color-success)', color: 'white' }}>
-                                Continuar a PTAP Compacta {"->"}
-                            </Button>
-                        )}
                     </div>
                 </form>
             </div>
@@ -182,6 +178,9 @@ export default function FiltroLentoForm({
                         </div>
                     </div>
                 </div>
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+                <ModuleNavigation projectId={projectId} currentModuleKey="filtro_lento" />
             </div>
         </div>
     );

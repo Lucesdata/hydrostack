@@ -6,6 +6,7 @@ import Input from '@/components/ui/Input';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import ModuleWarning from './ModuleWarning';
+import ModuleNavigation from './ModuleNavigation';
 
 export default function DesarenadorForm({
     projectId,
@@ -153,11 +154,6 @@ export default function DesarenadorForm({
                         <Button type="submit" disabled={loading} variant={saved ? 'secondary' : 'primary'}>
                             {loading ? 'Guardando...' : 'Guardar Diseño'}
                         </Button>
-                        {saved && (
-                            <Button type="button" onClick={() => router.push(`/dashboard/projects/${projectId}/jar-test`)} style={{ backgroundColor: 'var(--color-success)', color: 'white' }}>
-                                Continuar a Ensayo Jarras {"->"}
-                            </Button>
-                        )}
                     </div>
                 </form>
             </div>
@@ -194,6 +190,9 @@ export default function DesarenadorForm({
                         </div>
                     </div>
                 </div>
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+                <ModuleNavigation projectId={projectId} currentModuleKey="desarenador" />
             </div>
         </div>
     );

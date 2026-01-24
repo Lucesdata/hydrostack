@@ -6,6 +6,7 @@ import Input from '@/components/ui/Input';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import ModuleWarning from './ModuleWarning';
+import ModuleNavigation from './ModuleNavigation';
 
 export default function ConduccionForm({
     projectId,
@@ -189,11 +190,7 @@ export default function ConduccionForm({
                         <Button type="submit" disabled={loading} variant={saved ? 'secondary' : 'primary'}>
                             {loading ? 'Guardando...' : 'Guardar Diseño'}
                         </Button>
-                        {saved && (
-                            <Button type="button" onClick={() => router.push(`/dashboard/projects/${projectId}/desarenador`)} style={{ backgroundColor: 'var(--color-success)', color: 'white' }}>
-                                Continuar a Desarenador →
-                            </Button>
-                        )}        </div>
+                    </div>
                 </form>
             </div>
 
@@ -243,6 +240,9 @@ export default function ConduccionForm({
                                 '✓ Velocidad dentro de rangos recomendados (0.5 - 2.5 m/s)'}</p>
                     </div>
                 </div>
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+                <ModuleNavigation projectId={projectId} currentModuleKey="conduccion" />
             </div>
         </div>
     );
