@@ -139,7 +139,7 @@ export default function ProjectReport({ data }: { data: REPORT_DATA }) {
                 </p>
 
                 <p style={{ marginBottom: '1.5rem', textAlign: 'justify', fontSize: '1rem' }}>
-                    {NarrativeEngine.generateTreatmentNarrative(calculations)}
+                    {NarrativeEngine.generateTreatmentNarrative(calculations, project)}
                 </p>
 
                 <p style={{ textAlign: 'justify', fontSize: '1rem' }}>

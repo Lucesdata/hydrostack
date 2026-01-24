@@ -158,12 +158,12 @@ export default function ProjectSidebar({ projectId }: { projectId: string }) {
                                             </span>
                                             {badge && (
                                                 <span
-                                                    title={`${badge.label}`}
+                                                    title={moduleStat?.status === 'essential' && project?.project_context === 'rural' ? 'Esencial por contexto rural: Este componente es clave para asegurar continuidad del servicio y control sanitario.' : `${badge.label}`}
                                                     style={{
                                                         fontSize: '0.55rem',
                                                         flexShrink: 0,
                                                         backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : `${badge.color}15`,
-                                                        color: isActive ? 'white' : badge.color,
+                                                        color: isActive ? 'white' : (moduleStat?.status === 'essential' && project?.project_context === 'rural' ? '#C2410C' : badge.color),
                                                         padding: '0.1rem 0.35rem',
                                                         borderRadius: '0.5rem',
                                                         fontWeight: 800,
@@ -171,7 +171,7 @@ export default function ProjectSidebar({ projectId }: { projectId: string }) {
                                                         textTransform: 'uppercase'
                                                     }}
                                                 >
-                                                    {badge.label.substring(0, 3)}
+                                                    {moduleStat?.status === 'essential' && project?.project_context === 'rural' ? 'RURAL' : badge.label.substring(0, 3)}
                                                 </span>
                                             )}
                                         </Link>

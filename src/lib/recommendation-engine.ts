@@ -137,8 +137,29 @@ export class RecommendationEngine {
 
         const adaptations: ModuleConfig['adaptations'] = {};
         let reason: string | undefined;
+        const isRural = context === 'rural';
 
-        // Adaptaciones con lenguaje descriptivo y profesional
+        // 2.2 Fuente de Abastecimiento — Bloque C
+        if (moduleKey === 'source' && isRural && domain === 'water_treatment') {
+            adaptations.help_text = '💡 Nota técnica: Las fuentes superficiales en contextos rurales suelen presentar alta variabilidad en calidad y mayor riesgo sanitario. Se recomienda evaluar el tratamiento como un sistema de barreras múltiples, no como una unidad aislada.';
+        }
+
+        // 2.3 Selección de Tratamiento — Bloque E
+        if (isRural) {
+            if (moduleKey === 'filtro_lento' || category === 'fime') {
+                adaptations.help_text = '✅ Tecnología alineada con el contexto: Esta configuración es coherente con proyectos rurales por su simplicidad operativa, tolerancia a fallos y facilidad de mantenimiento. HydroStack la considera una solución robusta para este tipo de sistema.';
+            }
+            if (moduleKey === 'compact_design' || category === 'compact_plant') {
+                adaptations.warning = '⚠️ Advertencia de sostenibilidad: Esta tecnología es técnicamente viable, pero puede presentar dificultades operativas en contextos rurales sin personal permanente, repuestos locales o control continuo. Se recomienda validar la capacidad real de operación y mantenimiento antes de adoptarla.';
+            }
+        }
+
+        // 2.4 Caudales y Dimensionamiento — Bloque D
+        if (moduleKey === 'caudales' && isRural) {
+            adaptations.help_text = '💡 Criterio de diseño: En sistemas rurales, la estabilidad operativa es tan importante como la precisión hidráulica. Los márgenes de seguridad deben considerar variaciones de calidad y operación.';
+        }
+
+        // Adaptaciones adicionales con lenguaje descriptivo y profesional (Original + Refined)
         if (moduleKey === 'desarenador') {
             if (category === 'desalination_high_purity') {
                 reason = 'Nota normativa: En procesos de desalinización de alta pureza, la sedimentación de partículas pesadas suele integrarse en la microfiltración previa.';
@@ -161,7 +182,10 @@ export class RecommendationEngine {
 
         if (moduleKey === 'filtro_lento') {
             if (category === 'fime') {
-                adaptations.help_text = 'Nota técnica: Este módulo actúa como la barrera microbiológica principal, fundamentada en el desarrollo del bio-lecho (esqumutzdecke).';
+                // adaptations.help_text already handled for rural above, adding technical detail if not rural or as addition
+                if (!adaptations.help_text) {
+                    adaptations.help_text = 'Nota técnica: Este módulo actúa como la barrera microbiológica principal, fundamentada en el desarrollo del bio-lecho (esqumutzdecke).';
+                }
             }
             if (category === 'compact_plant') {
                 reason = 'Observación técnica: Las plantas de alta tasa operan bajo regímenes de filtración rápida, que son conceptualmente distintos a la filtración lenta biológica.';
@@ -173,13 +197,6 @@ export class RecommendationEngine {
             if (category === 'fime') {
                 reason = 'Observación técnica: La ingeniería compacta se basa en tiempos de residencia bajos y alta carga superficial, opuesta a la baja carga de los sistemas FLA.';
                 adaptations.warning = 'Sugerencia profesional: La integración de estas tecnologías debe ser evaluada bajo la premisa de la capacidad técnica del operador local.';
-            }
-        }
-
-        if (moduleKey === 'source') {
-            if (domain === 'wastewater_treatment') {
-                reason = 'Nota técnica: En el dominio de saneamiento, este componente se reorienta hacia la caracterización del afluente bruto o punto de vertido.';
-                adaptations.warning = 'Observación técnica: Se sugiere priorizar el aforo y muestreo del vertimiento para definir la carga orgánica real.';
             }
         }
 
@@ -266,13 +283,14 @@ export class RecommendationEngine {
 
     /**
      * 🅱️ FASE B — AUDITORÍA TÉCNICA ASISTIDA (PASIVA)
-     * Realiza cruces lógicos entre datos sin imponer cambios.
+     * Realiza cruces lógicos entre datos sin imponer cambios, incorporando filosofía rural.
      */
     static performTechnicalAudit(project: Project, data: any): string[] {
         const observations: string[] = [];
+        const isRural = project.project_context === 'rural';
 
         // 1. Dotación vs Tipo de Fuente
-        if (data.consumption?.avg_daily_consumption > 150 && project.project_context === 'rural') {
+        if (data.consumption?.avg_daily_consumption > 150 && isRural) {
             observations.push('Observación técnica: La dotación proyectada supera los promedios rurales estándar. Se sugiere verificar concordancia con la capacidad de la fuente.');
         }
 
@@ -283,30 +301,45 @@ export class RecommendationEngine {
 
         // 3. Calidad vs Tecnología
         if (data.quality?.turbidity > 200 && project.treatment_category === 'fime') {
-            observations.push('Sugerencia profesional: La turbiedad reportada en fuente presenta picos elevados para el régimen de filtración lenta. Se recomienda evaluar etapas de pre-sedimentación robustas.');
+            observations.push('Sugerencia profesional: La turbiedad reportada presenta picos elevados para el régimen de filtración lenta. Se recomienda evaluar etapas de pre-sedimentación robustas.');
         }
 
         // 4. Población vs Tipo de Sistema
-        if (data.calculations?.final_population > 5000 && project.project_context === 'rural') {
-            observations.push('Observación técnica: La magnitud de la población proyectada sugiere una transición hacia esquemas operativos de tipo urbano o regional.');
+        if (data.calculations?.final_population > 5000 && isRural) {
+            observations.push('Observación técnica: La magnitud de la población sugiere una transición hacia esquemas operativos de tipo urbano o regional.');
+        }
+
+        // 5. FILOSOFÍA RURAL: Sostenibilidad de la Tecnología
+        if (isRural && project.treatment_category === 'compact_plant') {
+            observations.push('Sugerencia profesional: Esta solución (Planta Compacta) es técnicamente viable, pero su sostenibilidad en contexto rural requiere asegurar operación permanente y suministro químico constante.');
+        }
+
+        if (isRural && (project.treatment_category === 'fime' || project.treatment_category === 'specific_plant')) {
+            observations.push('Nota técnica: Se prioriza un esquema de barreras múltiples de baja carga superficial, coherente con la capacidad operativa local identificada.');
+        }
+
+        // 6. Evaluación de Riesgo Sanitario (Estructura Interna Silenciosa)
+        const sourceRisk = data.source?.source_type === 'superficial' ? 'Alto' : 'Moderado';
+        if (sourceRisk === 'Alto' && !project.treatment_category) {
+            observations.push(`Observación técnica: Fuente superficial identificada (Riesgo ${sourceRisk}). Se sugiere definir un tren de tratamiento con al menos tres barreras de remoción.`);
         }
 
         return observations;
     }
 
     /**
-     * Obtener texto explicativo según categoría de tratamiento
+     * Obtener texto explicativo según categoría de tratamiento (Refinado con filosofía rural)
      */
     static getTreatmentCategoryDescription(category: TreatmentCategory): string {
         switch (category) {
             case 'fime':
-                return 'Filtración en Múltiples Etapas: Sistema basado en barreras físicas y biológicas sucesivas para remoción de carga coloidal y patógenos.';
+                return 'Filtración en Múltiples Etapas: Sistema biológico robusto diseñado para contextos rurales. Prioriza la barrera microbiológica sin dependencia crítica de químicos.';
             case 'compact_plant':
-                return 'Planta Compacta: Integración de clarificación química y filtración rápida en unidades de alta tasa. Óptimo para espacios reducidos.';
+                return 'Planta Compacta: Sistema mecánico de alta tasa. Requiere personal calificado y logística de insumos constante para su sostenibilidad técnica.';
             case 'specific_plant':
-                return 'Ingeniería Específica: Configuración a medida del tren de tratamiento basada en la caracterización físico-química de la fuente.';
+                return 'Ingeniería Específica: Configuración a medida. Se recomienda priorizar procesos de sedimentación y filtración lenta en entornos de difícil acceso.';
             case 'desalination_high_purity':
-                return 'Desalinización / Alta Pureza: Procesos de separación por membranas diseñados para la reducción de sólidos disueltos totales.';
+                return 'Desalinización / Alta Pureza: Procesos avanzados de membranas. Requiere esquemas de mantenimiento especializado y gestión de rechazos.';
         }
     }
 

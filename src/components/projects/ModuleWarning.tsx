@@ -43,6 +43,7 @@ export default function ModuleWarning({
                 .single();
 
             // Fetch additional data for audits
+            const { data: source } = await supabase.from('project_sources').select('*').eq('project_id', projectId).single();
             const { data: calc } = await supabase.from('project_calculations').select('*').eq('project_id', projectId).single();
             const { data: cons } = await supabase.from('project_consumption').select('*').eq('project_id', projectId).single();
             const { data: qual } = await supabase.from('project_water_quality').select('*').eq('project_id', projectId).single();
@@ -62,6 +63,7 @@ export default function ModuleWarning({
 
                 // Perform Technical Audit Phase B
                 const auditData = {
+                    source: source,
                     calculations: calc,
                     consumption: cons,
                     quality: qual,

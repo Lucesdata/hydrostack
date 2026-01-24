@@ -143,7 +143,13 @@ export default function ProjectCard({ project, moduleStatuses, onDelete }: Proje
                     </p>
                     {missingEssential.length > 0 ? (
                         <p style={{ color: '#444', lineHeight: 1.4 }}>
-                            Componentes en consolidación técnica: <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>{missingEssential.slice(0, 3).join(', ')}{missingEssential.length > 3 ? '...' : ''}</span>
+                            {project.project_context === 'rural' && project.project_domain === 'water_treatment' ? (
+                                <span>
+                                    <strong>Observación técnica:</strong> El proyecto aún no valida componentes esenciales para un sistema rural de agua potable, como el esquema completo de tratamiento o la caracterización de la fuente.
+                                </span>
+                            ) : (
+                                <>Componentes en consolidación técnica: <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>{missingEssential.slice(0, 3).join(', ')}{missingEssential.length > 3 ? '...' : ''}</span></>
+                            )}
                         </p>
                     ) : (
                         <p style={{ color: 'var(--color-success)', fontWeight: 600 }}>

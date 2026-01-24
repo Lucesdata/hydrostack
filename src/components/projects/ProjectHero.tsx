@@ -78,6 +78,30 @@ export default function ProjectHero({ projectId }: { projectId: string }) {
                         <MetaItem label="Ubicación" value={project.location} />
                     )}
                 </div>
+
+                {project.project_domain === 'water_treatment' && project.project_context === 'rural' && (
+                    <div style={{
+                        marginTop: '1.5rem',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        backdropFilter: 'blur(8px)',
+                        padding: '1.25rem',
+                        borderRadius: 'var(--radius-md)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        display: 'flex',
+                        gap: '1rem',
+                        alignItems: 'flex-start'
+                    }}>
+                        <span style={{ fontSize: '1.5rem' }}>🏡</span>
+                        <div>
+                            <p style={{ fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>
+                                Contexto rural identificado
+                            </p>
+                            <p style={{ fontSize: '0.85rem', lineHeight: 1.5, opacity: 0.9 }}>
+                                Este proyecto se desarrolla en un entorno rural. HydroStack priorizará soluciones de tratamiento robustas, de operación simple y sostenibles en el tiempo. Puedes ajustar o sobreescribir cualquier recomendación técnica según la realidad del sistema.
+                            </p>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
