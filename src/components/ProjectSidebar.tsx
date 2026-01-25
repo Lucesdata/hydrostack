@@ -52,32 +52,49 @@ export default function ProjectSidebar({ projectId }: { projectId: string }) {
 
     const navItems: { label: string; href: string; moduleKey: ModuleKey }[] = [
         // BLOQUE A: Contexto
-        { label: '1. Info General', href: `/dashboard/projects/${projectId}/general`, moduleKey: 'general' },
+        { label: 'Info General', href: `/dashboard/projects/${projectId}/general`, moduleKey: 'general' },
+        { label: 'Viabilidad Tecnológica', href: `/dashboard/projects/${projectId}/viability-matrix`, moduleKey: 'viability_matrix' },
 
         // BLOQUE B: Caracterización de Demanda
-        { label: '2. Población y Censo', href: `/dashboard/projects/${projectId}/population`, moduleKey: 'population' },
-        { label: '3. Población Estacional', href: `/dashboard/projects/${projectId}/floating-population`, moduleKey: 'floating_population' },
+        { label: 'Población y Censo', href: `/dashboard/projects/${projectId}/population`, moduleKey: 'population' },
+        { label: 'Población Estacional', href: `/dashboard/projects/${projectId}/floating-population`, moduleKey: 'floating_population' },
 
         // BLOQUE C: Caracterización de Fuente
-        { label: '4. Fuente de Agua', href: `/dashboard/projects/${projectId}/source`, moduleKey: 'source' },
-        { label: '5. Consumo de Agua', href: `/dashboard/projects/${projectId}/consumption`, moduleKey: 'consumption' },
-        { label: '6. Calidad del Agua', href: `/dashboard/projects/${projectId}/quality`, moduleKey: 'quality' },
+        { label: 'Fuente de Agua', href: `/dashboard/projects/${projectId}/source`, moduleKey: 'source' },
+        { label: 'Consumo de Agua', href: `/dashboard/projects/${projectId}/consumption`, moduleKey: 'consumption' },
+        { label: 'Calidad del Agua', href: `/dashboard/projects/${projectId}/quality`, moduleKey: 'quality' },
 
         // BLOQUE D: Caracterización Hidráulica
-        { label: '7. Caudales de Diseño', href: `/dashboard/projects/${projectId}/caudales`, moduleKey: 'caudales' },
-        { label: '8. Almacenamiento', href: `/dashboard/projects/${projectId}/tank`, moduleKey: 'tank' },
-        { label: '9. Conducción', href: `/dashboard/projects/${projectId}/conduccion`, moduleKey: 'conduccion' },
+        { label: 'Caudales de Diseño', href: `/dashboard/projects/${projectId}/caudales`, moduleKey: 'caudales' },
+        { label: 'Almacenamiento', href: `/dashboard/projects/${projectId}/tank`, moduleKey: 'tank' },
+        { label: 'Conducción', href: `/dashboard/projects/${projectId}/conduccion`, moduleKey: 'conduccion' },
 
-        // BLOQUE E: Dimensionamiento de Tratamiento
-        { label: '10. Desarenador', href: `/dashboard/projects/${projectId}/desarenador`, moduleKey: 'desarenador' },
-        { label: '11. Ensayo de Jarras', href: `/dashboard/projects/${projectId}/jar-test`, moduleKey: 'jar_test' },
-        { label: '12. Filtro Lento', href: `/dashboard/projects/${projectId}/filtro-lento`, moduleKey: 'filtro_lento' },
-        { label: '13. Ingeniería Compacta', href: `/dashboard/projects/${projectId}/compact-design`, moduleKey: 'compact_design' },
+        // BLOQUE E: Dimensionamiento de Tratamiento (Standard)
+        { label: 'Desarenador', href: `/dashboard/projects/${projectId}/desarenador`, moduleKey: 'desarenador' },
+        { label: 'Ensayo de Jarras', href: `/dashboard/projects/${projectId}/jar-test`, moduleKey: 'jar_test' },
+        { label: 'Filtro Lento', href: `/dashboard/projects/${projectId}/filtro-lento`, moduleKey: 'filtro_lento' },
+        { label: 'Ingeniería Compacta', href: `/dashboard/projects/${projectId}/compact-design`, moduleKey: 'compact_design' },
+
+        // BLOQUE E: FIME SPECIALIZED FLOW
+        { label: 'Pretratamiento FIME', href: `/dashboard/projects/${projectId}/fime-pretratamiento`, moduleKey: 'fime_pretratamiento' },
+        { label: 'Filtro Grueso Dinámico', href: `/dashboard/projects/${projectId}/fime-grueso-dinamico`, moduleKey: 'fime_grueso_dinamico' },
+        { label: 'Filtro Grueso Asc/Des', href: `/dashboard/projects/${projectId}/fime-grueso-asdesc`, moduleKey: 'fime_grueso_asdesc' },
+        { label: 'Filtro Lento de Arena', href: `/dashboard/projects/${projectId}/fime-lento-arena`, moduleKey: 'fime_lento_arena' },
+        { label: 'Hidráulica Integrada', href: `/dashboard/projects/${projectId}/fime-hidraulica`, moduleKey: 'fime_hidraulica' },
+        { label: 'Layout e Implantación', href: `/dashboard/projects/${projectId}/fime-implantacion`, moduleKey: 'fime_implantacion' },
+        { label: 'Balance de Masas', href: `/dashboard/projects/${projectId}/fime-balance-masas`, moduleKey: 'fime_balance_masas' },
+
+        // BLOQUE E: COMPACT PLANT SPECIALIZED FLOW (SKELETON)
+        { label: 'Mezcla Rápida', href: `/dashboard/projects/${projectId}/compact-mixing`, moduleKey: 'compact_mixing' },
+        { label: 'Floculación', href: `/dashboard/projects/${projectId}/compact-flocculation`, moduleKey: 'compact_flocculation' },
+        { label: 'Sedimentación', href: `/dashboard/projects/${projectId}/compact-sedimentation`, moduleKey: 'compact_sedimentation' },
+        { label: 'Filtración Rápida', href: `/dashboard/projects/${projectId}/compact-filtration`, moduleKey: 'compact_filtration' },
+        { label: 'Desinfección (CT)', href: `/dashboard/projects/${projectId}/compact-disinfection`, moduleKey: 'compact_disinfection' },
 
         // BLOQUE F: Evaluación Técnica y Económica
-        { label: '14. Costos (OpEx)', href: `/dashboard/projects/${projectId}/costs`, moduleKey: 'costs' },
-        { label: '15. Viabilidad y O&M', href: `/dashboard/projects/${projectId}/viability`, moduleKey: 'viability' },
-        { label: '16. Selección de Tecnología', href: `/dashboard/projects/${projectId}/tech-selection`, moduleKey: 'tech_selection' },
+        { label: 'Costos (OpEx)', href: `/dashboard/projects/${projectId}/costs`, moduleKey: 'costs' },
+        { label: 'Viabilidad y O&M', href: `/dashboard/projects/${projectId}/viability`, moduleKey: 'viability' },
+        { label: 'Matriz AHP (Profundización)', href: `/dashboard/projects/${projectId}/tech-selection`, moduleKey: 'tech_selection' },
     ];
 
     return (
@@ -107,79 +124,118 @@ export default function ProjectSidebar({ projectId }: { projectId: string }) {
                 )}
 
                 <nav style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    {[
-                        { title: '🟢 BLOQUE A: CONTEXTO', items: navItems.filter(i => ['general'].includes(i.moduleKey)) },
-                        { title: '🟢 BLOQUE B: DEMANDA', items: navItems.filter(i => ['population', 'floating_population', 'consumption'].includes(i.moduleKey)) },
-                        { title: '🟢 BLOQUE C: FUENTE', items: navItems.filter(i => ['source', 'quality'].includes(i.moduleKey)) },
-                        { title: '🟢 BLOQUE D: HIDRÁULICA', items: navItems.filter(i => ['caudales', 'tank', 'conduccion'].includes(i.moduleKey)) },
-                        { title: '🟡 BLOQUE E: TRATAMIENTO', items: navItems.filter(i => ['desarenador', 'jar_test', 'filtro_lento', 'compact_design'].includes(i.moduleKey)) },
-                        { title: '🟢 BLOQUE F: EVALUACIÓN', items: navItems.filter(i => ['costs', 'viability', 'tech_selection'].includes(i.moduleKey)) }
-                    ].map((block) => {
-                        const visibleItems = block.items.filter(item => {
-                            const moduleStat = moduleStatuses.get(item.moduleKey);
-                            return moduleStat && moduleStat.status !== 'not_applicable';
-                        });
+                    {(() => {
+                        let globalIndex = 0;
+                        return [
+                            { title: '🟢 BLOQUE A: CONTEXTO', items: navItems.filter(i => ['general', 'viability_matrix'].includes(i.moduleKey)) },
+                            { title: '🟢 BLOQUE B: DEMANDA', items: navItems.filter(i => ['population', 'floating_population', 'consumption'].includes(i.moduleKey)) },
+                            { title: '🟢 BLOQUE C: FUENTE', items: navItems.filter(i => ['source', 'quality'].includes(i.moduleKey)) },
+                            { title: '🟢 BLOQUE D: HIDRÁULICA', items: navItems.filter(i => ['caudales', 'tank', 'conduccion'].includes(i.moduleKey)) },
+                            {
+                                title: '🟡 BLOQUE E: TRATAMIENTO', items: navItems.filter(i => [
+                                    'desarenador', 'jar_test', 'filtro_lento', 'compact_design',
+                                    'fime_pretratamiento', 'fime_grueso_dinamico', 'fime_grueso_asdesc',
+                                    'fime_lento_arena', 'fime_hidraulica', 'fime_implantacion', 'fime_balance_masas',
+                                    'compact_mixing', 'compact_flocculation', 'compact_sedimentation', 'compact_filtration', 'compact_disinfection'
+                                ].includes(i.moduleKey))
+                            },
+                            { title: '🟢 BLOQUE F: EVALUACIÓN', items: navItems.filter(i => ['costs', 'viability', 'tech_selection'].includes(i.moduleKey)) }
+                        ].map((block) => {
+                            const visibleItems = block.items.filter(item => {
+                                const moduleStat = moduleStatuses.get(item.moduleKey);
+                                const sysRec = project ? RecommendationEngine.getModuleRecommendation(
+                                    item.moduleKey,
+                                    project.project_domain,
+                                    project.project_context,
+                                    project.project_level,
+                                    project.treatment_category
+                                ) : 'optional';
 
-                        if (visibleItems.length === 0) return null;
+                                if (moduleStat) return moduleStat.status !== 'not_applicable';
+                                return sysRec === 'essential' || sysRec === 'recommended';
+                            });
 
-                        return (
-                            <div key={block.title} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                <p style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--color-primary)', opacity: 0.8, paddingLeft: '0.85rem', marginBottom: '0.25rem' }}>
-                                    {block.title.replace('CARACTERIZACIÓN', 'MODELADO')}
-                                </p>
-                                {visibleItems.map((item) => {
-                                    const isActive = pathname === item.href;
-                                    const moduleStat = moduleStatuses.get(item.moduleKey);
-                                    const badge = moduleStat ? RecommendationEngine.getRecommendationBadge(moduleStat.status) : null;
+                            if (visibleItems.length === 0) return null;
 
-                                    return (
-                                        <Link
-                                            key={item.href}
-                                            href={item.href}
-                                            style={{
-                                                padding: '0.5rem 0.85rem',
-                                                borderRadius: 'var(--radius-sm)',
-                                                textDecoration: 'none',
-                                                fontSize: '0.8rem',
-                                                color: isActive ? 'white' : 'var(--color-gray-dark)',
-                                                backgroundColor: isActive ? 'var(--color-primary)' : 'transparent',
-                                                transition: 'all 0.15s ease',
-                                                fontWeight: isActive ? 600 : 400,
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                alignItems: 'center',
-                                                borderLeft: isActive ? 'none' : '2px solid transparent'
-                                            }}
-                                            onMouseEnter={(e: any) => { if (!isActive) e.currentTarget.style.backgroundColor = '#f4f4f5'; }}
-                                            onMouseLeave={(e: any) => { if (!isActive) e.currentTarget.style.backgroundColor = 'transparent'; }}
-                                        >
-                                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginRight: '0.5rem' }}>
-                                                {item.label.split('. ')[1] || item.label}
-                                            </span>
-                                            {badge && (
-                                                <span
-                                                    title={moduleStat?.status === 'essential' && project?.project_context === 'rural' ? 'Esencial por contexto rural: Este componente es clave para asegurar continuidad del servicio y control sanitario.' : `${badge.label}`}
-                                                    style={{
-                                                        fontSize: '0.55rem',
-                                                        flexShrink: 0,
-                                                        backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : `${badge.color}15`,
-                                                        color: isActive ? 'white' : (moduleStat?.status === 'essential' && project?.project_context === 'rural' ? '#C2410C' : badge.color),
-                                                        padding: '0.1rem 0.35rem',
-                                                        borderRadius: '0.5rem',
-                                                        fontWeight: 800,
-                                                        border: isActive ? '1px solid rgba(255,255,255,0.4)' : `1px solid ${badge.color}30`,
-                                                        textTransform: 'uppercase'
-                                                    }}
-                                                >
-                                                    {moduleStat?.status === 'essential' && project?.project_context === 'rural' ? 'RURAL' : badge.label.substring(0, 3)}
+                            return (
+                                <div key={block.title} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                    <p style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--color-primary)', opacity: 0.8, paddingLeft: '0.85rem', marginBottom: '0.25rem' }}>
+                                        {block.title.replace('CARACTERIZACIÓN', 'MODELADO')}
+                                    </p>
+                                    {visibleItems.map((item) => {
+                                        globalIndex++;
+                                        const isActive = pathname === item.href;
+                                        let moduleStat = moduleStatuses.get(item.moduleKey);
+
+                                        // Auto-healing logic repeated here if needed, but we did it in filtering to check visibility.
+                                        // We need the badge though.
+                                        const sysRec = project ? RecommendationEngine.getModuleRecommendation(
+                                            item.moduleKey,
+                                            project.project_domain,
+                                            project.project_context,
+                                            project.project_level,
+                                            project.treatment_category
+                                        ) : 'optional';
+
+                                        if (!moduleStat && (sysRec === 'essential' || sysRec === 'recommended')) {
+                                            moduleStat = {
+                                                module_key: item.moduleKey,
+                                                status: sysRec,
+                                                is_user_override: false
+                                            } as any;
+                                        }
+
+                                        const badge = moduleStat ? RecommendationEngine.getRecommendationBadge(moduleStat.status) : null;
+
+                                        return (
+                                            <Link
+                                                key={item.href}
+                                                href={item.href}
+                                                style={{
+                                                    padding: '0.5rem 0.85rem',
+                                                    borderRadius: 'var(--radius-sm)',
+                                                    textDecoration: 'none',
+                                                    fontSize: '0.8rem',
+                                                    color: isActive ? 'white' : 'var(--color-gray-dark)',
+                                                    backgroundColor: isActive ? 'var(--color-primary)' : 'transparent',
+                                                    transition: 'all 0.15s ease',
+                                                    fontWeight: isActive ? 600 : 400,
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center',
+                                                    borderLeft: isActive ? 'none' : '2px solid transparent'
+                                                }}
+                                                onMouseEnter={(e: any) => { if (!isActive) e.currentTarget.style.backgroundColor = '#f4f4f5'; }}
+                                                onMouseLeave={(e: any) => { if (!isActive) e.currentTarget.style.backgroundColor = 'transparent'; }}
+                                            >
+                                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginRight: '0.5rem' }}>
+                                                    {globalIndex}. {item.label}
                                                 </span>
-                                            )}
-                                        </Link>
-                                    );
-                                })}
-                            </div>
-                        );
-                    })}
+                                                {badge && (
+                                                    <span
+                                                        title={moduleStat?.status === 'essential' && project?.project_context === 'rural' ? 'Esencial por contexto rural: Este componente es clave para asegurar continuidad del servicio y control sanitario.' : `${badge.label}`}
+                                                        style={{
+                                                            fontSize: '0.55rem',
+                                                            flexShrink: 0,
+                                                            backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : `${badge.color}15`,
+                                                            color: isActive ? 'white' : (moduleStat?.status === 'essential' && project?.project_context === 'rural' ? '#C2410C' : badge.color),
+                                                            padding: '0.1rem 0.35rem',
+                                                            borderRadius: '0.5rem',
+                                                            fontWeight: 800,
+                                                            border: isActive ? '1px solid rgba(255,255,255,0.4)' : `1px solid ${badge.color}30`,
+                                                            textTransform: 'uppercase'
+                                                        }}
+                                                    >
+                                                        {moduleStat?.status === 'essential' && project?.project_context === 'rural' ? 'RURAL' : badge.label.substring(0, 3)}
+                                                    </span>
+                                                )}
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
+                            );
+                        })
+                    })()}
                 </nav>
             </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { createClient } from '@/utils/supabase/client';
@@ -14,9 +14,12 @@ import {
     DOMAIN_LABELS,
     CONTEXT_LABELS,
     LEVEL_LABELS,
-    CATEGORY_LABELS
+    CATEGORY_LABELS,
+    ViabilityMatrixInputs,
+    TechnologyViabilityResult
 } from '@/types/project';
 import { RecommendationEngine } from '@/lib/recommendation-engine';
+import { ViabilityEngine } from '@/lib/viability-engine';
 
 export default function NewProjectPage() {
     const [flowStage, setFlowStage] = useState(0); // 0: Intent, 1: Domain, 2: Wizard
@@ -29,8 +32,20 @@ export default function NewProjectPage() {
         name: '',
         description: '',
         location: '',
-        estimated_population: '',
-        estimated_flow: ''
+        // Matrix Inputs
+        settlement_type: 'rural_concentrado' as ViabilityMatrixInputs['settlement_type'],
+        population_range: 'medium' as ViabilityMatrixInputs['population_range'],
+        community_organization: 'medium' as ViabilityMatrixInputs['community_organization'],
+        operator_availability: 'medium' as ViabilityMatrixInputs['operator_availability'],
+        energy_access: 'partial' as ViabilityMatrixInputs['energy_access'],
+        chemical_access: 'medium' as ViabilityMatrixInputs['chemical_access'],
+        maintenance_capacity: 'medium' as ViabilityMatrixInputs['maintenance_capacity'],
+        capex_tolerance: 'medium' as ViabilityMatrixInputs['capex_tolerance'],
+        opex_tolerance: 'medium' as ViabilityMatrixInputs['opex_tolerance'],
+        project_horizon: 20,
+        source_quality: 'fair' as ViabilityMatrixInputs['source_quality'],
+        climate_variability: 'medium' as ViabilityMatrixInputs['climate_variability'],
+        environmental_sensitivity: 'medium' as ViabilityMatrixInputs['environmental_sensitivity']
     });
 
     const [loading, setLoading] = useState(false);
@@ -45,6 +60,11 @@ export default function NewProjectPage() {
 
     const handleNext = () => {
         if (step === 1) {
+            if (!formData.name) {
+                setError('El nombre del proyecto es obligatorio para continuar');
+                return;
+            }
+            setError('');
             setStep(2);
         } else if (step === 2) {
             setStep(3);
@@ -53,8 +73,8 @@ export default function NewProjectPage() {
         } else if (step === 4) {
             setStep(5);
         } else if (step === 5) {
-            if (!formData.name) {
-                setError('El nombre del proyecto es obligatorio para continuar');
+            if (!formData.treatment_category) {
+                setError('Seleccione una tecnología para continuar');
                 return;
             }
             setError('');
@@ -84,6 +104,7 @@ export default function NewProjectPage() {
         setError('');
 
         try {
+            // 1. Create Project
             const { data: project, error: insertError } = await supabase
                 .from('projects')
                 .insert([
@@ -97,8 +118,6 @@ export default function NewProjectPage() {
                         project_level: formData.project_level,
                         treatment_category: formData.treatment_category,
                         decision_metadata: {
-                            estimated_population: formData.estimated_population || null,
-                            estimated_flow: formData.estimated_flow || null,
                             wizard_completed_at: new Date().toISOString()
                         },
                         status: 'Borrador'
@@ -110,6 +129,22 @@ export default function NewProjectPage() {
             if (insertError) throw insertError;
 
             if (project) {
+                // 2. Create Viability Matrix Persistence
+                const {
+                    project_domain, project_context, project_level, treatment_category,
+                    name, description, location, ...matrixInputs
+                } = formData;
+
+                const results = ViabilityEngine.calculateViability(formData.project_domain, matrixInputs as ViabilityMatrixInputs);
+
+                await supabase.from('project_viability_matrix').insert({
+                    project_id: project.id,
+                    ...matrixInputs,
+                    results,
+                    selected_technology: formData.treatment_category
+                });
+
+                // 3. Initialize Module Statuses
                 const moduleStatuses = RecommendationEngine.initializeModuleStatuses(
                     project.id,
                     formData.project_domain,
@@ -229,14 +264,62 @@ export default function NewProjectPage() {
                     <div style={{ height: '100%', backgroundColor: 'var(--color-primary)', width: `${(step / 6) * 100}%`, transition: 'width 0.3s ease' }} />
                 </div>
 
-                {error && <div style={{ backgroundColor: '#FEE2E2', color: 'var(--color-error)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', marginBottom: '1.5rem' }}>{error}</div>}
+                {error && (
+                    <div
+                        onClick={() => {
+                            if (error.includes('nombre')) setStep(1);
+                            if (error.includes('tecnología')) setStep(5);
+                        }}
+                        style={{
+                            backgroundColor: '#FEE2E2',
+                            color: 'var(--color-error)',
+                            padding: '1rem',
+                            borderRadius: 'var(--radius-md)',
+                            marginBottom: '1.5rem',
+                            cursor: (error.includes('nombre') || error.includes('tecnología')) ? 'pointer' : 'default',
+                            border: '1px solid var(--color-error)',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            fontSize: '0.9rem'
+                        }}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <span>⚠️</span>
+                            <span>{error}</span>
+                        </div>
+                        {(error.includes('nombre') || error.includes('tecnología')) && (
+                            <span style={{
+                                fontSize: '0.75rem',
+                                fontWeight: 800,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em',
+                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                padding: '0.25rem 0.5rem',
+                                borderRadius: '4px',
+                                textDecoration: 'underline'
+                            }}>
+                                Reparar ahora →
+                            </span>
+                        )}
+                    </div>
+                )}
 
                 <form onSubmit={handleFinalSubmit}>
-                    {step === 1 && <StepDomain value={formData.project_domain} onChange={(v: ProjectDomain) => setFormData({ ...formData, project_domain: v })} />}
-                    {step === 2 && <StepContext domain={formData.project_domain} value={formData.project_context} onChange={(v: ProjectContext) => setFormData({ ...formData, project_context: v })} />}
-                    {step === 3 && <StepLevel value={formData.project_level} onChange={(v: ProjectLevel) => setFormData({ ...formData, project_level: v })} />}
-                    {step === 4 && <StepTreatmentCategory domain={formData.project_domain} value={formData.treatment_category} onChange={(v: TreatmentCategory | null) => setFormData({ ...formData, treatment_category: v })} />}
-                    {step === 5 && <StepGeneralInfo formData={formData} onChange={handleChange} />}
+                    {step === 1 && <StepGeneralInfo formData={formData} onChange={handleChange} />}
+                    {step === 2 && <StepContextAndLevel
+                        context={formData.project_context}
+                        level={formData.project_level}
+                        onChange={(context: ProjectContext, level: ProjectLevel) => setFormData({ ...formData, project_context: context, project_level: level })}
+                    />}
+                    {step === 3 && <StepSocialTechnical formData={formData} onChange={(name: string, value: any) => setFormData({ ...formData, [name]: value })} />}
+                    {step === 4 && <StepEconomicEnvironmental formData={formData} onChange={(name: string, value: any) => setFormData({ ...formData, [name]: value })} />}
+                    {step === 5 && <StepTechnologySelection
+                        domain={formData.project_domain}
+                        formData={formData}
+                        value={formData.treatment_category}
+                        onChange={(v: TreatmentCategory | null) => setFormData({ ...formData, treatment_category: v })}
+                    />}
                     {step === 6 && <StepReview formData={formData} />}
 
                     <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem', justifyContent: 'space-between' }}>
@@ -317,7 +400,7 @@ function StepDomain({ value, onChange }: any) {
     );
 }
 
-function StepContext({ domain, value, onChange }: any) {
+function StepContextAndLevel({ context, level, onChange }: any) {
     const contexts = [
         { value: 'rural', title: '🏡 Rural', description: 'Acueductos rurales, comunidades pequeñas.' },
         { value: 'urban', title: '🏙️ Urbano', description: 'Sistemas municipales, ciudades.' },
@@ -326,42 +409,138 @@ function StepContext({ domain, value, onChange }: any) {
         { value: 'desalination', title: '🌊 Desalinización', description: 'Tratamiento de agua salobre o marina.' }
     ];
     return (
-        <div>
-            <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>2. Contexto del Proyecto</h2>
-            <p style={{ color: 'var(--color-gray-dark)', marginBottom: '1.5rem' }}>¿En qué entorno se desarrollará el diseño?</p>
-            <div style={{ display: 'grid', gap: '1rem' }}>
-                {contexts.map(c => <RadioCard key={c.value} name="context" value={c.value} checked={value === c.value} onChange={() => onChange(c.value)} title={c.title} description={c.description} />)}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <div>
+                <h2 style={{ fontSize: '1.25rem', marginBottom: '1rem' }}>2a. Contexto del Proyecto</h2>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    {contexts.map(c => (
+                        <RadioCard key={c.value} name="context" value={c.value} checked={context === c.value} onChange={() => onChange(c.value, level)} title={c.title} description={c.description} />
+                    ))}
+                </div>
+            </div>
+            <div>
+                <h2 style={{ fontSize: '1.25rem', marginBottom: '1rem' }}>2b. Nivel de Alcance</h2>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <RadioCard name="level" value="preliminary_assessment" checked={level === 'preliminary_assessment'} onChange={() => onChange(context, 'preliminary_assessment')} title="📋 Evaluación Preliminar" description="Diagnóstico inicial rápido." />
+                    <RadioCard name="level" value="complete_design" checked={level === 'complete_design'} onChange={() => onChange(context, 'complete_design')} title="📐 Diseño Completo" description="Dimensionamiento detallado." />
+                </div>
             </div>
         </div>
     );
 }
 
-function StepLevel({ value, onChange }: any) {
+function StepSocialTechnical({ formData, onChange }: any) {
     return (
         <div>
-            <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>3. Nivel de Detalle</h2>
-            <p style={{ color: 'var(--color-gray-dark)', marginBottom: '1.5rem' }}>¿Qué profundidad técnica requieres hoy?</p>
-            <div style={{ display: 'grid', gap: '1rem' }}>
-                <RadioCard name="level" value="preliminary_assessment" checked={value === 'preliminary_assessment'} onChange={() => onChange('preliminary_assessment')} title="📋 Evaluación Preliminar" description="Factibilidad y diagnóstico inicial rápido." />
-                <RadioCard name="level" value="complete_design" checked={value === 'complete_design'} onChange={() => onChange('complete_design')} title="📐 Diseño Técnico Completo" description="Dimensionamiento detallado bajo RAS 0330." />
+            <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>3. Entorno Social y Técnico</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                <SelectField label="Tipo de Asentamiento" name="settlement_type" value={formData.settlement_type} onChange={onChange} options={[
+                    { value: 'rural_disperso', label: 'Rural Disperso' },
+                    { value: 'rural_concentrado', label: 'Rural Concentrado' },
+                    { value: 'urbano', label: 'Urbano' },
+                    { value: 'industrial', label: 'Industrial' }
+                ]} />
+                <SelectField label="Acceso a Energía" name="energy_access" value={formData.energy_access} onChange={onChange} options={[
+                    { value: 'none', label: 'Nulo (Gravedad)' },
+                    { value: 'partial', label: 'Inestable' },
+                    { value: 'reliable', label: 'Confiable' }
+                ]} />
+                <SelectField label="Acceso a Químicos" name="chemical_access" value={formData.chemical_access} onChange={onChange} options={[
+                    { value: 'low', label: 'Difícil Acceso' },
+                    { value: 'medium', label: 'Regular' },
+                    { value: 'high', label: 'Garantizado' }
+                ]} />
+                <SelectField label="Organización Comunitaria" name="community_organization" value={formData.community_organization} onChange={onChange} options={[
+                    { value: 'low', label: 'Baja' },
+                    { value: 'medium', label: 'Media' },
+                    { value: 'high', label: 'Alta' }
+                ]} />
             </div>
         </div>
     );
 }
 
-function StepTreatmentCategory({ domain, value, onChange }: any) {
-    const categories = [
-        { value: 'fime', title: '🔄 FIME', description: 'Filtración en Múltiples Etapas.' },
-        { value: 'compact_plant', title: '⚗️ Planta Compacta', description: 'Coagulación + Filtración rápida PRFV.' },
-        { value: 'specific_plant', title: '🛠️ Diseño Custom', description: 'Dimensionamiento específico.' },
-    ];
+function StepEconomicEnvironmental({ formData, onChange }: any) {
     return (
         <div>
-            <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>4. Estrategia de Tratamiento</h2>
-            <div style={{ display: 'grid', gap: '1rem' }}>
-                {categories.map(c => <RadioCard key={c.value} name="category" value={c.value} checked={value === c.value} onChange={() => onChange(c.value)} title={c.title} description={c.description} />)}
-                <button type="button" onClick={() => onChange(null)} style={{ padding: '1.5rem', border: `2px solid ${value === null ? 'var(--color-primary)' : '#e5e7eb'}`, borderRadius: 'var(--radius-md)', background: value === null ? '#f0f7ff' : 'white', cursor: 'pointer', textAlign: 'left', width: '100%', fontWeight: 700 }}>⏭️ Definir más adelante</button>
+            <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>4. Viabilidad Económica y Ambiental</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                <SelectField label="Tolerancia Costos Operación (OpEx)" name="opex_tolerance" value={formData.opex_tolerance} onChange={onChange} options={[
+                    { value: 'low', label: 'Baja' },
+                    { value: 'medium', label: 'Media' },
+                    { value: 'high', label: 'Alta' }
+                ]} />
+                <SelectField label="Calidad de la Fuente" name="source_quality" value={formData.source_quality} onChange={onChange} options={[
+                    { value: 'good', label: 'Buena' },
+                    { value: 'fair', label: 'Regular' },
+                    { value: 'poor', label: 'Mala' }
+                ]} />
+                <SelectField label="Variabilidad Climática" name="climate_variability" value={formData.climate_variability} onChange={onChange} options={[
+                    { value: 'low', label: 'Baja' },
+                    { value: 'medium', label: 'Moderada' },
+                    { value: 'high', label: 'Alta' }
+                ]} />
+                <div className="input-group">
+                    <label className="label">Horizonte de Diseño (años)</label>
+                    <input type="number" className="input" value={formData.project_horizon} onChange={(e) => onChange('project_horizon', parseInt(e.target.value))} />
+                </div>
             </div>
+        </div>
+    );
+}
+
+function StepTechnologySelection({ domain, formData, value, onChange }: any) {
+    const [results, setResults] = useState<TechnologyViabilityResult[]>([]);
+
+    useEffect(() => {
+        const { project_domain, project_context, project_level, treatment_category, name, description, location, ...inputs } = formData;
+        const scores = ViabilityEngine.calculateViability(domain, inputs);
+        setResults(scores.sort((a, b) => b.scores.global - a.scores.global));
+    }, [formData, domain]);
+
+    return (
+        <div>
+            <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>5. Selección Tecnológica Sugerida</h2>
+            <p style={{ color: 'var(--color-gray-dark)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+                HydroStack ha calculado la viabilidad técnica para este entorno. Seleccione la tecnología que desea desarrollar.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {results.slice(0, 4).map(tech => (
+                    <label key={tech.category} style={{
+                        padding: '1rem',
+                        border: `2px solid ${value === tech.category ? 'var(--color-primary)' : '#e5e7eb'}`,
+                        borderRadius: 'var(--radius-md)',
+                        cursor: 'pointer',
+                        backgroundColor: value === tech.category ? '#f0f7ff' : 'white',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                    }}>
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                            <input type="radio" checked={value === tech.category} onChange={() => onChange(tech.category)} />
+                            <div>
+                                <div style={{ fontWeight: 700 }}>{tech.name}</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-dark)' }}>Viabilidad Global: {tech.scores.global}%</div>
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            {tech.scores.global > 80 && <span title="Alta compatibilidad" style={{ fontSize: '1.1rem' }}>🛡️</span>}
+                            {tech.scores.global < 40 && <span title="Riesgo de sostenibilidad" style={{ fontSize: '1.1rem' }}>⚠️</span>}
+                        </div>
+                    </label>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function SelectField({ label, name, value, onChange, options }: any) {
+    return (
+        <div className="input-group">
+            <label className="label">{label}</label>
+            <select className="input" value={value} onChange={(e) => onChange(name, e.target.value)} style={{ backgroundColor: 'white' }}>
+                {options.map((o: any) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
         </div>
     );
 }
@@ -369,11 +548,14 @@ function StepTreatmentCategory({ domain, value, onChange }: any) {
 function StepGeneralInfo({ formData, onChange }: any) {
     return (
         <div>
-            <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>5. Datos de Identificación</h2>
+            <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>1. Identificación del Proyecto</h2>
             <div style={{ display: 'grid', gap: '1.5rem' }}>
-                <Input id="name" name="name" label="Nombre del Proyecto *" value={formData.name} onChange={onChange} required />
-                <Input id="location" name="location" label="Localización" value={formData.location} onChange={onChange} />
-                <textarea id="description" name="description" placeholder="Descripción breve del alcance..." className="input" value={formData.description} onChange={onChange} rows={4} style={{ fontFamily: 'inherit' }} />
+                <Input id="name" name="name" label="Nombre del Proyecto *" value={formData.name} onChange={onChange} required placeholder="Ej: Acueducto Vereda El Salitre" />
+                <Input id="location" name="location" label="Localización" value={formData.location} onChange={onChange} placeholder="Municipio, Departamento" />
+                <div className="input-group">
+                    <label className="label">Descripción del Alcance</label>
+                    <textarea id="description" name="description" placeholder="Describa brevemente el propósito del sistema..." className="input" value={formData.description} onChange={onChange} rows={3} style={{ fontFamily: 'inherit' }} />
+                </div>
             </div>
         </div>
     );
@@ -382,13 +564,17 @@ function StepGeneralInfo({ formData, onChange }: any) {
 function StepReview({ formData }: any) {
     return (
         <div>
-            <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>6. Validación de Configuración</h2>
+            <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>6. Resumen de Ingeniería</h2>
             <div style={{ padding: '2rem', backgroundColor: '#f9fafb', borderRadius: 'var(--radius-md)', border: '1px solid #e5e7eb' }}>
-                <p style={{ fontWeight: 800, color: 'var(--color-primary)', marginBottom: '1rem' }}>SISTEMA DE ASISTENCIA ACTIVADO</p>
+                <div style={{ marginBottom: '1.5rem' }}>
+                    <p style={{ fontSize: '0.7rem', textTransform: 'uppercase', fontWeight: 800, color: 'var(--color-primary)', letterSpacing: '0.05em' }}>Proyecto</p>
+                    <p style={{ fontSize: '1.25rem', fontWeight: 700 }}>{formData.name}</p>
+                </div>
                 <ul style={{ listStyle: 'none', padding: 0, fontSize: '0.95rem' }}>
-                    <li style={{ marginBottom: '0.5rem' }}><strong>Dominio:</strong> {DOMAIN_LABELS[formData.project_domain as ProjectDomain]}</li>
-                    <li style={{ marginBottom: '0.5rem' }}><strong>Contexto:</strong> {CONTEXT_LABELS[formData.project_context as ProjectContext]}</li>
-                    <li style={{ marginBottom: '0.5rem' }}><strong>Alcance:</strong> {LEVEL_LABELS[formData.project_level as ProjectLevel]}</li>
+                    <li style={{ marginBottom: '0.8rem' }}><strong>Dominio:</strong> {DOMAIN_LABELS[formData.project_domain as ProjectDomain]}</li>
+                    <li style={{ marginBottom: '0.8rem' }}><strong>Contexto:</strong> {CONTEXT_LABELS[formData.project_context as ProjectContext]}</li>
+                    <li style={{ marginBottom: '0.8rem' }}><strong>Nivel:</strong> {LEVEL_LABELS[formData.project_level as ProjectLevel]}</li>
+                    <li style={{ marginBottom: '0.8rem' }}><strong>Tecnología:</strong> {formData.treatment_category ? CATEGORY_LABELS[formData.treatment_category as TreatmentCategory] : 'Sin definir'}</li>
                 </ul>
             </div>
         </div>

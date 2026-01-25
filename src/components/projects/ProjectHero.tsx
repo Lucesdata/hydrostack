@@ -82,22 +82,24 @@ export default function ProjectHero({ projectId }: { projectId: string }) {
                 {project.project_domain === 'water_treatment' && project.project_context === 'rural' && (
                     <div style={{
                         marginTop: '1.5rem',
-                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        backgroundColor: project.treatment_category === 'fime' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.1)',
                         backdropFilter: 'blur(8px)',
                         padding: '1.25rem',
                         borderRadius: 'var(--radius-md)',
-                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        border: project.treatment_category === 'fime' ? '2px solid rgba(16, 185, 129, 0.6)' : '1px solid rgba(255, 255, 255, 0.2)',
                         display: 'flex',
                         gap: '1rem',
                         alignItems: 'flex-start'
                     }}>
-                        <span style={{ fontSize: '1.5rem' }}>🏡</span>
+                        <span style={{ fontSize: '1.5rem' }}>{project.treatment_category === 'fime' ? '🛡️' : '🏡'}</span>
                         <div>
-                            <p style={{ fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>
-                                Contexto rural identificado
+                            <p style={{ fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.25rem', color: project.treatment_category === 'fime' ? '#34d399' : 'white' }}>
+                                {project.treatment_category === 'fime' ? 'CERTIFICACIÓN: FIME BASELINE V1.0 - CASO DE USO NORMATIVO' : 'CONTEXTO RURAL IDENTIFICADO'}
                             </p>
                             <p style={{ fontSize: '0.85rem', lineHeight: 1.5, opacity: 0.9 }}>
-                                Este proyecto se desarrolla en un entorno rural. HydroStack priorizará soluciones de tratamiento robustas, de operación simple y sostenibles en el tiempo. Puedes ajustar o sobreescribir cualquier recomendación técnica según la realidad del sistema.
+                                {project.treatment_category === 'fime'
+                                    ? 'Este proyecto ha sido declarado como Tecnología Base para Proyectos Rurales. El sistema aplica el motor de dimensionamiento completo auditado según RAS/OMS. La soberanía del ingeniero es total para el ajuste fino de cada componente.'
+                                    : 'Este proyecto se desarrolla en un entorno rural. HydroStack priorizará soluciones de tratamiento robustas, de operación simple y sostenibles en el tiempo. Puedes ajustar o sobreescribir cualquier recomendación técnica según la realidad del sistema.'}
                             </p>
                         </div>
                     </div>

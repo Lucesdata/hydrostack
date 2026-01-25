@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { Project, ModuleKey, ModuleStatus, ProjectModuleStatus } from '@/types/project';
 import { RecommendationEngine } from '@/lib/recommendation-engine';
+import { NarrativeEngine } from '@/lib/narrative-engine';
 import { useRouter } from 'next/navigation';
 
 /**
@@ -22,6 +23,7 @@ export default function ModuleWarning({
     const [isSaving, setIsSaving] = useState(false);
     const [auditObservations, setAuditObservations] = useState<string[]>([]);
     const [project, setProject] = useState<Project | null>(null);
+    const [pedagogy, setPedagogy] = useState<{ rationale: string; implication: string } | null>(null);
     const router = useRouter();
     const supabase = createClient();
 
@@ -72,6 +74,10 @@ export default function ModuleWarning({
                 };
                 const observations = RecommendationEngine.performTechnicalAudit(proj as Project, auditData);
                 setAuditObservations(observations);
+
+                // Get Pedagogical Narrative Phase C
+                const narrative = NarrativeEngine.getModuleRecommendationRationale(moduleKey, proj as Project);
+                setPedagogy(narrative);
             }
 
             if (status) {
@@ -236,6 +242,33 @@ export default function ModuleWarning({
                                 <span style={{ fontSize: '1.25rem' }}>🎓</span>
                                 <div style={{ fontSize: '0.9rem', color: '#475569', lineHeight: 1.5 }}>
                                     {adaptations.help_text}
+                                </div>
+                            </div>
+                        )}
+
+                        {pedagogy && (
+                            <div style={{
+                                backgroundColor: '#F0FDF4',
+                                border: '1px solid #BBF7D0',
+                                padding: '1.25rem',
+                                borderRadius: 'var(--radius-md)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.75rem'
+                            }}>
+                                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '1.25rem' }}>🧠</span>
+                                    <p style={{ fontSize: '0.75rem', fontWeight: 800, color: '#166534', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                        Soberanía del Ingeniero y Racional Técnico:
+                                    </p>
+                                </div>
+                                <div style={{ paddingLeft: '2rem' }}>
+                                    <p style={{ fontSize: '0.9rem', color: '#14532D', marginBottom: '0.5rem', fontWeight: 500 }}>
+                                        {pedagogy.rationale}
+                                    </p>
+                                    <p style={{ fontSize: '0.85rem', color: '#166534', opacity: 0.9, borderTop: '1px solid #DCFCE7', paddingTop: '0.5rem', fontStyle: 'italic' }}>
+                                        <strong>Implicación de la decisión:</strong> {pedagogy.implication}
+                                    </p>
                                 </div>
                             </div>
                         )}

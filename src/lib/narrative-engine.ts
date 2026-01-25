@@ -30,6 +30,18 @@ export class NarrativeEngine {
         jar_test: 'Ensayo de Jarras',
         filtro_lento: 'Filtración Lenta',
         compact_design: 'Ingeniería Compacta',
+        fime_pretratamiento: 'E1. Pretratamiento FIME',
+        fime_grueso_dinamico: 'E2. Filtro Grueso Dinámico',
+        fime_grueso_asdesc: 'E3. Filtro Grueso Asc/Des',
+        fime_lento_arena: 'E4. Filtro Lento de Arena',
+        fime_hidraulica: 'E5. Hidráulica Integrada',
+        fime_implantacion: 'E6. Layout e Implantación',
+        fime_balance_masas: 'E7. Balance de Masas',
+        compact_mixing: 'E1. Mezcla Rápida (PC)',
+        compact_flocculation: 'E2. Floculación (PC)',
+        compact_sedimentation: 'E3. Sedimentación (PC)',
+        compact_filtration: 'E4. Filtración Rápida (PC)',
+        compact_disinfection: 'E5. Desinfección CT (PC)',
         costs: 'Costos OpEx',
         viability: 'Viabilidad y O&M',
         tech_selection: 'Selección de Tecnología'
@@ -106,7 +118,12 @@ export class NarrativeEngine {
         let narrative = "";
 
         if (isRural) {
-            narrative += "La selección de la tecnología de tratamiento se realizó considerando la calidad de la fuente, el nivel de riesgo sanitario y el contexto rural del sistema. Se priorizó un esquema de tratamiento basado en barreras múltiples y operación simplificada, buscando sostenibilidad técnica y operativa en el tiempo. ";
+            narrative += "La selección de la tecnología de tratamiento se realizó considerando la calidad de la fuente, el nivel de riesgo sanitario y el contexto rural del sistema. ";
+            if (project?.treatment_category === 'fime') {
+                narrative += "El sistema de tratamiento fue diseñado bajo el esquema de Filtración en Múltiples Etapas (FIME), adecuado para contextos rurales por su operación simple y alta resiliencia. El diseño evita el uso de productos químicos, apoyándose en procesos físicos y biológicos para la remoción de contaminantes. ";
+            } else {
+                narrative += "Se priorizó un esquema de tratamiento basado en barreras múltiples y operación simplificada, buscando sostenibilidad técnica y operativa en el tiempo. ";
+            }
         }
 
         if (compact) {
@@ -132,5 +149,53 @@ export class NarrativeEngine {
 
         const gravity = viability.gravity_arrival ? "conducción por gravedad" : "requerimiento de bombeo";
         return `En términos de viabilidad de sitio, el proyecto aprovecha una ${gravity}, lo que impacta positivamente en el O&M. Se han validado factores críticos como la estabilidad geológica del lote y la capacidad de evacuación de lodos. El plan de mantenimiento se ha establecido bajo una frecuencia cíclica que minimiza los periodos de fuera de servicio del sistema.`;
+    }
+
+    /**
+     * BLOQUE C: Pedagogía Técnica y Consecuencias de Decisión
+     * Explica por qué se recomienda una tecnología y qué implica la soberanía del ingeniero.
+     */
+    static getModuleRecommendationRationale(moduleKey: ModuleKey, project: Project): { rationale: string; implication: string } {
+        const isRural = project.project_context === 'rural';
+        const category = project.treatment_category;
+
+        // Base cases for FIME
+        if (category === 'fime') {
+            if (moduleKey === 'fime_lento_arena') {
+                return {
+                    rationale: 'El FLA es el corazón sanitario del sistema FIME. Su diseño de baja tasa asegura la formación biológica necesaria para remover patógenos sin cloro constante.',
+                    implication: 'Seguir la sugerencia de baja velocidad (< 0.2 m/h) garantiza la seguridad del agua. Aumentar la velocidad por encima de esto compromete la barrera microbiológica y la salud pública.'
+                };
+            }
+            if (moduleKey === 'fime_pretratamiento') {
+                return {
+                    rationale: 'En sistemas rurales, el pretratamiento protege la inversión. Remueve picos de turbiedad que de otro modo colmatarían los filtros biológicos.',
+                    implication: 'Omitir las unidades de protección obliga a limpiezas manuales frecuentes y reduce la vida útil de los materiales filtrantes caros.'
+                };
+            }
+        }
+
+        // Base cases for Compact Plant
+        if (category === 'compact_plant') {
+            if (moduleKey === 'compact_mixing') {
+                return {
+                    rationale: 'La mezcla rápida es crítica para la eficiencia del coagulante. En plantas de alta tasa, los segundos de contacto definen el éxito del tren completo.',
+                    implication: 'Un diseño deficiente en esta etapa aumentará drásticamente el consumo de químicos y el costo operativo mensual (OpEx) del sistema.'
+                };
+            }
+        }
+
+        // Generic context-based rationale
+        if (isRural && moduleKey === 'quality') {
+            return {
+                rationale: 'La variabilidad estacional en cuencas rurales exige un conocimiento profundo del afluente bajo escenarios de lluvia.',
+                implication: 'Un diseño basado solo en datos promedio puede fallar catastróficamente durante el primer invierno del proyecto.'
+            };
+        }
+
+        return {
+            rationale: 'Sugerencia técnica basada en los lineamientos del RAS 0330 y las mejores prácticas de ingeniería rural.',
+            implication: 'La soberanía del ingeniero permite ajustar estos parámetros según la topografía y logística local, bajo su responsabilidad profesional.'
+        };
     }
 }

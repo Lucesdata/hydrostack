@@ -38,6 +38,16 @@ export default function ModuleNavigation({ projectId, currentModuleKey }: Module
         { label: 'Ensayo de Jarras', href: `/dashboard/projects/${projectId}/jar-test`, moduleKey: 'jar_test', block: 'Bloque E: Tratamiento' },
         { label: 'Filtro Lento', href: `/dashboard/projects/${projectId}/filtro-lento`, moduleKey: 'filtro_lento', block: 'Bloque E: Tratamiento' },
         { label: 'Ingeniería Compacta', href: `/dashboard/projects/${projectId}/compact-design`, moduleKey: 'compact_design', block: 'Bloque E: Tratamiento' },
+
+        // BLOQUE E: FIME (Subflujo específico)
+        { label: 'Pretratamiento FIME', href: `/dashboard/projects/${projectId}/fime-pretratamiento`, moduleKey: 'fime_pretratamiento', block: 'Bloque E: Tratamiento' },
+        { label: 'Filtro Grueso Dinámico', href: `/dashboard/projects/${projectId}/fime-grueso-dinamico`, moduleKey: 'fime_grueso_dinamico', block: 'Bloque E: Tratamiento' },
+        { label: 'Filtro Grueso Asc/Des', href: `/dashboard/projects/${projectId}/fime-grueso-asdesc`, moduleKey: 'fime_grueso_asdesc', block: 'Bloque E: Tratamiento' },
+        { label: 'Filtro Lento de Arena', href: `/dashboard/projects/${projectId}/fime-lento-arena`, moduleKey: 'fime_lento_arena', block: 'Bloque E: Tratamiento' },
+        { label: 'Hidráulica Integrada', href: `/dashboard/projects/${projectId}/fime-hidraulica`, moduleKey: 'fime_hidraulica', block: 'Bloque E: Tratamiento' },
+        { label: 'Layout e Implantación', href: `/dashboard/projects/${projectId}/fime-implantacion`, moduleKey: 'fime_implantacion', block: 'Bloque E: Tratamiento' },
+        { label: 'Balance de Masas', href: `/dashboard/projects/${projectId}/fime-balance-masas`, moduleKey: 'fime_balance_masas', block: 'Bloque E: Tratamiento' },
+
         { label: 'Costos (OpEx)', href: `/dashboard/projects/${projectId}/costs`, moduleKey: 'costs', block: 'Bloque F: Evaluación' },
         { label: 'Viability y O&M', href: `/dashboard/projects/${projectId}/viability`, moduleKey: 'viability', block: 'Bloque F: Evaluación' },
         { label: 'Selección de Tecnología', href: `/dashboard/projects/${projectId}/tech-selection`, moduleKey: 'tech_selection', block: 'Bloque F: Evaluación' },
