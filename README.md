@@ -4,6 +4,8 @@
 
 HYDROSTACK es un entorno integral que acompaña a comunidades, acueductos rurales, ingenieros y empresas en la formulación y gestión de proyectos de agua potable, desde soluciones comunitarias hasta sistemas industriales.
 
+![HydroStack Logic](./docs/assets/quality_layer_summary.png)
+
 ## 🚀 Características
 
 - **Landing Page Profesional**: Diseño minimalista y técnico que comunica la visión y el alcance de la plataforma.
