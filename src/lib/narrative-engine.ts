@@ -142,6 +142,31 @@ export class NarrativeEngine {
     }
 
     /**
+     * BLOQUE G: Blindaje Sanitario (Nuevo Eje Transversal)
+     */
+    static generateSanitaryShieldNarrative(quality: any, project: Project): string {
+        if (!quality || !quality.turbidity || !quality.fecal_coliforms) return "El análisis de blindaje sanitario se encuentra pendiente de datos de entrada.";
+
+        const isFime = project.treatment_category === 'fime';
+        const complexity = quality.complexity_level || 'media';
+
+        let narrative = `Análisis de Blindaje Sanitario y Multibarreras:\n\n`;
+        narrative += `La fuente de abastecimiento presenta una calidad ${complexity === 'alta' ? 'crítica' : complexity === 'media' ? 'regular' : 'aceptable'}, con una carga de turbiedad de ${quality.turbidity} UNT y riesgo microbiológico de ${quality.fecal_coliforms} UFC/100ml. `;
+
+        if (isFime) {
+            narrative += `Para mitigar este riesgo, el sistema FIME actúa como una secuencia de barreras de atenuación. El Filtro Grueso Dinámico actúa como primera línea de defensa para picos de sólidos, seguido por la biofiltración gruesa y fina. El objetivo de diseño es alcanzar una reducción acumulada superior a 4-Logs en patógenos antes de la desinfección final. `;
+        } else {
+            narrative += `El tren de tratamiento propuesto integra procesos físico-químicos de alta tasa para garantizar la reducción de carga antes de la desinfección. `;
+        }
+
+        if (quality.irca_score) {
+            narrative += `El Índice de Riesgo de Calidad de Agua (IRCA) calculado inicialmente es del ${quality.irca_score}%, lo que exige una eficiencia de remoción superior al 95% en los procesos de clarificación y filtración.`;
+        }
+
+        return narrative;
+    }
+
+    /**
      * BLOQUE F: Viabilidad Operativa y Cierre
      */
     static generateViabilityJustification(viability: any): string {

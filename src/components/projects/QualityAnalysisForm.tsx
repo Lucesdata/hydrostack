@@ -5,7 +5,8 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
-import { calculateIRCA, getIrcaClassification, LEGAL_LIMITS } from '@/utils/irca-utils';
+import { WaterQualityEngine } from '@/lib/water-quality-engine';
+import { WaterQualityState } from '@/types/project';
 
 export default function QualityAnalysisForm({
     projectId,
@@ -32,7 +33,8 @@ export default function QualityAnalysisForm({
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const [saved, setSaved] = useState(false);
-    const [ircaResult, setIrcaResult] = useState({ score: 0, classification: getIrcaClassification(0) });
+    const [ircaResult, setIrcaResult] = useState({ score: 0, classification: { level: '', color: '', action: '' } });
+    const [complexity, setComplexity] = useState<'baja' | 'media' | 'alta'>('baja');
 
     const router = useRouter();
     const supabase = createClient();
@@ -45,8 +47,20 @@ export default function QualityAnalysisForm({
             if (!isNaN(val)) params[key] = val;
         });
 
-        const score = calculateIRCA(params);
-        setIrcaResult({ score, classification: getIrcaClassification(score) });
+        // Use new Engine
+        const result = WaterQualityEngine.calculateIRCA(params as WaterQualityState);
+        setIrcaResult({
+            score: result.score,
+            classification: {
+                level: result.risk_level,
+                color: result.color,
+                action: result.label
+            }
+        });
+
+        const comp = WaterQualityEngine.classifyComplexity(params as WaterQualityState);
+        setComplexity(comp);
+
     }, [formData]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,10 +72,12 @@ export default function QualityAnalysisForm({
         if (isNaN(val)) return false;
 
         if (name === 'ph') {
-            return val < LEGAL_LIMITS.ph.min || val > LEGAL_LIMITS.ph.max;
+            return val < 6.5 || val > 9.0;
         }
 
-        const limit = (LEGAL_LIMITS as any)[name];
+        // Límites hardcoded por ahora para UX rápida (idealmente traer del Engine, pero requiere refactor de acceso)
+        const limits: any = { turbidity: 2, color: 15, total_coliforms: 0, fecal_coliforms: 0, iron: 0.3 };
+        const limit = limits[name];
         return limit !== undefined && val > limit;
     };
 
@@ -74,6 +90,7 @@ export default function QualityAnalysisForm({
         const numericData: any = {
             project_id: projectId,
             irca_score: ircaResult.score,
+            complexity_level: complexity,
             updated_at: new Date().toISOString()
         };
 
@@ -163,8 +180,24 @@ export default function QualityAnalysisForm({
                     borderRadius: 'var(--radius-md)',
                     border: `1px solid ${ircaResult.classification.color}`
                 }}>
-                    <h4 style={{ fontWeight: 700, marginBottom: '0.5rem', fontSize: '0.95rem' }}>Acción Recomendada:</h4>
+                    <h4 style={{ fontWeight: 700, marginBottom: '0.5rem', fontSize: '0.95rem' }}>Diagnóstico:</h4>
                     <p style={{ fontSize: '0.85rem', color: 'var(--color-gray-dark)' }}>{ircaResult.classification.action}</p>
+
+                    <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>
+                        <h4 style={{ fontWeight: 700, marginBottom: '0.25rem', fontSize: '0.85rem' }}>Complejidad de Tratamiento:</h4>
+                        <span style={{
+                            display: 'inline-block',
+                            padding: '0.25rem 0.75rem',
+                            borderRadius: '1rem',
+                            fontSize: '0.75rem',
+                            fontWeight: 800,
+                            textTransform: 'uppercase',
+                            backgroundColor: complexity === 'alta' ? '#FEE2E2' : complexity === 'media' ? '#FEF3C7' : '#D1FAE5',
+                            color: complexity === 'alta' ? '#991B1B' : complexity === 'media' ? '#92400E' : '#065F46'
+                        }}>
+                            {complexity}
+                        </span>
+                    </div>
 
                     <div style={{ marginTop: '1.5rem', fontSize: '0.75rem', color: 'var(--color-gray-dark)', borderTop: '1px solid var(--color-gray-medium)', paddingTop: '1rem' }}>
                         <p><strong>Nota:</strong> Este cálculo se basa en la Res. 2115 de 2007 para Colombia.</p>

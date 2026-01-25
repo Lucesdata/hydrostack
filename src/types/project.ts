@@ -142,6 +142,44 @@ export interface TechnologyViabilityResult {
 }
 
 /**
+ * Estado dinámico de la calidad del agua
+ */
+export interface WaterQualityState {
+    ph: number;
+    turbidity: number;
+    color: number;
+    total_coliforms: number;
+    fecal_coliforms: number;
+    iron: number;
+    alkalinity: number;
+    hardness: number;
+}
+
+/**
+ * Resultado de cálculo IRCA
+ */
+export interface IRCAResult {
+    score: number;
+    risk_level: 'SIN RIESGO' | 'RIESGO BAJO' | 'RIESGO MEDIO' | 'RIESGO ALTO' | 'INVIABLE';
+    color: string;
+    label: string;
+    sanitary_status: 'Apto' | 'Condicionado' | 'No Apto';
+}
+
+/**
+ * Paso en la trayectoria de calidad (Evolución)
+ */
+export interface QualityEvolutionStep {
+    module_key: ModuleKey;
+    label: string;
+    input_quality: WaterQualityState;
+    output_quality: WaterQualityState;
+    removal_percentages: Partial<Record<keyof WaterQualityState, number>>;
+    irca_after: IRCAResult;
+    timestamp: string;
+}
+
+/**
  * Proyecto con campos del diagrama de decisión
  */
 export interface Project {

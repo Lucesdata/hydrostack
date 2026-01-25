@@ -1,4 +1,5 @@
 import { createClient } from '@/utils/supabase/server';
+import { WaterQualityEngine } from '@/lib/water-quality-engine';
 
 export default async function ProjectSummary({ projectId }: { projectId: string }) {
     const supabase = await createClient();
@@ -99,7 +100,24 @@ export default async function ProjectSummary({ projectId }: { projectId: string 
                             {quality && (
                                 <>
                                     <li><strong>Análisis:</strong> {quality.has_analysis}</li>
-                                    {quality.irca_score !== null && <li><strong>IRCA:</strong> {quality.irca_score.toFixed(1)}%</li>}
+                                    {quality.irca_score !== null && (
+                                        <li style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <span style={{
+                                                backgroundColor: quality.irca_score > 80 ? '#fecaca' : quality.irca_score > 35 ? '#fde68a' : '#bbf7d0',
+                                                color: quality.irca_score > 80 ? '#991b1b' : quality.irca_score > 35 ? '#92400e' : '#166534',
+                                                fontSize: '0.65rem',
+                                                fontWeight: 800,
+                                                padding: '0.1rem 0.4rem',
+                                                borderRadius: '4px',
+                                                border: '1px solid currentColor'
+                                            }}>
+                                                IRCA {quality.irca_score.toFixed(0)}%
+                                            </span>
+                                            <span style={{ fontSize: '0.7rem', fontWeight: 700 }}>
+                                                {quality.complexity_level === 'alta' ? 'Alta Complejidad' : quality.complexity_level === 'media' ? 'Media Comp.' : 'Baja Comp.'}
+                                            </span>
+                                        </li>
+                                    )}
                                 </>
                             )}
                         </ul>

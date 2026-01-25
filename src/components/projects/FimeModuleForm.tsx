@@ -8,6 +8,7 @@ import ModuleWarning from '@/components/projects/ModuleWarning';
 import ModuleNavigation from '@/components/projects/ModuleNavigation';
 import { ModuleKey } from '@/types/project';
 import { FimeEngine } from '@/lib/fime-engine';
+import QualityEvolutionWidget from './QualityEvolutionWidget';
 
 interface FimeModuleFormProps {
     projectId: string;
@@ -130,10 +131,20 @@ export default function FimeModuleForm({
                                 {quality && (
                                     <>
                                         <p><strong>Turbiedad Fuente:</strong> {quality.turbidity || 'N/A'} UNT</p>
-                                        <p><strong>Riesgo (Coli):</strong> {quality.coli_fecal || 'N/A'} UFC</p>
+                                        <p><strong>Riesgo (Coli):</strong> {quality.fecal_coliforms || 'N/A'} UFC</p>
                                     </>
                                 )}
                             </div>
+
+                            {/* Widget de Evolución de Calidad */}
+                            {quality && (
+                                <div style={{ marginTop: '1.5rem' }}>
+                                    <QualityEvolutionWidget
+                                        projectId={projectId}
+                                        moduleKey={moduleKey}
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
