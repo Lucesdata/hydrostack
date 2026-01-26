@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { createClient } from '@/utils/supabase/client';
@@ -491,12 +491,10 @@ function StepEconomicEnvironmental({ formData, onChange }: any) {
 }
 
 function StepTechnologySelection({ domain, formData, value, onChange }: any) {
-    const [results, setResults] = useState<TechnologyViabilityResult[]>([]);
-
-    useEffect(() => {
+    const results = useMemo(() => {
         const { project_domain, project_context, project_level, treatment_category, name, description, location, ...inputs } = formData;
         const scores = ViabilityEngine.calculateViability(domain, inputs);
-        setResults(scores.sort((a, b) => b.scores.global - a.scores.global));
+        return scores.sort((a, b) => b.scores.global - a.scores.global);
     }, [formData, domain]);
 
     return (

@@ -25,6 +25,34 @@ type REPORT_DATA = {
     quality: any;
 };
 
+const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
+    <div style={{ marginBottom: '2.5rem', breakInside: 'avoid' }}>
+        <h3 style={{
+            fontSize: '1.1rem',
+            fontWeight: 700,
+            color: 'var(--color-primary)',
+            borderBottom: '2px solid var(--color-primary-light)',
+            paddingBottom: '0.5rem',
+            marginBottom: '1rem',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em'
+        }}>
+            {title}
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+            {children}
+        </div>
+    </div>
+);
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const DataPoint = ({ label, value }: { label: string; value: any }) => (
+    <div style={{ marginBottom: '0.5rem' }}>
+        <p style={{ fontSize: '0.8rem', color: 'var(--color-gray-dark)', fontWeight: 600, marginBottom: '0.1rem' }}>{label}</p>
+        <p style={{ fontSize: '1rem', color: 'var(--color-foreground)' }}>{value || 'No reportado'}</p>
+    </div>
+);
+
 export default function ProjectReport({ data }: { data: REPORT_DATA }) {
     const { project, calculations, source, consumption, quality } = data;
 
@@ -63,32 +91,6 @@ export default function ProjectReport({ data }: { data: REPORT_DATA }) {
     const opMonthlyTotal = (alumMonthlyKg * priceAlum) + (chlorineMonthlyKg * priceCl) + salary + energy;
     const opCostPerM3 = prodMensualM3 > 0 ? opMonthlyTotal / prodMensualM3 : 0;
 
-    const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-        <div style={{ marginBottom: '2.5rem', breakInside: 'avoid' }}>
-            <h3 style={{
-                fontSize: '1.1rem',
-                fontWeight: 700,
-                color: 'var(--color-primary)',
-                borderBottom: '2px solid var(--color-primary-light)',
-                paddingBottom: '0.5rem',
-                marginBottom: '1rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-            }}>
-                {title}
-            </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
-                {children}
-            </div>
-        </div>
-    );
-
-    const DataPoint = ({ label, value }: { label: string; value: any }) => (
-        <div style={{ marginBottom: '0.5rem' }}>
-            <p style={{ fontSize: '0.8rem', color: 'var(--color-gray-dark)', fontWeight: 600, marginBottom: '0.1rem' }}>{label}</p>
-            <p style={{ fontSize: '1rem', color: 'var(--color-foreground)' }}>{value || 'No reportado'}</p>
-        </div>
-    );
 
     return (
         <div className="report-container" style={{ maxWidth: '900px', margin: '0 auto', backgroundColor: 'white', padding: '3rem', borderRadius: 'var(--radius-lg)', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
