@@ -20,13 +20,13 @@ export default function Navbar() {
             zIndex: 100
         }}>
             <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Link href="/" style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-primary)' }}>
+                <Link href="/dashboard/new" style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-primary)' }}>
                     HYDROSTACK
                 </Link>
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                     {user ? (
                         <>
-                            <Link href="/dashboard" style={{ fontWeight: 500, marginRight: '1rem' }}>
+                            <Link href="/dashboard/new" style={{ fontWeight: 500, marginRight: '1rem' }}>
                                 Hola, {user.user_metadata?.name || 'Usuario'}
                             </Link>
                             <Button variant="secondary" onClick={() => logout()}>Cerrar sesión</Button>

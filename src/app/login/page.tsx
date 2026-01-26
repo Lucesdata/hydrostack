@@ -33,7 +33,7 @@ export default function LoginPage() {
 
             if (signInError) throw signInError;
 
-            router.push('/dashboard');
+            router.push('/dashboard/new');
         } catch (err: any) {
             setError(err.message || 'Error al iniciar sesión. Verifique sus credenciales.');
         } finally {

@@ -201,7 +201,8 @@ export default function NewProjectPage() {
                     />
                 </div>
                 <div style={{ marginTop: '4rem', textAlign: 'center' }}>
-                    <Button variant="outline" onClick={() => router.push('/dashboard')}>Volver al Dashboard</Button>
+                    <p style={{ marginBottom: '1rem', color: 'var(--color-gray-dark)', fontSize: '0.9rem' }}>¿Ya tienes proyectos en curso?</p>
+                    <Button variant="outline" onClick={() => router.push('/dashboard')}>Ver mis proyectos existentes</Button>
                 </div>
             </div>
         );

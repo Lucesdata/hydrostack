@@ -66,13 +66,13 @@ export default function DashboardPage() {
         <div className="container" style={{ padding: '4rem 1rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <div>
-                    <h1 style={{ color: 'var(--color-primary)', fontSize: '2rem', marginBottom: '0.5rem' }}>Mis Proyectos</h1>
+                    <h1 style={{ color: 'var(--color-primary)', fontSize: '2rem', marginBottom: '0.5rem' }}>Mis Proyectos Existentes</h1>
                     <p style={{ color: 'var(--color-gray-dark)' }}>
-                        Hola, <strong>{user.user_metadata?.name}</strong>
+                        Administra y consulta tus diseños guardados.
                     </p>
                 </div>
                 <Link href="/dashboard/new">
-                    <Button>+ Nuevo Proyecto</Button>
+                    <Button variant="secondary">← Volver al inicio</Button>
                 </Link>
             </div>
 
