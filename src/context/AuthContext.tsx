@@ -25,17 +25,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         // Check active session
         const checkSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            setUser(session?.user ?? null);
-            setLoading(false);
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (error) throw error;
+                setUser(session?.user ?? null);
+            } catch (error: any) {
+                console.error("Auth session check failed:", error);
+                if (error.message?.includes('Refresh Token') || error.code === 'invalid_grant') {
+                    // Token is invalid, clear storage and state
+                    await supabase.auth.signOut();
+                    setUser(null);
+                }
+            } finally {
+                setLoading(false);
+            }
         };
 
         checkSession();
 
         // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
             setUser(session?.user ?? null);
             setLoading(false);
+
             if (_event === 'SIGNED_IN') router.push('/dashboard/new');
             if (_event === 'SIGNED_OUT') {
                 router.push('/');
