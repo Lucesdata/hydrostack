@@ -1,6 +1,13 @@
+"use client";
+
 import React from 'react';
 
+import { usePathname } from 'next/navigation';
+
 export default function Footer() {
+    const pathname = usePathname();
+    if (pathname === '/') return null;
+
     return (
         <footer style={{
             padding: '2rem 0',
