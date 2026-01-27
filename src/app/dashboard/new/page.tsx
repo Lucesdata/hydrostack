@@ -250,7 +250,7 @@ export default function NewProjectPage() {
 
     // Wizard Stage
     return (
-        <div className="container" style={{ maxWidth: '800px', padding: '4rem 1rem' }}>
+        <div className="container" style={{ maxWidth: '800px', padding: '4rem 1rem', color: 'var(--color-text-on-white)' }}>
             <div style={{ backgroundColor: 'white', padding: '2.5rem', borderRadius: 'var(--radius-lg)', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
                 <div style={{ marginBottom: '2rem' }}>
                     <h1 style={{ color: 'var(--color-primary)', marginBottom: '0.5rem' }}>
@@ -374,7 +374,7 @@ function IntentCard({ title, description, buttonText, onClick, disabled, badge, 
                 </span>
             )}
             <div>
-                <h3 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '1.25rem', color: primary ? 'var(--color-primary)' : 'var(--color-foreground)' }}>{title}</h3>
+                <h3 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '1.25rem', color: primary ? 'var(--color-primary)' : 'var(--color-text-on-white)' }}>{title}</h3>
                 <p style={{ color: 'var(--color-gray-dark)', fontSize: '1rem', lineHeight: 1.6, marginBottom: '2rem' }}>{description}</p>
             </div>
             <Button
@@ -585,7 +585,7 @@ function RadioCard({ name, value, checked, onChange, title, description }: any) 
         <label style={{ display: 'flex', gap: '1rem', padding: '1.5rem', border: `2px solid ${checked ? 'var(--color-primary)' : '#e5e7eb'}`, borderRadius: 'var(--radius-md)', cursor: 'pointer', backgroundColor: checked ? '#f0f7ff' : 'white', transition: 'all 0.2s' }}>
             <input type="radio" name={name} value={value} checked={checked} onChange={onChange} style={{ marginTop: '0.25rem' }} />
             <div>
-                <div style={{ fontWeight: 700, color: checked ? 'var(--color-primary)' : 'inherit' }}>{title}</div>
+                <div style={{ fontWeight: 700, color: checked ? 'var(--color-primary)' : 'var(--color-text-on-white)' }}>{title}</div>
                 <div style={{ fontSize: '0.85rem', color: 'var(--color-gray-dark)' }}>{description}</div>
             </div>
         </label>
