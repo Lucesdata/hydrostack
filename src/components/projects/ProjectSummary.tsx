@@ -48,17 +48,7 @@ export default async function ProjectSummary({ projectId }: { projectId: string 
     const isVisible = (key: string) => statusMap.get(key) !== 'not_applicable';
 
     return (
-        <aside style={{
-            width: '280px',
-            padding: '1.5rem',
-            backgroundColor: 'var(--color-bg-secondary)',
-            borderLeft: '1px solid var(--color-gray-medium)',
-            height: 'calc(100vh - 64px)',
-            position: 'sticky',
-            top: '0',
-            overflowY: 'auto',
-            fontSize: '0.85rem'
-        }}>
+        <aside className="project-summary">
             <h3 style={{
                 fontSize: '0.9rem',
                 fontWeight: 700,

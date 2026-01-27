@@ -89,16 +89,9 @@ export default function ModuleNavigation({ projectId, currentModuleKey }: Module
     const nextModule = effectiveIndex < enabledModules.length - 1 ? enabledModules[effectiveIndex + 1] : null;
 
     return (
-        <div style={{
-            marginTop: '3.5rem',
-            paddingTop: '2rem',
-            borderTop: '2px dashed var(--color-gray-medium)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1.5rem'
-        }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ flex: 1 }}>
+        <div className="module-nav-container">
+            <div className="module-nav-header">
+                <div className="module-nav-prev" style={{ flex: 1 }}>
                     {prevModule && (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.4rem' }}>
                             <Button
@@ -115,7 +108,7 @@ export default function ModuleNavigation({ projectId, currentModuleKey }: Module
                     )}
                 </div>
 
-                <div style={{ flex: 1, textAlign: 'center' }}>
+                <div className="module-nav-info" style={{ flex: 1, textAlign: 'center' }}>
                     {currentItem && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                             <span style={{ fontSize: '0.65rem', color: 'var(--color-primary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -128,7 +121,7 @@ export default function ModuleNavigation({ projectId, currentModuleKey }: Module
                     )}
                 </div>
 
-                <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+                <div className="module-nav-next" style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
                     {nextModule ? (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.4rem' }}>
                             <Button

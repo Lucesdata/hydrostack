@@ -19,11 +19,11 @@ export default function Navbar() {
             top: 0,
             zIndex: 100
         }}>
-            <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div className="container navbar-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Link href="/dashboard/new" style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-primary)' }}>
                     HYDROSTACK
                 </Link>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                <div className="navbar-links" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                     {user ? (
                         <>
                             <Link href="/dashboard/new" style={{ fontWeight: 500, marginRight: '1rem' }}>

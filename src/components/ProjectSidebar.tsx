@@ -19,6 +19,7 @@ export default function ProjectSidebar({ projectId }: { projectId: string }) {
     const pathname = usePathname();
     const [project, setProject] = useState<Project | null>(null);
     const [moduleStatuses, setModuleStatuses] = useState<Map<ModuleKey, ProjectModuleStatus>>(new Map());
+    const [isMobileExpanded, setIsMobileExpanded] = useState(false);
     const supabase = createClient();
 
     useEffect(() => {
@@ -98,16 +99,13 @@ export default function ProjectSidebar({ projectId }: { projectId: string }) {
     ];
 
     return (
-        <aside style={{
-            width: '280px',
-            backgroundColor: 'white',
-            borderRight: '1px solid var(--color-gray-medium)',
-            height: 'calc(100vh - 80px)',
-            padding: '1.5rem 1rem',
-            position: 'sticky',
-            top: '0',
-            overflowY: 'auto'
-        }}>
+        <aside className={`project-sidebar ${!isMobileExpanded ? 'mobile-collapsed' : ''}`}>
+            <div className="mobile-toggle" style={{ display: 'none', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <span style={{ fontWeight: 800, textTransform: 'uppercase', fontSize: '0.85rem' }}>Estructura del Proyecto</span>
+                <button onClick={() => setIsMobileExpanded(!isMobileExpanded)} style={{ background: 'none', border: 'none', fontSize: '1.2rem' }}>
+                    {isMobileExpanded ? '✕' : '☰'}
+                </button>
+            </div>
             <div style={{ marginBottom: '2rem' }}>
                 <h3 style={{ fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--color-gray-dark)', letterSpacing: '0.05em', marginBottom: '1rem' }}>
                     Estructura del Proyecto

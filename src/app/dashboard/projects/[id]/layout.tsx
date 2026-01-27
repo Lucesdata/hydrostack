@@ -20,20 +20,9 @@ export default async function ProjectLayout({
     const { id } = await params;
 
     return (
-        <div className="container" style={{
-            display: 'flex',
-            gap: '0',
-            padding: '0',
-            maxWidth: '100%',
-            height: 'calc(100vh - 64px)', // Navbar height
-            overflow: 'hidden'
-        }}>
+        <div className="project-layout">
             <ProjectSidebar projectId={id} />
-            <main style={{
-                flex: 1,
-                padding: '2rem',
-                overflowY: 'auto'
-            }}>
+            <main className="project-main">
                 <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
                     <ProjectHero projectId={id} />
                     {children}
