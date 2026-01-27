@@ -8,12 +8,14 @@ export default function Hero() {
     return (
         <section className="relative w-full overflow-hidden bg-background pt-32 pb-20 lg:pt-48 lg:pb-32">
             {/* Background Grid Pattern */}
-            <div className="absolute inset-0 z-0 opacity-20 pointer-events-none"
-                style={{
-                    backgroundImage: 'linear-gradient(#1e293b 1px, transparent 1px), linear-gradient(to right, #1e293b 1px, transparent 1px)',
-                    backgroundSize: '40px 40px'
-                }}
-            />
+            {/* Background Image */}
+            <div className="absolute inset-0 z-0">
+                <img
+                    src="/hero-bg.png"
+                    alt="Plano técnico de fondo"
+                    className="w-full h-full object-cover opacity-20"
+                />
+            </div>
 
             {/* Gradient Overlay */}
             <div className="absolute inset-0 z-0 bg-gradient-to-b from-transparent via-background/50 to-background pointer-events-none" />
