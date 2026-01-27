@@ -2,6 +2,17 @@
 
 Todos los cambios notables en este proyecto serán documentados en este archivo.
 
+## [v1.0.0-beta] - 2026-01-27
+
+### Lanzamiento Beta Pública
+- **Landing Page**: Nueva portada profesional con diseño "Engineering Navy", responsive y blueprint técnico animado.
+- **Mobile First**: Optimización completa del Dashboard y Sidebar para dispositivos móviles.
+- **Auth**: Solución a problema de "Invalid Refresh Token" con auto-logout y manejo de errores.
+
+### Infraestructura
+- **Tailwind v4**: Migración a última versión de Tailwind CSS.
+- **Vercel**: Configuración de variables de entorno y despliegue público sin password.
+
 ## [Desarrollo] - 2026-01-23
 
 ### Consolidación Técnica
