@@ -1,0 +1,597 @@
+"use client";
+
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+interface Fase1DiagnosticoProps {
+    projectId: string;
+}
+
+export default function Fase1Diagnostico({ projectId }: Fase1DiagnosticoProps) {
+    const router = useRouter();
+    const [step, setStep] = useState(1); // 1: Bienvenida, 2: Población, 3: Caudales, 4: Resultados
+
+    // Inputs población
+    const [poblacionActual, setPoblacionActual] = useState(2500);
+    const [anioInicial, setAnioInicial] = useState(2024);
+    const [anioHorizonte, setAnioHorizonte] = useState(2036);
+    const [tasaCrecimiento, setTasaCrecimiento] = useState(2.5); // %
+
+    // Inputs caudales
+    const [dotacionNeta, setDotacionNeta] = useState(125);
+    const [perdidas, setPerdidas] = useState(30);
+    const [consumosAdicionales, setConsumosAdicionales] = useState(0);
+
+    // Cálculos
+    const periodoDiseno = anioHorizonte - anioInicial;
+    const dotacionBruta = dotacionNeta * (1 + perdidas / 100);
+
+    const poblacionAritmetica = poblacionActual * (1 + (tasaCrecimiento / 100) * periodoDiseno);
+    const poblacionGeometrica = poblacionActual * Math.pow(1 + tasaCrecimiento / 100, periodoDiseno);
+    const poblacionMinCuadrados = (poblacionAritmetica + poblacionGeometrica) / 2; // Simplificado
+
+    const [poblacionSeleccionada, setPoblacionSeleccionada] = useState<'aritmetica' | 'geometrica' | 'mincuadrados'>('geometrica');
+
+    const poblacionFinal = poblacionSeleccionada === 'aritmetica' ? poblacionAritmetica :
+        poblacionSeleccionada === 'geometrica' ? poblacionGeometrica :
+            poblacionMinCuadrados;
+
+    const qmd = (poblacionFinal * dotacionBruta) / 86400; // L/s
+    const qca = consumosAdicionales; // L/s adicionales
+    const QMD = 1.3 * (qmd + qca); // Factor K1 = 1.3
+
+    return (
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem 0' }}>
+            {/* Header con Timeline */}
+            <div style={{ marginBottom: '2rem' }}>
+                <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>
+                    Fase 1: Diagnóstico y Proyección de Demanda
+                </h1>
+                <p style={{ fontSize: '0.95rem', color: '#64748b', marginBottom: '1.5rem' }}>
+                    Determinación del Caudal Máximo Diario (QMD) mediante proyección poblacional
+                </p>
+
+                {/* Progress Steps */}
+                <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+                    {[
+                        { num: 1, label: 'Bienvenida' },
+                        { num: 2, label: 'Proyección Poblacional' },
+                        { num: 3, label: 'Cálculo de Caudales' },
+                        { num: 4, label: 'Resultado QMD' }
+                    ].map(s => (
+                        <div key={s.num} style={{
+                            flex: 1,
+                            padding: '0.75rem',
+                            background: step >= s.num ? '#10b981' : '#e5e7eb',
+                            color: step >= s.num ? 'white' : '#64748b',
+                            borderRadius: '8px',
+                            textAlign: 'center',
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                            transition: 'all 0.3s ease'
+                        }}>
+                            {s.num}. {s.label}
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Step 1: Bienvenida */}
+            {step === 1 && (
+                <div style={{
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    padding: '2.5rem',
+                    borderRadius: '20px',
+                    color: 'white',
+                    marginBottom: '2rem'
+                }}>
+                    <h2 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '1rem' }}>
+                        ¡Bienvenido al Módulo de Diagnóstico! 🎯
+                    </h2>
+                    <p style={{ fontSize: '1.05rem', lineHeight: 1.7, marginBottom: '1.5rem', opacity: 0.95 }}>
+                        Esta fase es <strong>fundamental</strong> para el éxito del diseño. Aquí determinaremos el <strong>Caudal Máximo Diario (Q<sub>MD</sub>)</strong>,
+                        que es la base para dimensionar toda la planta FIME.
+                    </p>
+                    <p style={{ fontSize: '1rem', marginBottom: '2rem', opacity: 0.9 }}>
+                        Nos basaremos en:
+                    </p>
+                    <ul style={{ fontSize: '1rem', lineHeight: 1.8, marginBottom: '2rem', paddingLeft: '1.5rem' }}>
+                        <li><strong>Crecimiento poblacional</strong> proyectado a 12 años</li>
+                        <li><strong>Hábitos de consumo</strong> de la comunidad (dotación)</li>
+                        <li><strong>Pérdidas del sistema</strong> (30% estándar)</li>
+                        <li><strong>Factor de mayoración</strong> K₁ = 1.3 (RAS-2000)</li>
+                    </ul>
+                    <button
+                        onClick={() => setStep(2)}
+                        style={{
+                            background: 'white',
+                            color: '#10b981',
+                            padding: '0.875rem 2rem',
+                            borderRadius: '10px',
+                            border: 'none',
+                            fontSize: '1rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                        }}
+                    >
+                        Iniciar Diagnóstico →
+                    </button>
+                </div>
+            )}
+
+            {/* Step 2: Proyección Poblacional */}
+            {step === 2 && (
+                <div>
+                    <div style={{
+                        background: 'white',
+                        padding: '2rem',
+                        borderRadius: '16px',
+                        border: '1px solid #e5e7eb',
+                        marginBottom: '1.5rem'
+                    }}>
+                        <h3 style={{ fontSize: '1.3rem', fontWeight: 700, color: '#1e293b', marginBottom: '1.5rem' }}>
+                            📊 Proyección de Población
+                        </h3>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem', color: '#374151' }}>
+                                    Población Actual (P₀)
+                                </label>
+                                <input
+                                    type="number"
+                                    value={poblacionActual}
+                                    onChange={(e) => setPoblacionActual(Number(e.target.value))}
+                                    style={{
+                                        width: '100%',
+                                        padding: '0.75rem',
+                                        border: '2px solid #e5e7eb',
+                                        borderRadius: '8px',
+                                        fontSize: '1rem'
+                                    }}
+                                />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem', color: '#374151' }}>
+                                    Tasa de Crecimiento (%)
+                                </label>
+                                <input
+                                    type="number"
+                                    value={tasaCrecimiento}
+                                    onChange={(e) => setTasaCrecimiento(Number(e.target.value))}
+                                    step="0.1"
+                                    style={{
+                                        width: '100%',
+                                        padding: '0.75rem',
+                                        border: '2px solid #e5e7eb',
+                                        borderRadius: '8px',
+                                        fontSize: '1rem'
+                                    }}
+                                />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem', color: '#374151' }}>
+                                    Año Inicial (T₀)
+                                </label>
+                                <input
+                                    type="number"
+                                    value={anioInicial}
+                                    onChange={(e) => setAnioInicial(Number(e.target.value))}
+                                    style={{
+                                        width: '100%',
+                                        padding: '0.75rem',
+                                        border: '2px solid #e5e7eb',
+                                        borderRadius: '8px',
+                                        fontSize: '1rem'
+                                    }}
+                                />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem', color: '#374151' }}>
+                                    Año Horizonte (Tₓ)
+                                </label>
+                                <input
+                                    type="number"
+                                    value={anioHorizonte}
+                                    onChange={(e) => setAnioHorizonte(Number(e.target.value))}
+                                    style={{
+                                        width: '100%',
+                                        padding: '0.75rem',
+                                        border: '2px solid #e5e7eb',
+                                        borderRadius: '8px',
+                                        fontSize: '1rem'
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Métodos de Cálculo */}
+                        <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1e293b', marginBottom: '1rem' }}>
+                            Métodos de Proyección
+                        </h4>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
+                            {/* Aritmético */}
+                            <button
+                                onClick={() => setPoblacionSeleccionada('aritmetica')}
+                                style={{
+                                    background: poblacionSeleccionada === 'aritmetica' ? '#a7f3d0' : 'white',
+                                    border: `2px solid ${poblacionSeleccionada === 'aritmetica' ? '#10b981' : '#e5e7eb'}`,
+                                    padding: '1.5rem',
+                                    borderRadius: '12px',
+                                    cursor: 'pointer',
+                                    textAlign: 'left',
+                                    transition: 'all 0.2s ease'
+                                }}
+                            >
+                                <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.5rem', fontWeight: 600 }}>
+                                    MÉTODO ARITMÉTICO
+                                </div>
+                                <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>
+                                    {Math.round(poblacionAritmetica).toLocaleString()}
+                                </div>
+                                <div style={{ fontSize: '0.7rem', color: '#64748b', marginBottom: '0.75rem' }}>
+                                    Pf = P₀ · [1 + K · (Tf - T₀)]
+                                </div>
+                                <div style={{ fontSize: '0.7rem', color: '#6b7280' }}>
+                                    ⚡ Crecimiento lineal constante
+                                </div>
+                            </button>
+
+                            {/* Geométrico */}
+                            <button
+                                onClick={() => setPoblacionSeleccionada('geometrica')}
+                                style={{
+                                    background: poblacionSeleccionada === 'geometrica' ? '#a7f3d0' : 'white',
+                                    border: `2px solid ${poblacionSeleccionada === 'geometrica' ? '#10b981' : '#e5e7eb'}`,
+                                    padding: '1.5rem',
+                                    borderRadius: '12px',
+                                    cursor: 'pointer',
+                                    textAlign: 'left',
+                                    transition: 'all 0.2s ease'
+                                }}
+                            >
+                                <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.5rem', fontWeight: 600 }}>
+                                    MÉTODO GEOMÉTRICO
+                                </div>
+                                <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>
+                                    {Math.round(poblacionGeometrica).toLocaleString()}
+                                </div>
+                                <div style={{ fontSize: '0.7rem', color: '#64748b', marginBottom: '0.75rem' }}>
+                                    Pf = P₀ · (1 + r)^(Tf - T₀)
+                                </div>
+                                <div style={{ fontSize: '0.7rem', color: '#6b7280' }}>
+                                    📈 Crecimiento exponencial
+                                </div>
+                            </button>
+
+                            {/* Mínimos Cuadrados */}
+                            <button
+                                onClick={() => setPoblacionSeleccionada('mincuadrados')}
+                                style={{
+                                    background: poblacionSeleccionada === 'mincuadrados' ? '#a7f3d0' : 'white',
+                                    border: `2px solid ${poblacionSeleccionada === 'mincuadrados' ? '#10b981' : '#e5e7eb'}`,
+                                    padding: '1.5rem',
+                                    borderRadius: '12px',
+                                    cursor: 'pointer',
+                                    textAlign: 'left',
+                                    transition: 'all 0.2s ease'
+                                }}
+                            >
+                                <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.5rem', fontWeight: 600 }}>
+                                    MÍNIMOS CUADRADOS
+                                </div>
+                                <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>
+                                    {Math.round(poblacionMinCuadrados).toLocaleString()}
+                                </div>
+                                <div style={{ fontSize: '0.7rem', color: '#64748b', marginBottom: '0.75rem' }}>
+                                    Ajuste de tendencia histórica
+                                </div>
+                                <div style={{ fontSize: '0.7rem', color: '#6b7280' }}>
+                                    📊 Basado en censos previos
+                                </div>
+                            </button>
+                        </div>
+
+                        <div style={{
+                            background: '#f0fdf4',
+                            border: '1px solid #bbf7d0',
+                            padding: '1rem',
+                            borderRadius: '8px',
+                            fontSize: '0.875rem',
+                            color: '#166534'
+                        }}>
+                            <strong>💡 Recomendación:</strong> El método <strong>geométrico</strong> es el más usado en comunidades rurales con crecimiento moderado.
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '1rem', justifyContent: 'space-between' }}>
+                        <button
+                            onClick={() => setStep(1)}
+                            style={{
+                                background: 'white',
+                                border: '2px solid #e5e7eb',
+                                color: '#64748b',
+                                padding: '0.875rem 1.5rem',
+                                borderRadius: '8px',
+                                fontSize: '0.95rem',
+                                fontWeight: 600,
+                                cursor: 'pointer'
+                            }}
+                        >
+                            ← Atrás
+                        </button>
+                        <button
+                            onClick={() => setStep(3)}
+                            style={{
+                                background: '#10b981',
+                                color: 'white',
+                                padding: '0.875rem 2rem',
+                                borderRadius: '8px',
+                                border: 'none',
+                                fontSize: '0.95rem',
+                                fontWeight: 600,
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Continuar a Caudales →
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Step 3: Caudales */}
+            {step === 3 && (
+                <div>
+                    <div style={{
+                        background: 'white',
+                        padding: '2rem',
+                        borderRadius: '16px',
+                        border: '1px solid #e5e7eb',
+                        marginBottom: '1.5rem'
+                    }}>
+                        <h3 style={{ fontSize: '1.3rem', fontWeight: 700, color: '#1e293b', marginBottom: '1.5rem' }}>
+                            💧 Cálculo de Caudales
+                        </h3>
+
+                        <div style={{ marginBottom: '2rem', background: '#f8fafc', padding: '1.5rem', borderRadius: '12px' }}>
+                            <div style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '0.5rem' }}>
+                                Población proyectada ({poblacionSeleccionada})
+                            </div>
+                            <div style={{ fontSize: '2rem', fontWeight: 700, color: '#10b981' }}>
+                                {Math.round(poblacionFinal).toLocaleString()} habitantes
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem', color: '#374151' }}>
+                                    Dotación Neta (L/hab-día)
+                                </label>
+                                <input
+                                    type="number"
+                                    value={dotacionNeta}
+                                    onChange={(e) => setDotacionNeta(Number(e.target.value))}
+                                    style={{
+                                        width: '100%',
+                                        padding: '0.75rem',
+                                        border: '2px solid #e5e7eb',
+                                        borderRadius: '8px',
+                                        fontSize: '1rem'
+                                    }}
+                                />
+                                <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
+                                    Estándar: 125 L/hab-día (RAS)
+                                </div>
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem', color: '#374151' }}>
+                                    Pérdidas del Sistema (%)
+                                </label>
+                                <input
+                                    type="number"
+                                    value={perdidas}
+                                    onChange={(e) => setPerdidas(Number(e.target.value))}
+                                    style={{
+                                        width: '100%',
+                                        padding: '0.75rem',
+                                        border: '2px solid #e5e7eb',
+                                        borderRadius: '8px',
+                                        fontSize: '1rem'
+                                    }}
+                                />
+                                <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
+                                    Estándar: 30% (incluye fugas y desperdicios)
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={{
+                            background: '#f0fdf4',
+                            padding: '1.5rem',
+                            borderRadius: '12px',
+                            marginBottom: '1.5rem'
+                        }}>
+                            <div style={{ fontSize: '0.875rem', color: '#166534', marginBottom: '0.75rem' }}>
+                                📐 <strong>Dotación Bruta = Dotación Neta × (1 + Pérdidas/100)</strong>
+                            </div>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#10b981' }}>
+                                {dotacionBruta.toFixed(1)} L/hab-día
+                            </div>
+                        </div>
+
+                        <div>
+                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem', color: '#374151' }}>
+                                Consumos Adicionales Localizados (L/s)
+                            </label>
+                            <input
+                                type="number"
+                                value={consumosAdicionales}
+                                onChange={(e) => setConsumosAdicionales(Number(e.target.value))}
+                                step="0.1"
+                                style={{
+                                    width: '100%',
+                                    padding: '0.75rem',
+                                    border: '2px solid #e5e7eb',
+                                    borderRadius: '8px',
+                                    fontSize: '1rem',
+                                    marginBottom: '0.5rem'
+                                }}
+                            />
+                            <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                                Ej: Escuelas, centros de salud, canchas de fútbol
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '1rem', justifyContent: 'space-between' }}>
+                        <button
+                            onClick={() => setStep(2)}
+                            style={{
+                                background: 'white',
+                                border: '2px solid #e5e7eb',
+                                color: '#64748b',
+                                padding: '0.875rem 1.5rem',
+                                borderRadius: '8px',
+                                fontSize: '0.95rem',
+                                fontWeight: 600,
+                                cursor: 'pointer'
+                            }}
+                        >
+                            ← Atrás
+                        </button>
+                        <button
+                            onClick={() => setStep(4)}
+                            style={{
+                                background: '#10b981',
+                                color: 'white',
+                                padding: '0.875rem 2rem',
+                                borderRadius: '8px',
+                                border: 'none',
+                                fontSize: '0.95rem',
+                                fontWeight: 600,
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Ver Resultado Final →
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Step 4: Resultado QMD */}
+            {step === 4 && (
+                <div>
+                    {/* Gran Card de Resultado */}
+                    <div style={{
+                        background: 'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)',
+                        padding: '3rem',
+                        borderRadius: '20px',
+                        color: 'white',
+                        marginBottom: '2rem',
+                        textAlign: 'center'
+                    }}>
+                        <div style={{ fontSize: '0.95rem', opacity: 0.9, marginBottom: '0.5rem' }}>
+                            CAUDAL MÁXIMO DIARIO (Q<sub>MD</sub>)
+                        </div>
+                        <div style={{ fontSize: '4rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+                            {QMD.toFixed(2)} L/s
+                        </div>
+                        <div style={{ fontSize: '1.05rem', opacity: 0.85 }}>
+                            = {(QMD * 3.6).toFixed(2)} m³/h
+                        </div>
+                    </div>
+
+                    {/* Desglose */}
+                    <div style={{
+                        background: 'white',
+                        padding: '2rem',
+                        borderRadius: '16px',
+                        border: '1px solid #e5e7eb',
+                        marginBottom: '2rem'
+                    }}>
+                        <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1e293b', marginBottom: '1.5rem' }}>
+                            📋 Memoria de Cálculo
+                        </h3>
+
+                        <div style={{ display: 'grid', gap: '1rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', background: '#f8fafc', borderRadius: '8px' }}>
+                                <span style={{ color: '#64748b' }}>Población Final (método {poblacionSeleccionada})</span>
+                                <strong>{Math.round(poblacionFinal).toLocaleString()} hab</strong>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', background: '#f8fafc', borderRadius: '8px' }}>
+                                <span style={{ color: '#64748b' }}>Dotación Bruta</span>
+                                <strong>{dotacionBruta.toFixed(1)} L/hab-día</strong>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', background: '#f8fafc', borderRadius: '8px' }}>
+                                <span style={{ color: '#64748b' }}>Qmd (Caudal Medio Diario)</span>
+                                <strong>{qmd.toFixed(3)} L/s</strong>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', background: '#f8fafc', borderRadius: '8px' }}>
+                                <span style={{ color: '#64748b' }}>Qca (Consumos Adicionales)</span>
+                                <strong>{qca.toFixed(2)} L/s</strong>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', background: '#dcfce7', borderRadius: '8px', border: '2px solid #10b981' }}>
+                                <span style={{ color: '#065f46', fontWeight: 600 }}>Q<sub>MD</sub> = K₁ · (Qmd + Qca), donde K₁ = 1.3</span>
+                                <strong style={{ color: '#065f46' }}>{QMD.toFixed(2)} L/s</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Nota de Confiabilidad */}
+                    <div style={{
+                        background: '#fffbeb',
+                        border: '1px solid #fcd34d',
+                        padding: '1.5rem',
+                        borderRadius: '12px',
+                        marginBottom: '2rem'
+                    }}>
+                        <div style={{ fontSize: '0.9rem', color: '#92400e' }}>
+                            <strong>✓ Diseño Validado:</strong> Este caudal asegura que la planta FIME no será subdimensionada ni sobdimensionada,
+                            optimizando costos de inversión (CapEx) y operación (OpEx).
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                        <button
+                            onClick={() => setStep(3)}
+                            style={{
+                                background: 'white',
+                                border: '2px solid #e5e7eb',
+                                color: '#64748b',
+                                padding: '0.875rem 1.5rem',
+                                borderRadius: '8px',
+                                fontSize: '0.95rem',
+                                fontWeight: 600,
+                                cursor: 'pointer'
+                            }}
+                        >
+                            ← Revisar Cálculos
+                        </button>
+                        <button
+                            onClick={() => {
+                                // Guardar y continuar a Fase 2
+                                alert('Guardando Fase 1... Próximamente: Fase 2 - Selección de Tecnología');
+                                router.push(`/dashboard/projects/${projectId}/general`);
+                            }}
+                            style={{
+                                flex: 1,
+                                background: '#8b5cf6',
+                                color: 'white',
+                                padding: '0.875rem 2rem',
+                                borderRadius: '8px',
+                                border: 'none',
+                                fontSize: '0.95rem',
+                                fontWeight: 600,
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Guardar y Continuar a Fase 2 →
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}

@@ -329,7 +329,7 @@ export default function ModuleDashboard({ projectId }: ModuleDashboardProps) {
                         </h3>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                             <Link
-                                href={`/dashboard/projects/${projectId}/fime-pretratamiento`}
+                                href={`/dashboard/projects/${projectId}/fime`}
                                 style={{
                                     display: 'block',
                                     padding: '0.875rem 1.25rem',
