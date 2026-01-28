@@ -91,16 +91,6 @@ export default function ModuleDashboard({ projectId }: ModuleDashboardProps) {
 
     return (
         <div style={{ padding: '1.5rem 0', maxWidth: '100%' }}>
-            {/* Header */}
-            <div style={{ marginBottom: '2rem' }}>
-                <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>
-                    Dashboard
-                </h1>
-                <p style={{ fontSize: '0.95rem', color: '#64748b' }}>
-                    {project?.name || 'Proyecto'} • {project?.treatment_category ? CATEGORY_LABELS[project.treatment_category] : 'Sin tecnología'}
-                </p>
-            </div>
-
             {/* Stats Grid */}
             <div style={{
                 display: 'grid',
