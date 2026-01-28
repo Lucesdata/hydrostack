@@ -179,7 +179,7 @@ export default function ModuleDashboard({ projectId }: ModuleDashboardProps) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '1.5rem' }}>
                 {/* Left Column */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    {/* Module List */}
+                    {/* Fases FIME */}
                     <div style={{
                         background: 'white',
                         padding: '1.5rem',
@@ -193,78 +193,281 @@ export default function ModuleDashboard({ projectId }: ModuleDashboardProps) {
                             marginBottom: '1rem'
                         }}>
                             <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1e293b' }}>
-                                Módulos del Proyecto
+                                Módulo FIME - 6 Fases
                             </h3>
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '400px', overflowY: 'auto' }}>
-                            {allModules.slice(0, 10).map(module => {
-                                const status = getModuleStatus(module.moduleKey);
-                                const statusConfig = {
-                                    completed: { color: '#10b981', label: 'Completado', badge: '#ecfdf5' },
-                                    pending: { color: '#f59e0b', label: 'Pendiente', badge: '#fef3c7' },
-                                    optional: { color: '#6b7280', label: 'Opcional', badge: '#f3f4f6' }
-                                };
-                                const config = statusConfig[status];
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            {/* Fase 1 */}
+                            <Link
+                                href={`/dashboard/projects/${projectId}/fime`}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    padding: '1rem',
+                                    borderRadius: '12px',
+                                    textDecoration: 'none',
+                                    transition: 'all 0.15s ease',
+                                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                    color: 'white'
+                                }}
+                            >
+                                <div style={{
+                                    width: '48px',
+                                    height: '48px',
+                                    borderRadius: '12px',
+                                    background: 'rgba(255,255,255,0.2)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    marginRight: '1rem',
+                                    fontSize: '1.5rem'
+                                }}>
+                                    📊
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.25rem' }}>
+                                        Fase 1: Diagnóstico y Proyección de Demanda
+                                    </div>
+                                    <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>
+                                        Proyección poblacional • Caudales • QMD
+                                    </div>
+                                </div>
+                                <div style={{
+                                    padding: '0.375rem 0.875rem',
+                                    borderRadius: '12px',
+                                    background: 'rgba(255,255,255,0.25)',
+                                    fontSize: '0.7rem',
+                                    fontWeight: 700
+                                }}>
+                                    DISPONIBLE
+                                </div>
+                            </Link>
 
-                                return (
-                                    <Link
-                                        key={module.moduleKey}
-                                        href={module.href}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            padding: '0.875rem',
-                                            borderRadius: '8px',
-                                            textDecoration: 'none',
-                                            transition: 'all 0.15s ease',
-                                            background: '#fafafa'
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            e.currentTarget.style.background = '#f0f9ff';
-                                            e.currentTarget.style.transform = 'translateX(4px)';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.background = '#fafafa';
-                                            e.currentTarget.style.transform = 'translateX(0)';
-                                        }}
-                                    >
-                                        <div style={{
-                                            width: '40px',
-                                            height: '40px',
-                                            borderRadius: '8px',
-                                            background: config.badge,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            marginRight: '1rem',
-                                            fontWeight: 700,
-                                            fontSize: '0.875rem',
-                                            color: config.color
-                                        }}>
-                                            {module.num}
-                                        </div>
-                                        <div style={{ flex: 1 }}>
-                                            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#1e293b', marginBottom: '0.125rem' }}>
-                                                {module.label}
-                                            </div>
-                                            <div style={{ fontSize: '0.7rem', color: '#64748b' }}>
-                                                Bloque {module.block}
-                                            </div>
-                                        </div>
-                                        <div style={{
-                                            padding: '0.25rem 0.625rem',
-                                            borderRadius: '12px',
-                                            background: config.badge,
-                                            fontSize: '0.7rem',
-                                            fontWeight: 600,
-                                            color: config.color
-                                        }}>
-                                            {config.label}
-                                        </div>
-                                    </Link>
-                                );
-                            })}
+                            {/* Fase 2 */}
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    padding: '1rem',
+                                    borderRadius: '12px',
+                                    background: '#f8fafc',
+                                    opacity: 0.6,
+                                    cursor: 'not-allowed'
+                                }}
+                            >
+                                <div style={{
+                                    width: '48px',
+                                    height: '48px',
+                                    borderRadius: '12px',
+                                    background: '#e5e7eb',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    marginRight: '1rem',
+                                    fontSize: '1.5rem'
+                                }}>
+                                    🔍
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.25rem', color: '#1e293b' }}>
+                                        Fase 2: Selección de Tecnología
+                                    </div>
+                                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                        Validación CINARA • Criterios de decisión
+                                    </div>
+                                </div>
+                                <div style={{
+                                    padding: '0.375rem 0.875rem',
+                                    borderRadius: '12px',
+                                    background: '#fef3c7',
+                                    color: '#92400e',
+                                    fontSize: '0.7rem',
+                                    fontWeight: 700
+                                }}>
+                                    PRÓXIMAMENTE
+                                </div>
+                            </div>
+
+                            {/* Fase 3 */}
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    padding: '1rem',
+                                    borderRadius: '12px',
+                                    background: '#f8fafc',
+                                    opacity: 0.6,
+                                    cursor: 'not-allowed'
+                                }}
+                            >
+                                <div style={{
+                                    width: '48px',
+                                    height: '48px',
+                                    borderRadius: '12px',
+                                    background: '#e5e7eb',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    marginRight: '1rem',
+                                    fontSize: '1.5rem'
+                                }}>
+                                    🏗️
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.25rem', color: '#1e293b' }}>
+                                        Fase 3: Dimensionamiento FGDi
+                                    </div>
+                                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                        Filtración Gruesa Dinámica • Especificaciones
+                                    </div>
+                                </div>
+                                <div style={{
+                                    padding: '0.375rem 0.875rem',
+                                    borderRadius: '12px',
+                                    background: '#fef3c7',
+                                    color: '#92400e',
+                                    fontSize: '0.7rem',
+                                    fontWeight: 700
+                                }}>
+                                    PRÓXIMAMENTE
+                                </div>
+                            </div>
+
+                            {/* Fase 4 */}
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    padding: '1rem',
+                                    borderRadius: '12px',
+                                    background: '#f8fafc',
+                                    opacity: 0.6,
+                                    cursor: 'not-allowed'
+                                }}
+                            >
+                                <div style={{
+                                    width: '48px',
+                                    height: '48px',
+                                    borderRadius: '12px',
+                                    background: '#e5e7eb',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    marginRight: '1rem',
+                                    fontSize: '1.5rem'
+                                }}>
+                                    💧
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.25rem', color: '#1e293b' }}>
+                                        Fase 4: Dimensionamiento FLA
+                                    </div>
+                                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                        Filtración Lenta en Arena • Barrera microbiológica
+                                    </div>
+                                </div>
+                                <div style={{
+                                    padding: '0.375rem 0.875rem',
+                                    borderRadius: '12px',
+                                    background: '#fef3c7',
+                                    color: '#92400e',
+                                    fontSize: '0.7rem',
+                                    fontWeight: 700
+                                }}>
+                                    PRÓXIMAMENTE
+                                </div>
+                            </div>
+
+                            {/* Fase 5 */}
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    padding: '1rem',
+                                    borderRadius: '12px',
+                                    background: '#f8fafc',
+                                    opacity: 0.6,
+                                    cursor: 'not-allowed'
+                                }}
+                            >
+                                <div style={{
+                                    width: '48px',
+                                    height: '48px',
+                                    borderRadius: '12px',
+                                    background: '#e5e7eb',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    marginRight: '1rem',
+                                    fontSize: '1.5rem'
+                                }}>
+                                    ⚡
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.25rem', color: '#1e293b' }}>
+                                        Fase 5: Módulo de Desinfección
+                                    </div>
+                                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                        Hipoclorito • Tanque de contacto CT
+                                    </div>
+                                </div>
+                                <div style={{
+                                    padding: '0.375rem 0.875rem',
+                                    borderRadius: '12px',
+                                    background: '#fef3c7',
+                                    color: '#92400e',
+                                    fontSize: '0.7rem',
+                                    fontWeight: 700
+                                }}>
+                                    PRÓXIMAMENTE
+                                </div>
+                            </div>
+
+                            {/* Fase 6 */}
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    padding: '1rem',
+                                    borderRadius: '12px',
+                                    background: '#f8fafc',
+                                    opacity: 0.6,
+                                    cursor: 'not-allowed'
+                                }}
+                            >
+                                <div style={{
+                                    width: '48px',
+                                    height: '48px',
+                                    borderRadius: '12px',
+                                    background: '#e5e7eb',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    marginRight: '1rem',
+                                    fontSize: '1.5rem'
+                                }}>
+                                    📄
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.25rem', color: '#1e293b' }}>
+                                        Fase 6: Resultados y Soporte
+                                    </div>
+                                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                        Balance de masas • Planos • Informe PDF
+                                    </div>
+                                </div>
+                                <div style={{
+                                    padding: '0.375rem 0.875rem',
+                                    borderRadius: '12px',
+                                    background: '#fef3c7',
+                                    color: '#92400e',
+                                    fontSize: '0.7rem',
+                                    fontWeight: 700
+                                }}>
+                                    PRÓXIMAMENTE
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
