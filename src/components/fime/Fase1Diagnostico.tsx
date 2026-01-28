@@ -61,16 +61,33 @@ export default function Fase1Diagnostico({ projectId }: Fase1DiagnosticoProps) {
                     ].map(s => (
                         <div key={s.num} style={{
                             flex: 1,
-                            padding: '0.75rem',
+                            padding: '1rem',
                             background: step >= s.num ? '#10b981' : '#e5e7eb',
                             color: step >= s.num ? 'white' : '#64748b',
-                            borderRadius: '8px',
+                            borderRadius: '12px',
                             textAlign: 'center',
-                            fontSize: '0.8rem',
-                            fontWeight: 600,
-                            transition: 'all 0.3s ease'
+                            transition: 'all 0.3s ease',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '0.5rem'
                         }}>
-                            {s.num}. {s.label}
+                            <div style={{
+                                width: '36px',
+                                height: '36px',
+                                borderRadius: '50%',
+                                background: step >= s.num ? 'rgba(255,255,255,0.25)' : 'rgba(100,116,139,0.15)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '1.25rem',
+                                fontWeight: 700
+                            }}>
+                                {s.num}
+                            </div>
+                            <div style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+                                {s.label}
+                            </div>
                         </div>
                     ))}
                 </div>
