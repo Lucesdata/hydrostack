@@ -71,6 +71,7 @@ export type ModuleKey =
     | 'viability'
     | 'tech_selection'
     | 'fime_pretratamiento'
+    | 'fime_tech_selection'
     | 'fime_grueso_dinamico'
     | 'fime_grueso_asdesc'
     | 'fime_lento_arena'

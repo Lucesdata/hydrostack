@@ -235,22 +235,24 @@ export default function ModuleDashboard({ projectId }: ModuleDashboardProps) {
                             </Link>
 
                             {/* Fase 2 */}
-                            <div
+                            <Link
+                                href={`/dashboard/projects/${projectId}/fime-seleccion-tecnologia`}
                                 style={{
                                     display: 'flex',
                                     alignItems: 'center',
                                     padding: '1rem',
                                     borderRadius: '12px',
-                                    background: '#f8fafc',
-                                    opacity: 0.6,
-                                    cursor: 'not-allowed'
+                                    textDecoration: 'none',
+                                    transition: 'all 0.15s ease',
+                                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                                    color: 'white'
                                 }}
                             >
                                 <div style={{
                                     width: '48px',
                                     height: '48px',
                                     borderRadius: '12px',
-                                    background: '#e5e7eb',
+                                    background: 'rgba(255,255,255,0.2)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -260,42 +262,43 @@ export default function ModuleDashboard({ projectId }: ModuleDashboardProps) {
                                     🔍
                                 </div>
                                 <div style={{ flex: 1 }}>
-                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.25rem', color: '#1e293b' }}>
+                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.25rem' }}>
                                         Fase 2: Selección de Tecnología
                                     </div>
-                                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                    <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>
                                         Validación CINARA • Criterios de decisión
                                     </div>
                                 </div>
                                 <div style={{
                                     padding: '0.375rem 0.875rem',
                                     borderRadius: '12px',
-                                    background: '#fef3c7',
-                                    color: '#92400e',
+                                    background: 'rgba(255,255,255,0.25)',
                                     fontSize: '0.7rem',
                                     fontWeight: 700
                                 }}>
-                                    PRÓXIMAMENTE
+                                    DISPONIBLE
                                 </div>
-                            </div>
+                            </Link>
 
                             {/* Fase 3 */}
-                            <div
+                            <Link
+                                href={`/dashboard/projects/${projectId}/fime-grueso-dinamico`}
                                 style={{
                                     display: 'flex',
                                     alignItems: 'center',
                                     padding: '1rem',
                                     borderRadius: '12px',
-                                    background: '#f8fafc',
-                                    opacity: 0.6,
-                                    cursor: 'not-allowed'
+                                    textDecoration: 'none',
+                                    transition: 'all 0.15s ease',
+                                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                                    color: 'white'
                                 }}
                             >
                                 <div style={{
                                     width: '48px',
                                     height: '48px',
                                     borderRadius: '12px',
-                                    background: '#e5e7eb',
+                                    background: 'rgba(255,255,255,0.2)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -305,24 +308,23 @@ export default function ModuleDashboard({ projectId }: ModuleDashboardProps) {
                                     🏗️
                                 </div>
                                 <div style={{ flex: 1 }}>
-                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.25rem', color: '#1e293b' }}>
+                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.25rem' }}>
                                         Fase 3: Dimensionamiento FGDi
                                     </div>
-                                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                    <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>
                                         Filtración Gruesa Dinámica • Especificaciones
                                     </div>
                                 </div>
                                 <div style={{
                                     padding: '0.375rem 0.875rem',
                                     borderRadius: '12px',
-                                    background: '#fef3c7',
-                                    color: '#92400e',
+                                    background: 'rgba(255,255,255,0.25)',
                                     fontSize: '0.7rem',
                                     fontWeight: 700
                                 }}>
-                                    PRÓXIMAMENTE
+                                    NUEVO
                                 </div>
-                            </div>
+                            </Link>
 
                             {/* Fase 4 */}
                             <div
