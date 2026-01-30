@@ -59,7 +59,7 @@ export default function FeaturesSection() {
                                 </div>
                                 <p><span className="text-purple-400">const</span> <span className="text-sky-300">reactorVolume</span> = <span className="text-amber-300">4500.5</span>; <span className="text-slate-500">{`// m3`}</span></p>
                                 <p><span className="text-purple-400">const</span> <span className="text-sky-300">aerationDemand</span> = <span className="text-amber-300">240</span>; <span className="text-slate-500">{`// kgO2/h`}</span></p>
-                                <p><span className="text-purple-400">let</span> <span class="text-sky-300">energyEfficiency</span> = <span class="text-amber-300">0.85</span>;</p>
+                                <p><span className="text-purple-400">let</span> <span className="text-sky-300">energyEfficiency</span> = <span className="text-amber-300">0.85</span>;</p>
                                 <div className="flex gap-2 mt-2">
                                     <span className="bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded">PASSED</span>
                                     <span className="bg-sky-500/20 text-sky-400 px-1.5 py-0.5 rounded">OPTIMIZED</span>
