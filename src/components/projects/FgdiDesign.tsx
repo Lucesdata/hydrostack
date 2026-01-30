@@ -201,7 +201,7 @@ export default function FgdiDesign({ projectId }: { projectId: string }) {
                                     step="0.1"
                                     value={designParams.vf}
                                     onChange={(e) => setDesignParams({ ...designParams, vf: parseFloat(e.target.value) })}
-                                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none text-black"
                                 />
                                 <span className="text-gray-500 text-sm w-12">m/h</span>
                             </div>
@@ -215,7 +215,7 @@ export default function FgdiDesign({ projectId }: { projectId: string }) {
                                 min="2"
                                 value={designParams.num_units}
                                 onChange={(e) => setDesignParams({ ...designParams, num_units: parseInt(e.target.value) })}
-                                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none text-black"
                             />
                             <p className="text-xs text-gray-500 mt-1">Mínimo 2 para alternancia en lavado.</p>
                         </div>
@@ -227,7 +227,7 @@ export default function FgdiDesign({ projectId }: { projectId: string }) {
                                 step="0.5"
                                 value={designParams.ratio_l_a}
                                 onChange={(e) => setDesignParams({ ...designParams, ratio_l_a: parseFloat(e.target.value) })}
-                                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none text-black"
                             />
                         </div>
                     </div>

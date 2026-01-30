@@ -92,78 +92,7 @@ export default function ModuleDashboard({ projectId }: ModuleDashboardProps) {
     return (
         <div style={{ padding: '1.5rem 0', maxWidth: '100%' }}>
             {/* Stats Grid */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                gap: '1rem',
-                marginBottom: '1.5rem'
-            }}>
-                {/* Total Modules */}
-                <div style={{
-                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                    padding: '1.5rem',
-                    borderRadius: '16px',
-                    color: 'white',
-                    position: 'relative',
-                    overflow: 'hidden'
-                }}>
-                    <div style={{ fontSize: '0.75rem', opacity: 0.9, marginBottom: '0.5rem', textTransform: 'uppercase', fontWeight: 600 }}>
-                        Total Módulos
-                    </div>
-                    <div style={{ fontSize: '2.5rem', fontWeight: 700 }}>{stats.total}</div>
-                    <div style={{ fontSize: '0.7rem', opacity: 0.8, marginTop: '0.5rem' }}>
-                        📈 {project?.treatment_category === 'fime' ? 'FIME' : 'Estándar'}
-                    </div>
-                </div>
 
-                {/* Completed */}
-                <div style={{
-                    background: 'white',
-                    padding: '1.5rem',
-                    borderRadius: '16px',
-                    border: '1px solid #e5e7eb'
-                }}>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.5rem', textTransform: 'uppercase', fontWeight: 600 }}>
-                        Completos
-                    </div>
-                    <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#1e293b' }}>{stats.completed}</div>
-                    <div style={{ fontSize: '0.7rem', color: '#10b981', marginTop: '0.5rem', fontWeight: 500 }}>
-                        ✓ Finalizados
-                    </div>
-                </div>
-
-                {/* Pending */}
-                <div style={{
-                    background: 'white',
-                    padding: '1.5rem',
-                    borderRadius: '16px',
-                    border: '1px solid #e5e7eb'
-                }}>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.5rem', textTransform: 'uppercase', fontWeight: 600 }}>
-                        Pendientes
-                    </div>
-                    <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#1e293b' }}>{stats.pending}</div>
-                    <div style={{ fontSize: '0.7rem', color: '#f59e0b', marginTop: '0.5rem', fontWeight: 500 }}>
-                        ○ Requeridos
-                    </div>
-                </div>
-
-                {/* Optional */}
-                <div style={{
-                    background: 'white',
-                    padding: '1.5rem',
-                    borderRadius: '16px',
-                    border: '1px solid #e5e7eb'
-                }}>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.5rem', textTransform: 'uppercase', fontWeight: 600 }}>
-                        Opcionales
-                    </div>
-                    <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#1e293b' }}>{stats.optional}</div>
-                    <div style={{ fontSize: '0.7rem', color: '#6b7280', marginTop: '0.5rem', fontWeight: 500 }}>
-                        ◇ No críticos
-                    </div>
-                </div>
-            </div>
 
             {/* Main Grid */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '1.5rem' }}>
@@ -327,22 +256,24 @@ export default function ModuleDashboard({ projectId }: ModuleDashboardProps) {
                             </Link>
 
                             {/* Fase 4 */}
-                            <div
+                            <Link
+                                href={`/dashboard/projects/${projectId}/fime-lento-arena`}
                                 style={{
                                     display: 'flex',
                                     alignItems: 'center',
                                     padding: '1rem',
                                     borderRadius: '12px',
-                                    background: '#f8fafc',
-                                    opacity: 0.6,
-                                    cursor: 'not-allowed'
+                                    textDecoration: 'none',
+                                    transition: 'all 0.15s ease',
+                                    background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
+                                    color: 'white'
                                 }}
                             >
                                 <div style={{
                                     width: '48px',
                                     height: '48px',
                                     borderRadius: '12px',
-                                    background: '#e5e7eb',
+                                    background: 'rgba(255,255,255,0.2)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -352,24 +283,23 @@ export default function ModuleDashboard({ projectId }: ModuleDashboardProps) {
                                     💧
                                 </div>
                                 <div style={{ flex: 1 }}>
-                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.25rem', color: '#1e293b' }}>
+                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.25rem' }}>
                                         Fase 4: Dimensionamiento FLA
                                     </div>
-                                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                    <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>
                                         Filtración Lenta en Arena • Barrera microbiológica
                                     </div>
                                 </div>
                                 <div style={{
                                     padding: '0.375rem 0.875rem',
                                     borderRadius: '12px',
-                                    background: '#fef3c7',
-                                    color: '#92400e',
+                                    background: 'rgba(255,255,255,0.25)',
                                     fontSize: '0.7rem',
                                     fontWeight: 700
                                 }}>
-                                    PRÓXIMAMENTE
+                                    NUEVO
                                 </div>
-                            </div>
+                            </Link>
 
                             {/* Fase 5 */}
                             <div

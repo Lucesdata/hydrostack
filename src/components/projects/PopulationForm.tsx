@@ -148,6 +148,7 @@ export default function PopulationForm({ projectId, initialData }: { projectId: 
                         value={formData.community_name}
                         onChange={handleChange}
                         placeholder="Ej: Vereda El Silencio"
+                        className="text-black"
                     />
                     <Input
                         id="municipality"
@@ -156,6 +157,7 @@ export default function PopulationForm({ projectId, initialData }: { projectId: 
                         value={formData.municipality}
                         onChange={handleChange}
                         placeholder="Ej: San Roque"
+                        className="text-black"
                     />
                 </div>
 
@@ -168,6 +170,7 @@ export default function PopulationForm({ projectId, initialData }: { projectId: 
                         value={formData.dwellings_number}
                         onChange={handleChange}
                         placeholder="0"
+                        className="text-black"
                     />
                     <Input
                         id="people_per_dwelling"
@@ -178,6 +181,7 @@ export default function PopulationForm({ projectId, initialData }: { projectId: 
                         value={formData.people_per_dwelling}
                         onChange={handleChange}
                         placeholder="Ej: 3.5"
+                        className="text-black"
                     />
                 </div>
 
@@ -197,6 +201,7 @@ export default function PopulationForm({ projectId, initialData }: { projectId: 
                         label="Tasa de Crecimiento anual (%)"
                         value={formData.growth_rate}
                         onChange={handleChange}
+                        className="text-black"
                     />
                     <Input
                         id="projection_years"
@@ -205,6 +210,7 @@ export default function PopulationForm({ projectId, initialData }: { projectId: 
                         label="Período de Diseño (Años)"
                         value={formData.projection_years}
                         onChange={handleChange}
+                        className="text-black"
                     />
 
                     <div className="input-group">

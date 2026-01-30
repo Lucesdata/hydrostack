@@ -173,36 +173,41 @@ export default function NewProjectPage() {
     if (flowStage === 0) {
         return (
             <div className="container" style={{ maxWidth: '1000px', padding: '4rem 1rem' }}>
-                <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-                    <h1 style={{ color: 'var(--color-primary)', fontSize: '2.5rem', fontWeight: 800, marginBottom: '1rem' }}>Selecciona tu Intención</h1>
-                    <p style={{ color: 'var(--color-gray-dark)', fontSize: '1.1rem' }}>Identifica el propósito de tu sesión de trabajo de hoy.</p>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem' }}>
+                    {/* Card 1: Nuevo Proyecto */}
                     <IntentCard
-                        title="Empezar nuevo proyecto"
-                        description="Inicia el diseño técnico de un sistema de agua desde cero. HydroStack te guiará paso a paso como asistente de ingeniería, sin imponer decisiones, permitiéndote definir, evaluar y documentar el proyecto con rigor técnico."
+                        title="Nuevo Proyecto"
+                        description="Inicia tu diseño técnico desde cero con asistencia paso a paso."
                         buttonText="Iniciar proyecto"
                         onClick={() => setFlowStage(1)}
                         primary
                     />
+
+                    {/* Card 2: Gemelo Digital */}
                     <IntentCard
-                        title="Asistencia técnica"
-                        description="Recibe apoyo técnico especializado para revisar, validar o diagnosticar un proyecto existente. Ideal para análisis puntuales, verificación de diseños o soporte en decisiones específicas."
-                        buttonText="Solicitar asistencia"
-                        badge="Próximamente disponible"
+                        title="Gemelo Digital"
+                        description="Simulación y monitoreo en tiempo real de sistemas operativos."
+                        badge="Próximamente"
                         disabled
                     />
+
+                    {/* Card 3: Asistencia Social y Admin */}
                     <IntentCard
-                        title="Asistencia social y administrativa"
-                        description="Soporte en componentes sociales, normativos y administrativos asociados a proyectos de agua. Incluye acompañamiento en procesos comunitarios, documentación y requisitos institucionales."
-                        buttonText="Explorar opciones"
-                        badge="Próximamente disponible"
+                        title="Asistencia Social y Admin."
+                        description="Soporte en aspectos sociales, normativos y administrativos."
+                        badge="Próximamente"
                         disabled
                     />
-                </div>
-                <div style={{ marginTop: '4rem', textAlign: 'center' }}>
-                    <p style={{ marginBottom: '1rem', color: 'var(--color-gray-dark)', fontSize: '0.9rem' }}>¿Ya tienes proyectos en curso?</p>
-                    <Button variant="outline" onClick={() => router.push('/dashboard')}>Ver mis proyectos existentes</Button>
+
+                    {/* Card 4: Mis Proyectos */}
+                    <IntentCard
+                        title="Mis Proyectos"
+                        description="Accede a tu portafolio de proyectos existentes y continúa trabajando."
+                        buttonText="Ir al Dashboard"
+                        onClick={() => router.push('/dashboard')}
+                        primary
+                    />
                 </div>
             </div>
         );
@@ -377,14 +382,16 @@ function IntentCard({ title, description, buttonText, onClick, disabled, badge, 
                 <h3 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '1.25rem', color: primary ? 'var(--color-primary)' : 'var(--color-text-on-white)' }}>{title}</h3>
                 <p style={{ color: 'var(--color-gray-dark)', fontSize: '1rem', lineHeight: 1.6, marginBottom: '2rem' }}>{description}</p>
             </div>
-            <Button
-                onClick={onClick}
-                disabled={disabled}
-                variant={primary ? 'primary' : 'outline'}
-                style={{ width: '100%' }}
-            >
-                {buttonText}
-            </Button>
+            {buttonText && (
+                <Button
+                    onClick={onClick}
+                    disabled={disabled}
+                    variant={primary ? 'primary' : 'outline'}
+                    style={{ width: '100%' }}
+                >
+                    {buttonText}
+                </Button>
+            )}
         </div>
     );
 }
