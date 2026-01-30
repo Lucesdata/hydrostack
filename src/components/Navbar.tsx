@@ -13,14 +13,16 @@ export default function Navbar() {
     const router = useRouter();
     const pathname = usePathname();
     const isHome = pathname === '/';
+    const isAuth = pathname === '/login' || pathname === '/register';
+    const isDarkPage = isHome || isAuth;
 
     return (
-        <nav className={`transition-colors duration-300 border-b z-50 ${isHome
+        <nav className={`transition-colors duration-300 border-b z-50 ${isDarkPage
             ? 'absolute top-0 left-0 w-full border-white/5 bg-slate-950/20 backdrop-blur-md'
             : 'sticky top-0 bg-white/90 backdrop-blur-md border-gray-200'
             }`}>
             <div className="container px-4 mx-auto navbar-container h-16 flex items-center justify-between">
-                <Link href={isHome ? "/" : "/dashboard/new"} className={`text-xl font-bold tracking-tight transition-colors ${isHome ? 'text-white' : 'text-primary'
+                <Link href={user ? "/dashboard/new" : "/"} className={`text-xl font-bold tracking-tight transition-colors ${isDarkPage ? 'text-white' : 'text-primary'
                     }`}>
                     <span className="flex items-center gap-2">
                         {/* Optional Icon if needed */}
@@ -36,22 +38,22 @@ export default function Navbar() {
                         </div>
                     )}
                     {!isHome && (
-                        <Link href="/" className="text-sm text-gray-500 hover:text-primary hidden md:block">
+                        <Link href="/" className={`text-sm hidden md:block ${isDarkPage ? 'text-white/70 hover:text-white' : 'text-gray-500 hover:text-primary'}`}>
                             Inicio
                         </Link>
                     )}
                     {user ? (
                         <>
-                            <Link href="/dashboard/new" className={`text-sm font-medium ${isHome ? 'text-white hover:text-emerald-400' : 'text-gray-700 hover:text-black'} mr-2 hidden sm:inline-block`}>
+                            <Link href="/dashboard/new" className={`text-sm font-medium ${isDarkPage ? 'text-white hover:text-emerald-400' : 'text-gray-700 hover:text-black'} mr-2 hidden sm:inline-block`}>
                                 Hola, {user.user_metadata?.name || 'Usuario'}
                             </Link>
-                            <Button variant={isHome ? 'outline' : 'secondary'} onClick={() => logout()} className={isHome ? 'border-white/20 text-white hover:bg-white/10' : ''}>
+                            <Button variant={isDarkPage ? 'outline' : 'secondary'} onClick={() => logout()} className={isDarkPage ? 'border-white/20 text-white hover:bg-white/10' : ''}>
                                 Cerrar sesión
                             </Button>
                         </>
                     ) : (
                         <>
-                            <Link href="/login" className={`text-sm font-medium ${isHome ? 'text-white/70 hover:text-white' : 'text-gray-500 hover:text-primary'} mr-4 transition-colors`}>
+                            <Link href="/login" className={`text-sm font-medium ${isDarkPage ? 'text-white/70 hover:text-white' : 'text-gray-500 hover:text-primary'} mr-4 transition-colors`}>
                                 Log in
                             </Link>
 

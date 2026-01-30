@@ -4,11 +4,11 @@
 :root {
   --font-inter: 'Inter', sans-serif;
 
-  /* Legacy Compatibility Variables */
-  --color-primary: #0ea5e9;
-  /* Sky 500 */
-  --color-primary-hover: #0284c7;
-  /* Sky 600 */
+  /* Emerald Theme (Harmonized) */
+  --color-primary: #10b981;
+  /* Emerald 500 */
+  --color-primary-hover: #059669;
+  /* Emerald 600 */
   --color-background: #0f172a;
   /* Slate 900 */
   --color-foreground: #f8fafc;
@@ -116,7 +116,7 @@
 .input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
 }
 
 /* Landing Page Custom Utilities */

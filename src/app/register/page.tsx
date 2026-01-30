@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState } from 'react';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import { USER_CATEGORIES } from '@/constants/project';
+import AuthLayout from '@/components/auth/AuthLayout';
+import { Loader2, ChevronDown } from 'lucide-react';
 
 export default function RegisterPage() {
     const [formData, setFormData] = useState({
@@ -49,11 +49,6 @@ export default function RegisterPage() {
 
             if (signUpError) throw signUpError;
 
-            // Note: In Supabase, if email confirmation is enabled, user won't be signed in immediately usually.
-            // But for this MVP assume auto-confirm or handling "Check email" state if necessary.
-            // If auto-confirm is off, we should show a message. 
-            // For simplicity in MVP, we often disable confirm email or just redirect.
-
             router.push('/dashboard');
         } catch (err: any) {
             setError(err.message || 'Error al registrarse');
@@ -63,63 +58,96 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="container" style={{ maxWidth: '480px', padding: '4rem 1rem' }}>
-            <div style={{ backgroundColor: 'white', padding: '2rem', borderRadius: 'var(--radius-lg)', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-                <h1 style={{ textAlign: 'center', marginBottom: '1.5rem', color: 'var(--color-primary)' }}>Crear Cuenta</h1>
-                {error && <div style={{ backgroundColor: '#FEE2E2', color: 'var(--color-error)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem', textAlign: 'center' }}>{error}</div>}
-                <form onSubmit={handleSubmit}>
-                    <Input
+        <AuthLayout title="Crear Cuenta" subtitle="Únete a la comunidad de Hydrostack">
+            <form onSubmit={handleSubmit} className="space-y-4">
+                {error && (
+                    <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-3 rounded-lg text-center">
+                        {error}
+                    </div>
+                )}
+
+                <div className="space-y-1.5">
+                    <label className="text-xs font-mono font-medium text-emerald-400 uppercase tracking-wider">
+                        Nombre completo
+                    </label>
+                    <input
                         id="name"
                         name="name"
                         type="text"
-                        label="Nombre completo"
-                        placeholder="Tu nombre"
                         value={formData.name}
                         onChange={handleChange}
+                        placeholder="Tu nombre"
+                        className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all"
                     />
-                    <Input
+                </div>
+
+                <div className="space-y-1.5">
+                    <label className="text-xs font-mono font-medium text-emerald-400 uppercase tracking-wider">
+                        Correo electrónico
+                    </label>
+                    <input
                         id="email"
                         name="email"
                         type="email"
-                        label="Correo electrónico"
-                        placeholder="ejemplo@correo.com"
                         value={formData.email}
                         onChange={handleChange}
+                        placeholder="ejemplo@correo.com"
+                        className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all"
                     />
-                    <Input
+                </div>
+
+                <div className="space-y-1.5">
+                    <label className="text-xs font-mono font-medium text-emerald-400 uppercase tracking-wider">
+                        Contraseña
+                    </label>
+                    <input
                         id="password"
                         name="password"
                         type="password"
-                        label="Contraseña"
-                        placeholder="******"
                         value={formData.password}
                         onChange={handleChange}
+                        placeholder="••••••"
+                        className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all"
                     />
+                </div>
 
-                    <div className="input-group">
-                        <label htmlFor="user_type" className="label">Tipo de usuario</label>
+                <div className="space-y-1.5 relative">
+                    <label htmlFor="user_type" className="text-xs font-mono font-medium text-emerald-400 uppercase tracking-wider">
+                        Tipo de usuario
+                    </label>
+                    <div className="relative">
                         <select
                             id="user_type"
                             name="user_type"
-                            className="input"
                             value={formData.user_type}
                             onChange={handleChange}
-                            style={{ backgroundColor: 'white' }}
+                            className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white appearance-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all cursor-pointer"
                         >
                             {USER_CATEGORIES.map((type) => (
-                                <option key={type} value={type}>{type}</option>
+                                <option key={type} value={type} className="bg-slate-900 text-white">{type}</option>
                             ))}
                         </select>
+                        <ChevronDown className="w-4 h-4 absolute right-3 top-3 text-slate-400 pointer-events-none" />
                     </div>
+                </div>
 
-                    <div style={{ marginTop: '1.5rem' }}>
-                        <Button type="submit" fullWidth>Registrarse</Button>
-                    </div>
-                </form>
-                <p style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.9rem', color: 'var(--color-gray-dark)' }}>
-                    ¿Ya tienes cuenta? <Link href="/login" style={{ color: 'var(--color-primary)', fontWeight: 500 }}>Inicia sesión</Link>
-                </p>
-            </div>
-        </div>
+                <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-medium py-3 rounded-lg shadow-lg shadow-emerald-900/20 transition-all flex justify-center items-center gap-2 mt-4 disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Registrarse'}
+                </button>
+
+                <div className="text-center pt-2">
+                    <p className="text-slate-400 text-sm">
+                        ¿Ya tienes cuenta?{' '}
+                        <Link href="/login" className="text-emerald-400 hover:text-emerald-300 font-medium transition-colors">
+                            Inicia sesión
+                        </Link>
+                    </p>
+                </div>
+            </form>
+        </AuthLayout>
     );
 }
