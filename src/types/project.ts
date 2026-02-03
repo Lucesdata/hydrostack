@@ -73,11 +73,14 @@ export type ModuleKey =
     | 'fime_pretratamiento'
     | 'fime_tech_selection'
     | 'fime_grueso_dinamico'
+    | 'fime_grueso_ascendente'     // FGAC - Added
     | 'fime_grueso_asdesc'
     | 'fime_lento_arena'
+    | 'fime_weir_control'           // Weir Control - Added
     | 'fime_hidraulica'
     | 'fime_implantacion'
     | 'fime_balance_masas'
+    | 'risk_analysis'               // Risk Analysis - Added
     | 'viability_matrix'
     | 'compact_mixing'
     | 'compact_flocculation'

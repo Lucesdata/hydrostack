@@ -81,8 +81,20 @@ export default function FimeTechSelection({ projectId }: { projectId: string }) 
                 message: '',
                 description: '',
                 type: 'success' as 'success' | 'warning' | 'error',
-                warnings: [] as string[]
+                warnings: [] as string[],
+                requiresPilot: false
             };
+
+            // ALERTA CRÍTICA: Valores fuera de rango FIME convencional
+            if (t > 70 || coli > 20000) {
+                rec.tech = '🛑 Requiere Planta Piloto';
+                rec.message = 'Calidad Fuera de Rango Estándar FIME';
+                rec.description = `Los valores extremos (${t > 70 ? `Turbiedad: ${t} UNT` : ''}${t > 70 && coli > 20000 ? ', ' : ''}${coli > 20000 ? `Coliformes: ${coli} UFC/100mL` : ''}) exceden los límites de aplicabilidad directa de FIME. Se requiere estudio en planta piloto para validar eficiencia y ajustar parámetros de diseño.`;
+                rec.type = 'error';
+                rec.requiresPilot = true;
+                rec.warnings.push(' ACCIÓN REQUERIDA: Antes de proceder con el diseño definitivo, debe ejecutar un estudio piloto de al menos 3 meses para determinar tasas de filtración óptimas y eficiencias reales.');
+                return rec;
+            }
 
             // Lógica Base CINARA (Tabla 5.1 refinada)
             // Caso 1: Calidad Excelente/Buena (<10 UNT, <20 UPC) -> FGDi + FLA
@@ -92,26 +104,24 @@ export default function FimeTechSelection({ projectId }: { projectId: string }) 
                 rec.description = 'La opción más viable económica y técnicamente. La baja carga de sólidos permite utilizar Filtro Grueso Dinámico (FGDi) como única protección antes del Filtro Lento.';
                 rec.type = 'success';
             }
-            // Caso 2: Calidad Regular (10-30 UNT, 20-40 UPC) -> Requiere FGAC
-            // Nota: El usuario especificó 10-20 UNT para FGAC, ajustamos a la lógica CINARA que suele ser hasta 20-30. 
-            // Seguimos instrucción: "Si Turbiedad está entre 10-20 UNT: Informa que se requiere añadir FGAC".
-            else if (t <= 30 || c <= 40) {
+            // Caso 2: Calidad Regular (10-50 UNT, 20-70 UPC) -> Requiere FGAC
+            else if (t <= 50 && c <= 70) {
                 rec.tech = 'FGDi + FGAC + FLA';
                 rec.message = 'Requiere Filtración Gruesa Adicional';
                 rec.description = 'Niveles de turbiedad intermedios exigen añadir un Filtro Grueso Ascendente en Capas (FGAC) después del FGDi para evitar la colmatación rápida del Filtro Lento.';
                 rec.type = 'warning';
             }
-            // Caso 3: Calidad Mala -> Tren Complejo
-            else {
+            // Caso 3: Calidad Mala (50-70 UNT) -> Tren Complejo
+            else if (t <= 70 && c <= 100) {
                 rec.tech = 'Tren Complejo (Sed + FG + FLA)';
                 rec.message = 'Alta carga contaminante';
                 rec.description = 'Se requieren múltiples barreras. Considere sedimentación previa o series largas de filtración gruesa.';
                 rec.type = 'error';
             }
 
-            // Advertencia Microbiológica (> 500 UFC)
-            if (coli > 500) {
-                rec.warnings.push(' Riesgo Microbiológico Alto (>500 UFC). Se debe robustecer la desinfección final y asegurar operación estricta para lograr >5 Log de remoción.');
+            // Advertencia Microbiológica (>500 UFC)
+            if (coli > 500 && coli <= 20000) {
+                rec.warnings.push(` Riesgo Microbiológico Alto (>500 UFC). Se debe robustecer la desinfección final y asegurar operación estricta para lograr >5 Log de remoción.`);
                 // Si era success, pasamos a warning para que el usuario note el riesgo
                 if (rec.type === 'success') rec.type = 'warning';
             }
