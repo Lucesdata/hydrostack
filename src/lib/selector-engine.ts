@@ -1,0 +1,295 @@
+/**
+ * Motor del Selector de Proyecto y Tecnología — HydroStack Pro
+ * Calcula puntajes por tecnología según origen, usuario y caudal.
+ */
+
+import type { ProjectContext, TreatmentCategory } from '@/types/project';
+
+export type OrigenAgua = 'rio' | 'pozo' | 'lluvia' | 'mar';
+export type UsuarioProyecto = 'rural' | 'municipal' | 'residencial' | 'industria';
+
+export type TechKey = 'convencional' | 'fimes' | 'compacta' | 'uf' | 'ro';
+
+export interface Criterio {
+  id: string;
+  label: string;
+  desc: string;
+}
+
+export interface TechBaseScores {
+  calidad: number;
+  costo: number;
+  simplicidad: number;
+  robustez: number;
+  energia: number;
+}
+
+export interface TecnologiaData {
+  nombre: string;
+  color: string;
+  borderColor: string;
+  bgColor: string;
+  visible: boolean;
+  base: TechBaseScores;
+  desc: string;
+  costo_txt: string;
+  factorArea: number;
+}
+
+export const CRITERIOS: Criterio[] = [
+  { id: 'calidad', label: 'Calidad Agua', desc: 'Pureza' },
+  { id: 'costo', label: 'Eficiencia Costos', desc: 'CAPEX/OPEX' },
+  { id: 'simplicidad', label: 'Simplicidad', desc: 'Operación' },
+  { id: 'robustez', label: 'Robustez', desc: 'Durabilidad' },
+  { id: 'energia', label: 'Eficiencia Energ.', desc: 'Consumo' },
+];
+
+export const TECNOLOGIAS_DATA: Record<TechKey, TecnologiaData> = {
+  convencional: {
+    nombre: 'Convencional',
+    color: 'bg-gray-500',
+    borderColor: 'rgba(107, 114, 128, 1)',
+    bgColor: 'rgba(107, 114, 128, 0.2)',
+    visible: true,
+    base: { calidad: 60, costo: 80, simplicidad: 70, robustez: 80, energia: 90 },
+    desc: "El 'Caballo de Batalla' de la ingeniería sanitaria. Tren de procesos: Coagulación -> Floculación -> Sedimentación -> Filtración. Diseñada para tratar millones de litros por día (MLD) tolerando picos extremos de turbidez (Cargas de Choque).",
+    costo_txt: 'CAPEX Alto (Infraestructura) / OPEX Bajo por m³ (Economía de Escala).',
+    factorArea: 4.0,
+  },
+  fimes: {
+    nombre: 'FIMES',
+    color: 'bg-green-600',
+    borderColor: 'rgba(22, 163, 74, 1)',
+    bgColor: 'rgba(22, 163, 74, 0.2)',
+    visible: true,
+    base: { calidad: 85, costo: 70, simplicidad: 95, robustez: 90, energia: 100 },
+    desc: "Método de 'Barrera Biológica'. Imita la purificación natural de los acuíferos. Utiliza arena y actividad biológica (Schmutzdecke) para eliminar patógenos sin químicos. Requiere pre-filtros de grava.",
+    costo_txt: 'CAPEX Alto (Obra Civil Grande) / OPEX Muy Bajo.',
+    factorArea: 25.0,
+  },
+  compacta: {
+    nombre: 'Compacta',
+    color: 'bg-orange-500',
+    borderColor: 'rgba(249, 115, 22, 1)',
+    bgColor: 'rgba(249, 115, 22, 0.2)',
+    visible: true,
+    base: { calidad: 80, costo: 50, simplicidad: 40, robustez: 70, energia: 60 },
+    desc: "Tecnología 'Plug & Play'. Sistemas prefabricados, modulares y transportables. Ideales para campamentos (minería/petróleo), hoteles y emergencias. Alta eficiencia en espacio reducido.",
+    costo_txt: 'CAPEX Medio / OPEX Alto (Personal y Químicos).',
+    factorArea: 1.2,
+  },
+  uf: {
+    nombre: 'Ultrafiltración',
+    color: 'bg-blue-500',
+    borderColor: 'rgba(59, 130, 246, 1)',
+    bgColor: 'rgba(59, 130, 246, 0.2)',
+    visible: true,
+    base: { calidad: 90, costo: 60, simplicidad: 50, robustez: 60, energia: 70 },
+    desc: "Método de 'Barrera Física'. Utiliza membranas con poros de 0.01 micras. Retiene virus y bacterias físicamente, pero deja pasar las sales minerales saludables. Muy usada en industria de bebidas.",
+    costo_txt: 'CAPEX Alto / OPEX Medio. Requiere reemplazo de membranas cada 3-5 años.',
+    factorArea: 1.0,
+  },
+  ro: {
+    nombre: 'Ósmosis Inv.',
+    color: 'bg-purple-600',
+    borderColor: 'rgba(147, 51, 234, 1)',
+    bgColor: 'rgba(147, 51, 234, 0.2)',
+    visible: true,
+    base: { calidad: 100, costo: 30, simplicidad: 20, robustez: 40, energia: 20 },
+    desc: "Método de 'Desalinización'. Aplica alta presión para forzar el paso del agua a través de membranas semipermeables, rechazando sales y contaminantes. El agua producto suele requerir remineralización.",
+    costo_txt: 'CAPEX Muy Alto / OPEX Alto. Alto consumo energético.',
+    factorArea: 1.5,
+  },
+};
+
+export interface SelectorState {
+  origen: OrigenAgua;
+  usuario: UsuarioProyecto;
+}
+
+export interface CalcularResultado {
+  datos: Record<TechKey, TecnologiaData>;
+  texto: string;
+  tip: string;
+}
+
+function clamp(val: number, min: number, max: number): number {
+  if (val > max) return max;
+  if (val < min) return min;
+  return val;
+}
+
+export function calcularPuntajes(
+  estado: SelectorState,
+  caudalLps: number,
+  tecnologias: Record<TechKey, TecnologiaData>
+): CalcularResultado {
+  const resultados = JSON.parse(JSON.stringify(tecnologias)) as Record<TechKey, TecnologiaData>;
+  let explicacion = '';
+  let tipTecnico = '';
+
+  // 1. MODIFICADORES POR ORIGEN
+  if (estado.origen === 'rio') {
+    resultados.uf.base.robustez -= 30;
+    resultados.ro.base.robustez -= 30;
+    resultados.convencional.base.calidad += 10;
+    resultados.compacta.base.robustez -= 10;
+    tipTecnico =
+      'En fuentes superficiales (Ríos), la carga de sedimentos varía con la lluvia. La tecnología seleccionada debe tener capacidad de amortiguamiento o un buen pretratamiento.';
+  } else if (estado.origen === 'pozo') {
+    resultados.fimes.base.costo -= 30;
+    resultados.fimes.base.energia -= 40;
+    resultados.compacta.base.calidad += 10;
+    resultados.compacta.base.costo += 20;
+    tipTecnico =
+      '⚠️ ALERTA DE COSTOS: Usar FIMES con agua de pozo es un error común. Elevar el agua para que luego baje por gravedad genera un doble gasto energético. Es mejor usar filtros a presión (Compactas).';
+  } else if (estado.origen === 'lluvia') {
+    resultados.ro.base.costo -= 20;
+    resultados.fimes.base.costo += 5;
+    tipTecnico =
+      'El agua de lluvia es ácida y baja en minerales. Requiere corrección de pH y remineralización, pero no filtración compleja.';
+  } else if (estado.origen === 'mar') {
+    resultados.ro.base.calidad = 100;
+    resultados.ro.base.robustez += 20;
+    (['convencional', 'fimes', 'compacta', 'uf'] as const).forEach((t) => {
+      resultados[t].base.calidad = 10;
+      resultados[t].base.robustez = 10;
+    });
+    explicacion = 'Para agua de mar (costas/islas), la Ósmosis Inversa es obligatoria para la desalinización.';
+    tipTecnico =
+      'La desalinización por RO produce agua muy pura pero corrosiva. Es obligatorio un post-tratamiento con filtros de calcita.';
+    normalizar(resultados);
+    return { datos: resultados, texto: explicacion, tip: tipTecnico };
+  }
+
+  // 2. MODIFICADORES POR USUARIO
+  if (estado.usuario === 'rural') {
+    resultados.fimes.base.costo += 20;
+    resultados.fimes.base.simplicidad += 10;
+    resultados.compacta.base.simplicidad -= 40;
+    resultados.compacta.base.costo -= 20;
+    resultados.ro.base.simplicidad -= 40;
+    explicacion =
+      'Para comunidades rurales de montaña, la FIMES es una opción tradicional, aunque sistemas modulares ganan terreno en mantenibilidad.';
+    if (estado.origen === 'rio')
+      tipTecnico +=
+        ' ⚠️ IMPORTANTE: Para FIMES en ríos, es obligatorio instalar Filtros Gruesos Dinámicos (FGDi) antes.';
+  } else if (estado.usuario === 'municipal') {
+    resultados.fimes.base.costo -= 40;
+    resultados.fimes.base.simplicidad -= 20;
+    resultados.compacta.base.costo -= 20;
+    resultados.convencional.base.costo += 20;
+    resultados.convencional.base.simplicidad += 10;
+    resultados.convencional.base.robustez += 15;
+    explicacion =
+      "Para abastecimiento municipal, la tecnología Convencional es la única que ofrece 'Economía de Escala'.";
+    tipTecnico =
+      '🏭 REALIDAD OPERATIVA: Las plantas municipales modernas integran sistemas SCADA. El mayor reto es gestionar los lodos químicos.';
+  } else if (estado.usuario === 'residencial') {
+    resultados.compacta.base.simplicidad += 20;
+    resultados.compacta.base.costo += 20;
+    resultados.fimes.base.costo -= 30;
+    resultados.uf.base.simplicidad += 10;
+    explicacion =
+      'Las Plantas Compactas son la solución predilecta para el sector residencial y hotelero: estéticas y modulares.';
+    tipTecnico =
+      'En zonas residenciales, el ruido de las bombas y la estética de la planta son factores de diseño clave.';
+  } else if (estado.usuario === 'industria') {
+    resultados.ro.base.calidad += 20;
+    resultados.ro.base.costo += 30;
+    resultados.compacta.base.robustez += 10;
+    resultados.uf.base.calidad += 10;
+    explicacion =
+      'Para la industria, las Plantas Compactas son vitales por su movilidad y rápida puesta en marcha.';
+    tipTecnico = 'La industria requiere consistencia 24/7. Se suelen implementar sistemas redundantes (N+1).';
+  }
+
+  // 3. MODIFICADORES POR CAUDAL
+  if (caudalLps > 0) {
+    if (caudalLps < 5) {
+      resultados.convencional.base.costo -= 30;
+      resultados.compacta.base.costo += 10;
+      resultados.fimes.base.costo += 10;
+      if (!explicacion.includes('caudales'))
+        explicacion += ' Para caudales bajos (<5 L/s), las soluciones modulares o FIMES son opciones a considerar.';
+    } else if (caudalLps > 30) {
+      resultados.fimes.base.costo -= 40;
+      resultados.fimes.base.simplicidad -= 20;
+      resultados.compacta.base.costo -= 20;
+      resultados.convencional.base.costo += 25;
+      if (!explicacion.includes('caudales'))
+        explicacion += ' Con caudales altos (>30 L/s), la planta Convencional maximiza su eficiencia económica.';
+    }
+  }
+
+  normalizar(resultados);
+  return { datos: resultados, texto: explicacion, tip: tipTecnico };
+}
+
+function normalizar(resultados: Record<TechKey, TecnologiaData>): void {
+  (Object.keys(resultados) as TechKey[]).forEach((key) => {
+    (Object.keys(resultados[key].base) as (keyof TechBaseScores)[]).forEach((crit) => {
+      let val = resultados[key].base[crit];
+      resultados[key].base[crit] = clamp(val, 5, 100);
+    });
+  });
+}
+
+/** Mapea usuario del selector → ProjectContext */
+export function usuarioToProjectContext(usuario: UsuarioProyecto): ProjectContext {
+  const map: Record<UsuarioProyecto, ProjectContext> = {
+    rural: 'rural',
+    municipal: 'urban',
+    residencial: 'residential',
+    industria: 'industrial',
+  };
+  return map[usuario];
+}
+
+/** Mapea origen + tech key → project_context si es mar → desalination */
+export function getProjectContext(
+  origen: OrigenAgua,
+  usuario: UsuarioProyecto
+): ProjectContext {
+  if (origen === 'mar') return 'desalination';
+  return usuarioToProjectContext(usuario);
+}
+
+/** Mapea TechKey del selector → TreatmentCategory de HydroStack */
+export function techKeyToTreatmentCategory(
+  key: TechKey,
+  origen: OrigenAgua
+): TreatmentCategory {
+  if (origen === 'mar') return 'desalination_high_purity';
+  const map: Record<TechKey, TreatmentCategory> = {
+    convencional: 'conventional_rapid',
+    fimes: 'fime',
+    compacta: 'compact_plant',
+    uf: 'specific_plant',
+    ro: 'reverse_osmosis',
+  };
+  return map[key];
+}
+
+/** Obtiene la tecnología recomendada (mayor puntaje global) */
+export function getRecommendedTech(
+  datos: Record<TechKey, TecnologiaData>
+): { key: TechKey; nombre: string; score: number } | null {
+  const visibleKeys = (Object.keys(datos) as TechKey[]).filter((k) => datos[k].visible);
+  if (visibleKeys.length === 0) return null;
+  // USER Objective: FIMES should not be recommended by default even with high score
+  const filteredKeys = visibleKeys.filter(k => k !== 'fimes');
+  const targetKeys = filteredKeys.length > 0 ? filteredKeys : visibleKeys;
+
+  let maxScore = -1;
+  let bestKey: TechKey = targetKeys[0];
+  targetKeys.forEach((key) => {
+    const scores = Object.values(datos[key].base);
+    const promedio = scores.reduce((a, b) => a + b, 0) / scores.length;
+    if (promedio > maxScore) {
+      maxScore = promedio;
+      bestKey = key;
+    }
+  });
+  return { key: bestKey, nombre: datos[bestKey].nombre, score: Math.round(maxScore) };
+}

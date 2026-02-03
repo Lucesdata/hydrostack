@@ -180,7 +180,7 @@ export default function NewProjectPage() {
                         title="Nuevo Proyecto"
                         description="Inicia tu diseño técnico desde cero con asistencia paso a paso."
                         buttonText="Iniciar proyecto"
-                        onClick={() => setFlowStage(1)}
+                        onClick={() => router.push('/dashboard/new/selector')}
                         primary
                     />
 
@@ -213,45 +213,6 @@ export default function NewProjectPage() {
         );
     }
 
-    if (flowStage === 1) {
-        return (
-            <div className="container" style={{ maxWidth: '1000px', padding: '4rem 1rem' }}>
-                <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-                    <h1 style={{ color: 'var(--color-primary)', fontSize: '2.5rem', fontWeight: 800, marginBottom: '1rem' }}>Dominio del Proyecto</h1>
-                    <p style={{ color: 'var(--color-gray-dark)', fontSize: '1.1rem' }}>Selecciona el campo de aplicación de tu nuevo diseño técnico.</p>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
-                    <IntentCard
-                        title="Agua potable"
-                        description="Diseño y evaluación de sistemas de abastecimiento y tratamiento de agua para consumo humano. Incluye proyectos rurales, urbanos, institucionales, plantas compactas, sistemas FIME y desalinización, bajo normativas técnicas vigentes."
-                        buttonText="Continuar"
-                        onClick={() => {
-                            setFormData({ ...formData, project_domain: 'water_treatment' });
-                            setFlowStage(2);
-                        }}
-                        primary
-                    />
-                    <IntentCard
-                        title="Agua residual doméstica"
-                        description="Diseño conceptual y técnico de sistemas de tratamiento para aguas residuales de origen doméstico. Aplicable a comunidades, conjuntos residenciales y sistemas descentralizados."
-                        buttonText="Continuar"
-                        badge="En preparación"
-                        disabled
-                    />
-                    <IntentCard
-                        title="Agua residual industrial"
-                        description="Evaluación y tratamiento de efluentes industriales con características físico-químicas especiales. Incluye procesos avanzados, cumplimiento normativo y análisis de viabilidad técnica."
-                        buttonText="Continuar"
-                        badge="En preparación"
-                        disabled
-                    />
-                </div>
-                <div style={{ marginTop: '4rem', textAlign: 'center' }}>
-                    <Button variant="outline" onClick={() => setFlowStage(0)}>← Atrás</Button>
-                </div>
-            </div>
-        );
-    }
 
     // Wizard Stage
     return (

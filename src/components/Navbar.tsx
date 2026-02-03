@@ -22,7 +22,7 @@ export default function Navbar() {
             : 'sticky top-0 bg-white/90 backdrop-blur-md border-gray-200'
             }`}>
             <div className="container px-4 mx-auto navbar-container h-16 flex items-center justify-between">
-                <Link href={user ? "/dashboard/new" : "/"} className={`text-xl font-bold tracking-tight transition-colors ${isDarkPage ? 'text-white' : 'text-primary'
+                <Link href="/" className={`text-xl font-bold tracking-tight transition-colors ${isDarkPage ? 'text-white' : 'text-primary'
                     }`}>
                     <span className="flex items-center gap-2">
                         {/* Optional Icon if needed */}

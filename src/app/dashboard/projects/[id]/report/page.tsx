@@ -32,7 +32,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
         supabase.from('project_water_quality').select('*').eq('project_id', id).single(),
         supabase.from('project_conduccion').select('*').eq('project_id', id).single(),
         supabase.from('project_treatment').select('*').eq('project_id', id).single(),
-        supabase.from('project_seasonal_data').select('*').eq('id', id).single(),
+        supabase.from('project_seasonal_data').select('*').eq('project_id', id).single(),
         supabase.from('project_jar_test').select('*').eq('project_id', id).single(),
         supabase.from('project_opex').select('*').eq('project_id', id).single(),
         supabase.from('project_viability').select('*').eq('project_id', id).single(),

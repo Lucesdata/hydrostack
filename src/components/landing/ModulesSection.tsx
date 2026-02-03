@@ -1,36 +1,36 @@
-import { Waves, FlaskConical, Filter, Trash2, Droplet, Zap } from 'lucide-react';
+import { Users, Workflow, Filter, Trash2, Droplet, ClipboardCheck } from 'lucide-react';
 
 export default function ModulesSection() {
     const modules = [
         {
-            icon: Waves,
-            title: "Preliminary Treatment",
-            description: "Dimensioning of screening channels, grit chambers, and oil & grease removal units based on peak flow."
+            icon: Users,
+            title: "Proyección Poblacional",
+            description: "Cálculo de demanda hídrica incluyendo población flotante y turismo estacional (Método Geométrico/Lineal)."
         },
         {
-            icon: FlaskConical,
-            title: "Biological Reactors",
-            description: "Sizing for Activated Sludge, SBR, or MBBR processes with precise oxygen demand calculations."
+            icon: Workflow,
+            title: "Selección de Tecnología",
+            description: "Matriz de decisión automatizada para elegir entre FIME, Filtros Lentos o Convencionales según calidad del agua."
         },
         {
             icon: Filter,
-            title: "Clarification",
-            description: "Surface area and depth calculation for secondary clarifiers including sludge return ratios."
-        },
-        {
-            icon: Trash2,
-            title: "Sludge Management",
-            description: "Thickening, digestion, and dewatering equipment sizing based on dry solids production."
+            title: "Filtración Gruesa (FGDi)",
+            description: "Dimensionamiento de pre-filtros dinámicos para reducción de picos de turbiedad y sólidos suspendidos."
         },
         {
             icon: Droplet,
-            title: "Tertiary Filtration",
-            description: "Sand filter and membrane sizing for high-quality effluent reuse standards."
+            title: "Filtros Lentos (FLA)",
+            description: "Diseño de bio-filtros de arena para remoción de patógenos sin uso de químicos intensivos."
         },
         {
-            icon: Zap,
-            title: "Energy Optimization",
-            description: "AI analysis of pump and blower configurations to minimize operational kWh/m³."
+            icon: Trash2,
+            title: "Desarenadores",
+            description: "Cálculo hidráulico para unidades de remoción de arenas con zonas de entrada, sedimentación y lodos."
+        },
+        {
+            icon: ClipboardCheck,
+            title: "Análisis Normativo",
+            description: "Verificación de cumplimiento con RAS-2000 y cálculo de Índice de Riesgo de Calidad (IRCA)."
         }
     ];
 
@@ -38,12 +38,12 @@ export default function ModulesSection() {
         <section className="py-24 bg-white font-sans">
             <div className="max-w-7xl mx-auto px-6">
                 <div className="text-center max-w-3xl mx-auto mb-20">
-                    <span className="inline-block bg-sky-100 text-sky-700 text-xs font-semibold px-3 py-1 rounded-full mb-4">PLATFORM MODULES</span>
+                    <span className="inline-block bg-sky-100 text-sky-700 text-xs font-semibold px-3 py-1 rounded-full mb-4">MÓDULOS DE LA PLATAFORMA</span>
                     <h2 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight mb-4">
-                        Full-Cycle Treatment Plant Design
+                        Ciclo Completo de Acueductos Rurales
                     </h2>
                     <p className="text-lg text-slate-500 leading-relaxed">
-                        From preliminary screening to tertiary filtration, our algorithms handle every stage of the treatment process.
+                        Desde la estimación de la demanda hasta el diseño de detalle de unidades de filtración, Hydrostack integra todo el flujo de ingeniería de agua potable.
                     </p>
                 </div>
 
