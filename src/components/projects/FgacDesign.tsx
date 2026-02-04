@@ -159,7 +159,7 @@ export default function FgacDesign({ projectId }: { projectId: string }) {
             <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-purple-500">
                 <h1 className="text-2xl font-bold text-gray-800">Filtro Grueso Ascendente en Capas (FGAC)</h1>
                 <p className="text-gray-600 mt-2">
-                    Unidad de tratamiento intermedia que reduce la carga de turbiedad antes del Filtro Lento. 
+                    Unidad de tratamiento intermedia que reduce la carga de turbiedad antes del Filtro Lento.
                     Esencial para aguas con turbiedad media (10-50 UNT).
                 </p>
                 <div className="mt-4 flex gap-4 text-sm flex-wrap">
@@ -207,7 +207,29 @@ export default function FgacDesign({ projectId }: { projectId: string }) {
 
             {/* Hydraulic Design */}
             <section className="bg-white p-6 rounded-lg shadow-sm">
-                <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">2. Dimensionamiento Hidráulico</h2>
+                <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">2. Dimensionamiento Hidráulico (Normativo)</h2>
+
+                {/* Validation Errors */}
+                {(() => {
+                    const errors = [];
+                    if (designParams.vf < 0.3 || designParams.vf > 0.6)
+                        errors.push(`Velocidad de Filtración ${designParams.vf} m/h fuera de rango (0.3 - 0.6 m/h) [Guía FIME Sección 10.3]`);
+
+                    if (results && results.area_m2 > 20)
+                        errors.push(`Área por unidad (${results.area_m2.toFixed(2)} m²) demasiado grande. Se recomienda < 20 m² para facilitar lavado.`);
+
+                    if (errors.length > 0) {
+                        return (
+                            <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded shadow-sm">
+                                <h3 className="font-bold mb-2">⛔ RESTRICCIONES NORMATIVAS</h3>
+                                <ul className="list-disc pl-5 space-y-1">
+                                    {errors.map((err, i) => <li key={i}>{err}</li>)}
+                                </ul>
+                            </div>
+                        );
+                    }
+                    return null;
+                })()}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Inputs */}
@@ -224,11 +246,15 @@ export default function FgacDesign({ projectId }: { projectId: string }) {
                                     max="0.6"
                                     value={designParams.vf}
                                     onChange={(e) => setDesignParams({ ...designParams, vf: parseFloat(e.target.value) })}
-                                    className="w-full p-2 border rounded focus:ring-2 focus:ring-purple-500 outline-none text-black"
+                                    className={`w-full p-2 border rounded focus:ring-2 outline-none text-black ${designParams.vf < 0.3 || designParams.vf > 0.6 ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                                        }`}
                                 />
                                 <span className="text-gray-500 text-sm w-12">m/h</span>
                             </div>
-                            <p className="text-xs text-gray-500 mt-1">Recomendado: 0.3 - 0.6 m/h (CINARA)</p>
+                            <p className="text-xs text-gray-500 mt-1">Rango Estricto: 0.3 - 0.6 m/h</p>
+                            <p className="text-xs text-blue-600 mt-1">
+                                {quality.turbidity && quality.turbidity > 20 ? 'Recomendado: 0.45 m/h (Calidad Media/Alta)' : 'Recomendado: 0.60 m/h (Calidad Mejor)'}
+                            </p>
                         </div>
 
                         <div>
@@ -240,7 +266,7 @@ export default function FgacDesign({ projectId }: { projectId: string }) {
                                 onChange={(e) => setDesignParams({ ...designParams, num_units: parseInt(e.target.value) })}
                                 className="w-full p-2 border rounded focus:ring-2 focus:ring-purple-500 outline-none text-black"
                             />
-                            <p className="text-xs text-gray-500 mt-1">Mínimo 2 para alternancia en lavado.</p>
+                            <p className="text-xs text-gray-500 mt-1">Mínimo 2 unidades.</p>
                         </div>
 
                         <div>
@@ -282,9 +308,11 @@ export default function FgacDesign({ projectId }: { projectId: string }) {
                                 </div>
 
                                 <div className="mt-4 pt-4 border-t border-purple-200">
-                                    <h4 className="text-sm font-bold text-purple-900 mb-2">Altura Total de Lecho</h4>
-                                    <div className="text-sm bg-white p-2 rounded">
-                                        Altura Total: <strong>{results.height_total.toFixed(2)} m</strong> (3 capas)
+                                    <h4 className="text-sm font-bold text-purple-900 mb-2">Altura Total Estructura</h4>
+                                    <div className="text-sm bg-white p-2 rounded text-black">
+                                        Lecho + Soporte + Sobrenadante (0.1m) + Borde Libre (0.2m)
+                                        <br />
+                                        <strong>Total Estimado: ~1.50 - 1.60 m</strong>
                                     </div>
                                 </div>
                             </div>
@@ -295,71 +323,78 @@ export default function FgacDesign({ projectId }: { projectId: string }) {
                 </div>
             </section>
 
-            {/* Material Specifications */}
+            {/* Material Specifications - 4 LAYERS STRICT */}
             <section className="bg-white p-6 rounded-lg shadow-sm">
-                <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">3. Especificaciones Constructivas</h2>
+                <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">3. Especificaciones del Lecho (4 Capas + Soporte)</h2>
 
                 <div className="overflow-x-auto">
-                    <h3 className="font-semibold text-gray-700 mb-3">Lecho Filtrante (De abajo hacia arriba - Flujo Ascendente)</h3>
+                    <p className="text-sm text-gray-600 mb-3 italic">
+                        Configuración multicapa para maximizar eficiencia de remoción (Guía FIME - Tabla de Grava Mejorada).
+                    </p>
                     <table className="w-full text-sm text-left border rounded-lg overflow-hidden">
                         <thead className="bg-gray-100 text-gray-700">
                             <tr>
                                 <th className="p-3 border-b">Capa</th>
-                                <th className="p-3 border-b">Material</th>
+                                <th className="p-3 border-b">Función</th>
+                                <th className="p-3 border-b">Tamaño (mm)</th>
                                 <th className="p-3 border-b">Espesor (m)</th>
-                                <th className="p-3 border-b">Tamaño Grava (mm)</th>
-                                <th className="p-3 border-b">Ubicación</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y">
+                        <tbody className="divide-y text-gray-800">
+                            {/* Soporte */}
+                            <tr className="bg-gray-50/50">
+                                <td className="p-3 font-semibold">1. Soporte Inferior</td>
+                                <td className="p-3 text-gray-600">Distribución de Flujo</td>
+                                <td className="p-3 font-mono text-purple-700 font-bold">19 - 38 mm</td>
+                                <td className="p-3">0.15 - 0.30 m</td>
+                            </tr>
+                            {/* Filtración */}
                             <tr>
-                                <td className="p-3">Capa 1 (Inferior)</td>
-                                <td className="p-3">Grava Gruesa</td>
-                                <td className="p-3">0.30</td>
-                                <td className="p-3 font-mono">13 - 25 mm</td>
-                                <td className="p-3 text-xs text-gray-600">Entrada de agua cruda</td>
+                                <td className="p-3">2. Filtración Gruesa</td>
+                                <td className="p-3 text-gray-600">Retención de sólidos grandes</td>
+                                <td className="p-3 font-mono">13 - 19 mm</td>
+                                <td className="p-3">0.20 m</td>
                             </tr>
                             <tr>
-                                <td className="p-3">Capa 2 (Intermedia)</td>
-                                <td className="p-3">Grava Media</td>
-                                <td className="p-3">0.40</td>
+                                <td className="p-3">3. Filtración Media</td>
+                                <td className="p-3 text-gray-600">Retención intermedia</td>
                                 <td className="p-3 font-mono">6 - 13 mm</td>
-                                <td className="p-3 text-xs text-gray-600">Remoción intermedia</td>
+                                <td className="p-3">0.15 m</td>
                             </tr>
                             <tr>
-                                <td className="p-3">Capa 3 (Superior)</td>
-                                <td className="p-3">Grava Fina</td>
-                                <td className="p-3">0.50</td>
+                                <td className="p-3">4. Filtración Fina I</td>
+                                <td className="p-3 text-gray-600">Afino primario</td>
                                 <td className="p-3 font-mono">3 - 6 mm</td>
-                                <td className="p-3 text-xs text-gray-600">Salida hacia FLA</td>
+                                <td className="p-3">0.15 m</td>
                             </tr>
-                            <tr className="bg-gray-50 font-bold">
-                                <td className="p-3 text-right" colSpan={2}>Altura Total Lecho</td>
-                                <td className="p-3 text-purple-600">1.20 m</td>
-                                <td className="p-3"></td>
-                                <td className="p-3"></td>
+                            <tr>
+                                <td className="p-3 font-semibold text-purple-900">5. Filtración Fina II</td>
+                                <td className="p-3 text-gray-600">Afino final (Pulimento)</td>
+                                <td className="p-3 font-mono bg-purple-50 text-purple-900 font-bold">1.6 - 3 mm</td>
+                                <td className="p-3 bg-purple-50 font-bold">0.15 m</td>
+                            </tr>
+                            <tr className="bg-gray-100 border-t-2 border-gray-200 font-bold">
+                                <td className="p-3 text-right" colSpan={3}>Altura Total Lecho Filtrante (Sin soporte)</td>
+                                <td className="p-3 text-purple-700">0.65 m</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                        <h4 className="font-bold text-gray-800 mb-2">Sistema de Drenaje Inferior</h4>
+                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <h4 className="font-bold text-gray-800 mb-2">Sistema de Drenaje</h4>
                         <ul className="text-sm space-y-2 text-gray-600">
-                            <li>• Tubería Principal: <strong>6"</strong> PVC perforada</li>
-                            <li>• Tubería Lateral: <strong>4"</strong> PVC perforada</li>
-                            <li>• Separación Laterales: <strong>0.3 - 0.5 m</strong></li>
-                            <li>• Perforaciones: <strong>6-10 mm Ø</strong></li>
+                            <li>• <strong>Distribución Homogénea</strong>: Falso fondo o múltiple difuso.</li>
+                            <li>• <strong>Velocidad Orificios</strong>: 0.2 - 0.3 m/s para lavado uniforme.</li>
+                            <li>• <strong>Válvula de Lavado</strong>: Tipo de compuerta de apertura rápida (Accionamiento &lt; 10s).</li>
                         </ul>
                     </div>
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                        <h4 className="font-bold text-gray-800 mb-2">Sistema de Recolección Superior</h4>
-                        <ul className="text-sm space-y-2 text-gray-600">
-                            <li>• Canal Recolector: <strong>Concreto</strong></li>
-                            <li>• Velocidad Máxima: <strong>0.3 m/s</strong></li>
-                            <li>• Control de Nivel: <strong>Vertedero Triangular</strong></li>
-                        </ul>
+                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
+                        <h4 className="font-bold text-purple-900 mb-2">Importante (Operación)</h4>
+                        <p className="text-sm text-purple-800 italic">
+                            "El lavado se realiza por descarga hidráulica de fondo (Shock). Requiere una apertura violenta de la válvula para fluidificar el lecho y arrastrar los lodos acumulados."
+                        </p>
                     </div>
                 </div>
             </section>

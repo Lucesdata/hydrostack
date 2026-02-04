@@ -70,65 +70,91 @@ export default function FimeTechSelection({ projectId }: { projectId: string }) 
         setSaving(false);
     };
 
+    // LÓGICA NORMATIVA STRICTA - GUÍA FIME TABLA 2
     const recommendation = React.useMemo(() => {
-        if (quality.turbidity !== null && quality.color !== null) {
-            const t = quality.turbidity;
-            const c = quality.color;
-            const coli = quality.fecal_coliforms || 0;
+        if (!quality || quality.turbidity === null) return null;
 
-            const rec = {
-                tech: '',
-                message: '',
-                description: '',
-                type: 'success' as 'success' | 'warning' | 'error',
-                warnings: [] as string[],
-                requiresPilot: false
-            };
+        const t = Number(quality.turbidity);
+        const c = Number(quality.color || 0);
+        const coli = Number(quality.fecal_coliforms || 0);
 
-            // ALERTA CRÍTICA: Valores fuera de rango FIME convencional
-            if (t > 70 || coli > 20000) {
-                rec.tech = '🛑 Requiere Planta Piloto';
-                rec.message = 'Calidad Fuera de Rango Estándar FIME';
-                rec.description = `Los valores extremos (${t > 70 ? `Turbiedad: ${t} UNT` : ''}${t > 70 && coli > 20000 ? ', ' : ''}${coli > 20000 ? `Coliformes: ${coli} UFC/100mL` : ''}) exceden los límites de aplicabilidad directa de FIME. Se requiere estudio en planta piloto para validar eficiencia y ajustar parámetros de diseño.`;
-                rec.type = 'error';
-                rec.requiresPilot = true;
-                rec.warnings.push(' ACCIÓN REQUERIDA: Antes de proceder con el diseño definitivo, debe ejecutar un estudio piloto de al menos 3 meses para determinar tasas de filtración óptimas y eficiencias reales.');
-                return rec;
+        const rec = {
+            tech: '',
+            configuration: [] as string[],
+            message: '',
+            description: '',
+            type: 'success' as 'success' | 'warning' | 'error',
+            warnings: [] as string[],
+            requiresPilot: false,
+            blocked: false,
+            designParams: {
+                fgac_vf: 0,
+                fla_vf: 0.15
             }
+        };
 
-            // Lógica Base CINARA (Tabla 5.1 refinada)
-            // Caso 1: Calidad Excelente/Buena (<10 UNT, <20 UPC) -> FGDi + FLA
-            if (t < 10 && c < 20) {
-                rec.tech = 'FGDi + FLA';
-                rec.message = 'Tren Estándar FIME';
-                rec.description = 'La opción más viable económica y técnicamente. La baja carga de sólidos permite utilizar Filtro Grueso Dinámico (FGDi) como única protección antes del Filtro Lento.';
-                rec.type = 'success';
-            }
-            // Caso 2: Calidad Regular (10-50 UNT, 20-70 UPC) -> Requiere FGAC
-            else if (t <= 50 && c <= 70) {
-                rec.tech = 'FGDi + FGAC + FLA';
-                rec.message = 'Requiere Filtración Gruesa Adicional';
-                rec.description = 'Niveles de turbiedad intermedios exigen añadir un Filtro Grueso Ascendente en Capas (FGAC) después del FGDi para evitar la colmatación rápida del Filtro Lento.';
-                rec.type = 'warning';
-            }
-            // Caso 3: Calidad Mala (50-70 UNT) -> Tren Complejo
-            else if (t <= 70 && c <= 100) {
-                rec.tech = 'Tren Complejo (Sed + FG + FLA)';
-                rec.message = 'Alta carga contaminante';
-                rec.description = 'Se requieren múltiples barreras. Considere sedimentación previa o series largas de filtración gruesa.';
-                rec.type = 'error';
-            }
-
-            // Advertencia Microbiológica (>500 UFC)
-            if (coli > 500 && coli <= 20000) {
-                rec.warnings.push(` Riesgo Microbiológico Alto (>500 UFC). Se debe robustecer la desinfección final y asegurar operación estricta para lograr >5 Log de remoción.`);
-                // Si era success, pasamos a warning para que el usuario note el riesgo
-                if (rec.type === 'success') rec.type = 'warning';
-            }
-
+        // 1. CASO CRÍTICO: FUERA DE RANGO FIME
+        if (t > 70 || coli > 20000 || c > 40) {
+            rec.tech = '⛔ NO APTO PARA DISEÑO DIRECTO';
+            rec.message = 'Requiere Estudio de Planta Piloto (Mandatorio)';
+            rec.description = 'La calidad del agua excede los límites empíricos de la tecnología FIME (Guía FIME Tabla 2). No es responsable proceder con un diseño directo.';
+            rec.type = 'error';
+            rec.requiresPilot = true;
+            rec.blocked = true;
+            rec.warnings.push('NORMATIVA: Para Turbiedad > 70 UNT o Coliformes > 20,000 UFC/100ml, la guía EXIGE estudio piloto.');
             return rec;
         }
-        return null;
+
+        // 2. NIVEL BAJO (Guía: "Sin FGA")
+        if (t < 10 && coli < 500 && c < 20) {
+            rec.tech = 'FGDi + FLA (Sin FGAC)';
+            rec.configuration = ['Filtro Grueso Dinámico (FGDi)', 'Filtro Lento de Arena (FLA)'];
+            rec.message = 'Nivel Bajo de Contaminación';
+            rec.description = 'Según Tabla 2 Guía FIME: Para turbiedad < 10 UNT y Coliformes < 500, no se requiere filtración gruesa ascendente.';
+            rec.type = 'success';
+            rec.designParams.fgac_vf = 0;
+            return rec;
+        }
+
+        // 3. NIVEL MEDIO (Guía: FGAC 0.6)
+        if (t <= 20 && coli <= 10000 && c <= 30) {
+            rec.tech = 'FGDi + FGAC + FLA';
+            rec.configuration = ['FGDi', 'FGAC (Vf = 0.60 m/h)', 'FLA'];
+            rec.message = 'Nivel Medio - Tren Estándar';
+            rec.description = 'Configuración robusta estándar. Se prescribe velocidad de 0.60 m/h para el filtro grueso ascendente.';
+            rec.type = 'success';
+            rec.designParams.fgac_vf = 0.60;
+            return rec;
+        }
+
+        // 4. NIVEL ALTO (Guía: FGAC 0.45)
+        if (t <= 50 && coli <= 20000 && c <= 40) {
+            rec.tech = 'FGDi + FGAC + FLA (Régimen Estricto)';
+            rec.configuration = ['FGDi', 'FGAC (Vf = 0.45 m/h)', 'FLA'];
+            rec.message = 'Nivel Alto - Reducción de Velocidad Obligatoria';
+            rec.description = 'La carga contaminante exige reducir la velocidad de filtración gruesa a 0.45 m/h para garantizar la eficiencia de remoción.';
+            rec.type = 'warning';
+            rec.designParams.fgac_vf = 0.45;
+            return rec;
+        }
+
+        // 5. NIVEL MUY ALTO (Guía: FGAS3 0.3)
+        if (t <= 70) {
+            rec.tech = 'FGDi + FGAC en Serie (3 etapas) + FLA';
+            rec.configuration = ['FGDi', 'FGAS-3 (Vf = 0.30 m/h por unidad)', 'FLA'];
+            rec.message = 'Nivel Muy Alto - Configuración Especial en Serie';
+            rec.description = 'ADVERTENCIA NORMATIVA: Requiere sistema FGAS-3 (3 filtros ascendentes en serie) operando a 0.30 m/h.';
+            rec.type = 'warning';
+            rec.warnings.push('Requiere diseño de 3 unidades FGAC en serie.');
+            rec.designParams.fgac_vf = 0.30;
+            return rec;
+        }
+
+        // Fallback
+        rec.tech = 'Evaluación Manual Requerida';
+        rec.blocked = true;
+        return rec;
+
     }, [quality]);
 
     if (loading) return <div className="p-12 text-center text-gray-500">Cargando perfil de calidad...</div>;

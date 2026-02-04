@@ -4,7 +4,15 @@ import React from 'react';
 import { Layers, Activity, ChevronDown, Zap, Cpu } from 'lucide-react';
 import Image from 'next/image';
 
+import { useRouter } from 'next/navigation';
+
 export default function NewHero() {
+    const router = useRouter();
+
+    const handleStart = () => {
+        router.push('/dashboard');
+    };
+
     return (
         <header className="relative min-h-[900px] flex items-center pt-20 overflow-hidden bg-slate-900 font-sans">
             {/* Background Image with Overlay */}
@@ -87,6 +95,16 @@ export default function NewHero() {
                         Hydrostack facilita el dimensionamiento de sistemas de tratamiento (FIME) para comunidades rurales. Integra cálculo de población flotante, caudales y selección de tecnología en minutos.
                     </p>
 
+                    <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                        <button
+                            onClick={handleStart}
+                            className="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg shadow-lg shadow-emerald-900/30 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2"
+                        >
+                            <Zap className="w-5 h-5" />
+                            Iniciar Proyecto Ahora
+                        </button>
+                    </div>
+
                     <div className="flex items-center gap-6 pt-2">
                         <div className="flex items-center gap-[-8px]">
                             <div className="w-10 h-10 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-xs text-white font-medium">JP</div>
@@ -111,7 +129,7 @@ export default function NewHero() {
                         <Cpu className="w-6 h-6 text-emerald-400" />
                     </div>
 
-                    <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
+                    <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); handleStart(); }}>
                         <div className="space-y-1.5">
                             <label className="text-[11px] font-mono font-medium text-emerald-400 uppercase tracking-wider">Nombre del Acueducto</label>
                             <input type="text" className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all" placeholder="ej. Vereda La Esperanza" />
@@ -141,7 +159,10 @@ export default function NewHero() {
                         </div>
 
                         <div className="pt-2">
-                            <button type="button" className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-medium py-3 rounded-lg shadow-lg shadow-emerald-900/20 transition-all flex justify-center items-center gap-2 group cursor-not-allowed opacity-80">
+                            <button
+                                type="submit"
+                                className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-medium py-3 rounded-lg shadow-lg shadow-emerald-900/20 transition-all flex justify-center items-center gap-2 group"
+                            >
                                 Calcular Diseño
                                 <Zap className="w-4 h-4 group-hover:fill-current" />
                             </button>

@@ -302,22 +302,25 @@ export default function ModuleDashboard({ projectId }: ModuleDashboardProps) {
                             </Link>
 
                             {/* Fase 5 */}
-                            <div
+                            {/* Fase 5 */}
+                            <Link
+                                href={`/dashboard/projects/${projectId}/fime-desinfeccion`}
                                 style={{
                                     display: 'flex',
                                     alignItems: 'center',
                                     padding: '1rem',
                                     borderRadius: '12px',
-                                    background: '#f8fafc',
-                                    opacity: 0.6,
-                                    cursor: 'not-allowed'
+                                    textDecoration: 'none',
+                                    transition: 'all 0.15s ease',
+                                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                                    color: 'white'
                                 }}
                             >
                                 <div style={{
                                     width: '48px',
                                     height: '48px',
                                     borderRadius: '12px',
-                                    background: '#e5e7eb',
+                                    background: 'rgba(255,255,255,0.2)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -327,42 +330,43 @@ export default function ModuleDashboard({ projectId }: ModuleDashboardProps) {
                                     ⚡
                                 </div>
                                 <div style={{ flex: 1 }}>
-                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.25rem', color: '#1e293b' }}>
+                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.25rem' }}>
                                         Fase 5: Módulo de Desinfección
                                     </div>
-                                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                    <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>
                                         Hipoclorito • Tanque de contacto CT
                                     </div>
                                 </div>
                                 <div style={{
                                     padding: '0.375rem 0.875rem',
                                     borderRadius: '12px',
-                                    background: '#fef3c7',
-                                    color: '#92400e',
+                                    background: 'rgba(255,255,255,0.25)',
                                     fontSize: '0.7rem',
                                     fontWeight: 700
                                 }}>
-                                    PRÓXIMAMENTE
+                                    NUEVO
                                 </div>
-                            </div>
+                            </Link>
 
                             {/* Fase 6 */}
-                            <div
+                            <Link
+                                href={`/dashboard/projects/${projectId}/fime-resultados`}
                                 style={{
                                     display: 'flex',
                                     alignItems: 'center',
                                     padding: '1rem',
                                     borderRadius: '12px',
-                                    background: '#f8fafc',
-                                    opacity: 0.6,
-                                    cursor: 'not-allowed'
+                                    textDecoration: 'none',
+                                    transition: 'all 0.15s ease',
+                                    background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
+                                    color: 'white'
                                 }}
                             >
                                 <div style={{
                                     width: '48px',
                                     height: '48px',
                                     borderRadius: '12px',
-                                    background: '#e5e7eb',
+                                    background: 'rgba(255,255,255,0.2)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -372,24 +376,23 @@ export default function ModuleDashboard({ projectId }: ModuleDashboardProps) {
                                     📄
                                 </div>
                                 <div style={{ flex: 1 }}>
-                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.25rem', color: '#1e293b' }}>
+                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.25rem' }}>
                                         Fase 6: Resultados y Soporte
                                     </div>
-                                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                    <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>
                                         Balance de masas • Planos • Informe PDF
                                     </div>
                                 </div>
                                 <div style={{
                                     padding: '0.375rem 0.875rem',
                                     borderRadius: '12px',
-                                    background: '#fef3c7',
-                                    color: '#92400e',
+                                    background: 'rgba(255,255,255,0.25)',
                                     fontSize: '0.7rem',
                                     fontWeight: 700
                                 }}>
-                                    PRÓXIMAMENTE
+                                    NUEVO
                                 </div>
-                            </div>
+                            </Link>
                         </div>
                     </div>
                 </div>

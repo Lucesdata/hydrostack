@@ -148,6 +148,14 @@ export default function CaudalesForm({ projectId, initialData }: { projectId: st
                         <Button type="submit" disabled={loading} variant={saved ? 'secondary' : 'primary'}>
                             {loading ? 'Guardando...' : 'Guardar Cálculos'}
                         </Button>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => router.push(`/dashboard/projects/${projectId}/fime-grueso-dinamico`)}
+                            disabled={!(saved || initialData?.calculated_flows)}
+                        >
+                            Siguiente: Pretratamiento (FGDi) →
+                        </Button>
                     </div>
                 </form>
             </div>

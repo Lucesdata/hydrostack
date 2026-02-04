@@ -28,6 +28,7 @@ export default function FlaDesign({ projectId }: { projectId: string }) {
     const router = useRouter();
     const supabase = createClient();
     const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
 
     // Data States
     const [qmd, setQmd] = useState<number>(0);
@@ -46,6 +47,10 @@ export default function FlaDesign({ projectId }: { projectId: string }) {
             const { data: cData } = await supabase.from('project_calculations').select('calculated_flows').eq('project_id', projectId).maybeSingle();
             if (cData && cData.calculated_flows) {
                 setQmd(cData.calculated_flows.qmd_max || 0);
+
+                if (cData.calculated_flows.fla?.params) {
+                    setDesignParams(cData.calculated_flows.fla.params);
+                }
             }
             setLoading(false);
         }
@@ -76,6 +81,47 @@ export default function FlaDesign({ projectId }: { projectId: string }) {
         };
     }, [designParams, qmd]);
 
+    const handleSave = async () => {
+        if (!results) return;
+        setSaving(true);
+        try {
+            const { data: latestData, error: fetchError } = await supabase
+                .from('project_calculations')
+                .select('calculated_flows')
+                .eq('project_id', projectId)
+                .single();
+
+            if (fetchError) throw fetchError;
+
+            const currentFlows = latestData?.calculated_flows || {};
+
+            const updatedFlows = {
+                ...currentFlows,
+                fla: {
+                    params: designParams,
+                    results: results,
+                    updated_at: new Date().toISOString()
+                }
+            };
+
+            const { error: updateError } = await supabase
+                .from('project_calculations')
+                .update({ calculated_flows: updatedFlows })
+                .eq('project_id', projectId);
+
+            if (updateError) throw updateError;
+
+            alert('Diseño FLA guardado exitosamente.');
+            router.refresh();
+
+        } catch (error) {
+            console.error('Error saving FLA design:', error);
+            alert('Error al guardar el diseño. Por favor intente nuevamente.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
     if (loading) return <div className="p-8 text-center text-gray-500">Cargando datos hidráulicos...</div>;
 
     return (
@@ -97,7 +143,46 @@ export default function FlaDesign({ projectId }: { projectId: string }) {
 
             {/* Hydraulic Design */}
             <section className="bg-white p-6 rounded-lg shadow-sm">
-                <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">1. Dimensionamiento Hidráulico</h2>
+                <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">1. Dimensionamiento Hidráulico (Normativo)</h2>
+
+                {!qmd && (
+                    <div className="mb-6 p-6 bg-red-50 border border-red-200 rounded-lg text-center">
+                        <div className="text-red-500 text-4xl mb-2">⚠️</div>
+                        <h3 className="text-lg font-bold text-red-800 mb-2">Caudal de Diseño No Definido</h3>
+                        <p className="text-red-700 mb-4">
+                            No se ha calculado el Caudal Máximo Diario (QMD). El sistema no puede realizar el dimensionamiento sin este valor.
+                        </p>
+                        <Button
+                            variant="primary"
+                            onClick={() => router.push(`/dashboard/projects/${projectId}/caudales`)}
+                        >
+                            Ir a Calcular Caudales
+                        </Button>
+                    </div>
+                )}
+
+                {/* Validation Errors */}
+                {(() => {
+                    const errors = [];
+                    if (designParams.vf < 0.1 || designParams.vf > 0.2)
+                        errors.push(`Velocidad de Filtración ${designParams.vf} m/h fuera de rango normativo (0.1 - 0.2 m/h) [Guía FIME Sección 10.4]`);
+
+                    if (results && results.area_unit_m2 > 100)
+                        errors.push(`Área por módulo (${results.area_unit_m2.toFixed(2)} m²) excede el límite máximo de 100 m² [Guía FIME Sección 10.4.c]. Aumente el número de módulos.`);
+
+                    if (errors.length > 0) {
+                        return (
+                            <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded shadow-sm">
+                                <h3 className="font-bold mb-2">⛔ RESTRICCIONES NORMATIVAS</h3>
+                                <ul className="list-disc pl-5 space-y-1">
+                                    {errors.map((err, i) => <li key={i}>{err}</li>)}
+                                </ul>
+                                <p className="text-xs mt-3 font-semibold">El diseño no podrá generarse válidamente con estos parámetros.</p>
+                            </div>
+                        );
+                    }
+                    return null;
+                })()}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Inputs */}
@@ -111,18 +196,19 @@ export default function FlaDesign({ projectId }: { projectId: string }) {
                                     type="number"
                                     step="0.01"
                                     min="0.1"
-                                    max="0.3"
+                                    max="0.2"
                                     value={designParams.vf}
                                     onChange={(e) => setDesignParams({ ...designParams, vf: parseFloat(e.target.value) })}
-                                    className="w-full p-2 border rounded focus:ring-2 focus:ring-cyan-500 outline-none text-black"
+                                    className={`w-full p-2 border rounded focus:ring-2 outline-none text-black ${designParams.vf < 0.1 || designParams.vf > 0.2 ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                                        }`}
                                 />
                                 <span className="text-gray-500 text-sm w-12">m/h</span>
                             </div>
-                            <p className="text-xs text-gray-500 mt-1">Recomendado: 0.15 m/h. Rango: 0.1 - 0.3 m/h.</p>
+                            <p className="text-xs text-gray-500 mt-1">Rango Estricto: 0.10 - 0.20 m/h</p>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Número de Unidades (n)</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Número de Módulos (n)</label>
                             <input
                                 type="number"
                                 min="2"
@@ -130,7 +216,7 @@ export default function FlaDesign({ projectId }: { projectId: string }) {
                                 onChange={(e) => setDesignParams({ ...designParams, num_units: parseInt(e.target.value) })}
                                 className="w-full p-2 border rounded focus:ring-2 focus:ring-cyan-500 outline-none text-black"
                             />
-                            <p className="text-xs text-gray-500 mt-1">Mínimo 2 unidades para operación continua.</p>
+                            <p className="text-xs text-gray-500 mt-1">Mínimo 2 módulos independientes.</p>
                         </div>
 
                         <div>
@@ -147,7 +233,7 @@ export default function FlaDesign({ projectId }: { projectId: string }) {
 
                     {/* Results */}
                     <div className="bg-cyan-50 p-6 rounded-lg border border-cyan-100">
-                        <h3 className="font-semibold text-cyan-900 mb-4">Resultados (Por Unidad)</h3>
+                        <h3 className="font-semibold text-cyan-900 mb-4">Resultados (Por Módulo)</h3>
 
                         {results ? (
                             <div className="space-y-4">
@@ -157,14 +243,14 @@ export default function FlaDesign({ projectId }: { projectId: string }) {
                                 </div>
                                 <div className="flex justify-between items-center border-b border-cyan-200 pb-2">
                                     <span className="text-cyan-800">Área superficial</span>
-                                    <span className={`font-bold ${results.is_area_safe ? 'text-cyan-900' : 'text-red-600'}`}>
+                                    <span className={`font-bold ${results.area_unit_m2 > 100 ? 'text-red-600' : 'text-cyan-900'}`}>
                                         {results.area_unit_m2.toFixed(2)} m²
                                     </span>
                                 </div>
 
-                                {!results.is_area_safe && (
+                                {results.area_unit_m2 > 100 && (
                                     <div className="text-xs bg-red-100 text-red-700 p-2 rounded">
-                                        ⚠️ Excede 100 m²/unidad. Dificulta mantenimiento manual. Aumente el número de unidades.
+                                        ⚠️ Excede 100 m²/módulo. Dificulta la operación manual (raspado). Divida el caudal en más módulos.
                                     </div>
                                 )}
 
@@ -202,56 +288,68 @@ export default function FlaDesign({ projectId }: { projectId: string }) {
                             </tr>
                         </thead>
                         <tbody className="divide-y text-gray-800">
-                            <tr className="bg-blue-50">
+                            <tr className="bg-blue-50/50">
                                 <td className="p-3 font-medium">Capa Hto.</td>
                                 <td className="p-3">Agua Sobrenadante</td>
-                                <td className="p-3">0.75 m</td>
-                                <td className="p-3 text-xs">Carga hidráulica constante</td>
+                                <td className="p-3 font-bold text-blue-800">1.10 m</td>
+                                <td className="p-3 text-xs">Mínimo 1.0 m para garantizar carrera de filtración.</td>
                             </tr>
                             <tr>
                                 <td className="p-3 font-medium">Medio Filtrante</td>
                                 <td className="p-3">Arena Sílice</td>
                                 <td className="p-3 font-bold">0.80 m</td>
                                 <td className="p-3 text-xs">
-                                    D.E: 0.15 - 0.30 mm<br />
-                                    C.U: {'<'} 2.0<br />
-                                    Lavada, libre de arcillas.
+                                    T.E (d10): 0.15 - 0.30 mm<br />
+                                    C.U: {'<'} 3 (Pref. {'<'} 2.0)<br />
+                                    Lavada, libre de limo/arcilla.
                                 </td>
                             </tr>
-                            <tr>
-                                <td className="p-3 font-medium">Soporte Sop.</td>
-                                <td className="p-3">Grava Fina</td>
+                            <tr className="bg-gray-50/30">
+                                <td className="p-3 font-medium text-gray-600" rowSpan={3}>Soporte (Grava)</td>
+                                <td className="p-3">Fina (1.6 - 3 mm)</td>
                                 <td className="p-3">0.05 m</td>
-                                <td className="p-3 text-xs">2 - 9 mm</td>
+                                <td className="p-3 text-xs">Transición a arena (opcional)</td>
                             </tr>
-                            <tr>
-                                <td className="p-3 font-medium">Soporte Inf.</td>
-                                <td className="p-3">Grava Media</td>
+                            <tr className="bg-gray-50/30">
+                                <td className="p-3">Media (6 - 13 mm)</td>
+                                <td className="p-3">0.10 m</td>
+                                <td className="p-3 text-xs">Capa intermedia</td>
+                            </tr>
+                            <tr className="bg-gray-50/30">
+                                <td className="p-3">Gruesa (19 - 38 mm)</td>
                                 <td className="p-3">0.15 m</td>
-                                <td className="p-3 text-xs">9 - 19 mm</td>
+                                <td className="p-3 text-xs">Sobre drenajes</td>
                             </tr>
-                            <tr className="bg-gray-50">
-                                <td className="p-3 font-medium">Drenaje</td>
-                                <td className="p-3">Tubería PVC Perf.</td>
+                            <tr className="bg-gray-100 font-bold border-t">
+                                <td className="p-3">TOTAL CAJA</td>
                                 <td className="p-3">-</td>
-                                <td className="p-3 text-xs">Principal 6&quot;, Laterales 4&quot;</td>
+                                <td className="p-3">~ 2.4 - 2.5 m</td>
+                                <td className="p-3 text-xs">Incluyendo borde libre (0.2m)</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
                 <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg">
-                    <h3 className="font-bold text-amber-900 mb-1">⚠️ Proceso de Maduración (Schmutzdecke)</h3>
+                    <h3 className="font-bold text-amber-900 mb-1">⚠️ Control de Operación (Schmutzdecke)</h3>
                     <p className="text-sm text-amber-800">
-                        El filtro <strong>NO funcionará inmediatamente</strong> después de construido. Requiere un periodo de maduración (filtrado a pérdida) de <strong>15 a 30 días</strong> hasta que se forme la capa biológica superficial.
-                        <br /><br />
-                        <strong>Indicador de éxito:</strong> Reducción drástica de coliformes y turbiedad a la salida.
+                        La eficiencia biológica depende de la maduración (15-30 días).
+                        <strong>Prohibido cloración previa</strong> al FLA, ya que destruiría la capa biológica.
                     </p>
                 </div>
             </section>
 
             <div className="flex justify-end gap-4 pt-4">
-                <Button variant="primary">Guardar Diseño FLA</Button>
+                <Button variant="primary" onClick={handleSave} disabled={saving || !results}>
+                    {saving ? 'Guardando...' : 'Guardar Diseño FLA'}
+                </Button>
+                <Button
+                    variant="secondary"
+                    onClick={() => router.push(`/dashboard/projects/${projectId}/fime-desinfeccion`)}
+                    disabled={!results}
+                >
+                    Siguiente: Desinfección →
+                </Button>
             </div>
 
             <ModuleNavigation projectId={projectId} currentModuleKey="fime_lento_arena" />

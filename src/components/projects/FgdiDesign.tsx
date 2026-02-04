@@ -128,6 +128,49 @@ export default function FgdiDesign({ projectId }: { projectId: string }) {
         };
     }, [designParams, qmd]);
 
+    const handleSave = async () => {
+        if (!results) return;
+        setSaving(true);
+        try {
+            // Fetch current calculations to preserve other data
+            const { data: latestData, error: fetchError } = await supabase
+                .from('project_calculations')
+                .select('calculated_flows')
+                .eq('project_id', projectId)
+                .single();
+
+            if (fetchError) throw fetchError;
+
+            const currentFlows = latestData?.calculated_flows || {};
+
+            const updatedFlows = {
+                ...currentFlows,
+                fgdi: {
+                    params: designParams,
+                    results: results,
+                    recommendation: recommendation,
+                    updated_at: new Date().toISOString()
+                }
+            };
+
+            const { error: updateError } = await supabase
+                .from('project_calculations')
+                .update({ calculated_flows: updatedFlows })
+                .eq('project_id', projectId);
+
+            if (updateError) throw updateError;
+
+            alert('Diseño FGDi guardado exitosamente.');
+            router.refresh();
+
+        } catch (error) {
+            console.error('Error saving FGDi design:', error);
+            alert('Error al guardar el diseño. Por favor intente nuevamente.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
     if (loading) return <div className="p-8 text-center text-gray-500">Cargando datos del proyecto...</div>;
 
     return (
@@ -186,7 +229,33 @@ export default function FgdiDesign({ projectId }: { projectId: string }) {
 
             {/* Step 2: Hydraulic Design */}
             <section className="bg-white p-6 rounded-lg shadow-sm">
-                <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">2. Dimensionamiento Hidráulico</h2>
+                <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">2. Dimensionamiento Hidráulico (Normativo)</h2>
+
+                {/* Validation Errors Display */}
+                {(() => {
+                    const errors = [];
+                    if (designParams.vf < 2.0 || designParams.vf > 3.0)
+                        errors.push(`Velocidad de Filtración ${designParams.vf} m/h fuera de rango normativo (2.0 - 3.0 m/h) [Guía FIME Tabla 3]`);
+
+                    if (results && results.area_m2 > 10)
+                        errors.push(`Área por unidad (${results.area_m2.toFixed(2)} m²) excede el máximo permitido de 10 m² [Guía FIME Tabla 3]`);
+
+                    if (designParams.ratio_l_a < 3 || designParams.ratio_l_a > 6)
+                        errors.push(`Relación Largo/Ancho ${designParams.ratio_l_a} fuera de rango (3:1 a 6:1) [Sección 10.2.a]`);
+
+                    if (errors.length > 0) {
+                        return (
+                            <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded shadow-sm">
+                                <h3 className="font-bold mb-2">⛔ RESTRICCIONES NORMATIVAS DETECTADAS</h3>
+                                <ul className="list-disc pl-5 space-y-1">
+                                    {errors.map((err, i) => <li key={i}>{err}</li>)}
+                                </ul>
+                                <p className="text-xs mt-3 font-semibold">El diseño no podrá guardarse hasta corregir estos parámetros.</p>
+                            </div>
+                        );
+                    }
+                    return null;
+                })()}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Inputs */}
@@ -199,13 +268,16 @@ export default function FgdiDesign({ projectId }: { projectId: string }) {
                                 <input
                                     type="number"
                                     step="0.1"
+                                    min="2.0"
+                                    max="3.0"
                                     value={designParams.vf}
                                     onChange={(e) => setDesignParams({ ...designParams, vf: parseFloat(e.target.value) })}
-                                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none text-black"
+                                    className={`w-full p-2 border rounded focus:ring-2 outline-none text-black ${designParams.vf < 2.0 || designParams.vf > 3.0 ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                                        }`}
                                 />
                                 <span className="text-gray-500 text-sm w-12">m/h</span>
                             </div>
-                            <p className="text-xs text-gray-500 mt-1">Recomendado: 1.0 - 3.0 m/h</p>
+                            <p className="text-xs text-gray-500 mt-1">Rango Normativo Estricto: 2.0 - 3.0 m/h</p>
                         </div>
 
                         <div>
@@ -217,7 +289,7 @@ export default function FgdiDesign({ projectId }: { projectId: string }) {
                                 onChange={(e) => setDesignParams({ ...designParams, num_units: parseInt(e.target.value) })}
                                 className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none text-black"
                             />
-                            <p className="text-xs text-gray-500 mt-1">Mínimo 2 para alternancia en lavado.</p>
+                            <p className="text-xs text-gray-500 mt-1">Mínimo 2 unidades (Guía Sección 10.2.a)</p>
                         </div>
 
                         <div>
@@ -225,10 +297,14 @@ export default function FgdiDesign({ projectId }: { projectId: string }) {
                             <input
                                 type="number"
                                 step="0.5"
+                                min="3"
+                                max="6"
                                 value={designParams.ratio_l_a}
                                 onChange={(e) => setDesignParams({ ...designParams, ratio_l_a: parseFloat(e.target.value) })}
-                                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none text-black"
+                                className={`w-full p-2 border rounded focus:ring-2 outline-none text-black ${designParams.ratio_l_a < 3 || designParams.ratio_l_a > 6 ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                                    }`}
                             />
+                            <p className="text-xs text-gray-500 mt-1">Rango Normativo: 3:1 a 6:1</p>
                         </div>
                     </div>
 
@@ -244,8 +320,13 @@ export default function FgdiDesign({ projectId }: { projectId: string }) {
                                 </div>
                                 <div className="flex justify-between items-center border-b border-blue-200 pb-2">
                                     <span className="text-blue-800">Área Filtración Requerida</span>
-                                    <span className="font-bold text-blue-900 text-lg">{results.area_m2.toFixed(2)} m²</span>
+                                    <span className={`font-bold text-lg ${results.area_m2 > 10 ? 'text-red-600' : 'text-blue-900'}`}>
+                                        {results.area_m2.toFixed(2)} m²
+                                    </span>
                                 </div>
+                                {results.area_m2 > 10 && (
+                                    <p className="text-xs text-red-600 font-bold mb-2">⚠ Excede máximo de 10 m². Aumente el número de unidades.</p>
+                                )}
 
                                 <div className="grid grid-cols-2 gap-4 mt-4">
                                     <div className="bg-white p-3 rounded border border-blue-200">
@@ -263,7 +344,7 @@ export default function FgdiDesign({ projectId }: { projectId: string }) {
                                     <p className="text-sm text-blue-800 mb-2">
                                         Para cumplir Vs entre 0.15 y 0.30 m/s:
                                     </p>
-                                    <div className="text-sm bg-white p-2 rounded">
+                                    <div className="text-sm bg-white p-2 rounded text-black">
                                         Q Lavado Requerido:
                                         <strong> {(0.15 * results.area_m2 * 1000).toFixed(0)} - {(0.30 * results.area_m2 * 1000).toFixed(0)} L/s</strong>
                                     </div>
@@ -341,7 +422,16 @@ export default function FgdiDesign({ projectId }: { projectId: string }) {
 
             <div className="flex justify-end gap-4 pt-4">
                 {/* <Button variant="secondary" onClick={() => router.back()}>Atrás</Button> */}
-                <Button variant="primary">Guardar Diseño FGDi</Button>
+                <Button variant="primary" onClick={handleSave} disabled={saving || !results}>
+                    {saving ? 'Guardando...' : 'Guardar Diseño FGDi'}
+                </Button>
+                <Button
+                    variant="secondary"
+                    onClick={() => router.push(`/dashboard/projects/${projectId}/fime-lento-arena`)}
+                    disabled={!results}
+                >
+                    Siguiente: Filtro Lento (FLA) →
+                </Button>
             </div>
 
             <ModuleNavigation projectId={projectId} currentModuleKey="fime_grueso_dinamico" />

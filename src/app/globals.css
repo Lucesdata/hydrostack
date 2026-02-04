@@ -108,8 +108,14 @@
   font-size: 1rem;
   transition: border-color 0.2s;
   background-color: white;
-  color: var(--color-text-on-white);
-  /* Dark input text */
+  color: #1e293b !important;
+  /* Dark input text - explicit and important */
+}
+
+/* Ensure input text is always visible */
+.input::placeholder {
+  color: #94a3b8;
+  /* Lighter placeholder color */
 }
 
 
@@ -117,6 +123,23 @@
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+/* Select elements */
+select {
+  color: #1e293b !important;
+  background-color: white !important;
+}
+
+/* Textarea elements */
+textarea {
+  color: #1e293b !important;
+  background-color: white !important;
+}
+
+/* Number input arrows */
+input[type="number"] {
+  color: #1e293b !important;
 }
 
 /* Landing Page Custom Utilities */
