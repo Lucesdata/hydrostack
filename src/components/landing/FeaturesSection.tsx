@@ -2,7 +2,7 @@ import { Check } from 'lucide-react';
 
 export default function FeaturesSection() {
     return (
-        <section className="bg-slate-50 py-24 font-sans">
+        <section id="features" className="bg-slate-50 py-24 font-sans">
             <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
                 <div>
                     <span className="inline-block bg-white border border-slate-200 text-slate-800 text-xs font-semibold px-3 py-1 rounded-full mb-6 shadow-sm">INTELIGENCIA EN INGENIERÍA</span>

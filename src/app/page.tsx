@@ -1,5 +1,5 @@
 import NewHero from '@/components/landing/NewHero';
-import StatsSection from '@/components/landing/StatsSection';
+import DigitalTwinsCarousel from '@/components/landing/DigitalTwinsCarousel';
 import FeaturesSection from '@/components/landing/FeaturesSection';
 import ModulesSection from '@/components/landing/ModulesSection';
 import LogosSection from '@/components/landing/LogosSection';
@@ -9,7 +9,7 @@ export default function Home() {
   return (
     <main className="flex flex-col min-h-screen">
       <NewHero />
-      <StatsSection />
+      <DigitalTwinsCarousel />
       <FeaturesSection />
       <ModulesSection />
       <LogosSection />
