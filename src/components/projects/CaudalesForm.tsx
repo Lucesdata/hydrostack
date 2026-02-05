@@ -76,8 +76,8 @@ export default function CaudalesForm({ projectId, initialData }: { projectId: st
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSave = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSave = async (e: React.FormEvent | React.MouseEvent, shouldRedirect = false) => {
+        if (e) e.preventDefault();
         setLoading(true);
         setMessage('');
         setError('');
@@ -102,13 +102,20 @@ export default function CaudalesForm({ projectId, initialData }: { projectId: st
 
             if (upsertError) throw upsertError;
 
-            setMessage('Cálculos de caudales guardados exitosamente.');
-            setSaved(true);
-            router.refresh();
+            if (shouldRedirect) {
+                // Navegación directa a la siguiente fase
+                router.push(`/dashboard/projects/${projectId}/fime-seleccion-tecnologia`);
+            } else {
+                setMessage('Cálculos de caudales guardados exitosamente.');
+                setSaved(true);
+                router.refresh();
+            }
         } catch (err: any) {
             setError(err.message || 'Error al guardar los cálculos');
         } finally {
-            setLoading(false);
+            if (!shouldRedirect) {
+                setLoading(false);
+            }
         }
     };
 
@@ -134,7 +141,7 @@ export default function CaudalesForm({ projectId, initialData }: { projectId: st
                     Parámetros de Diseño
                 </h2>
 
-                <form onSubmit={handleSave}>
+                <form>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '2rem' }}>
                         <Input id="net_dotation" name="net_dotation" type="number" label="Dotación Neta (L/hab/día)" value={formData.net_dotation} onChange={handleChange} />
                         <Input id="losses_index" name="losses_index" type="number" label="Índice de Pérdidas (%)" value={formData.losses_index} onChange={handleChange} />
@@ -145,16 +152,26 @@ export default function CaudalesForm({ projectId, initialData }: { projectId: st
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-                        <Button type="submit" disabled={loading} variant={saved ? 'secondary' : 'primary'}>
-                            {loading ? 'Guardando...' : 'Guardar Cálculos'}
+                        <Button
+                            type="button"
+                            onClick={(e) => handleSave(e, false)}
+                            disabled={loading}
+                            variant="secondary"
+                        >
+                            {loading && !saved ? 'Guardando...' : 'Guardar Cálculos'}
                         </Button>
                         <Button
                             type="button"
-                            variant="secondary"
-                            onClick={() => router.push(`/dashboard/projects/${projectId}/fime-grueso-dinamico`)}
-                            disabled={!(saved || initialData?.calculated_flows)}
+                            variant="primary"
+                            onClick={(e) => handleSave(e, true)}
+                            disabled={loading}
+                            style={{
+                                fontWeight: 600,
+                                boxShadow: '0 0 15px rgba(0, 204, 153, 0.3)',
+                                transition: 'all 0.3s ease'
+                            }}
                         >
-                            Siguiente: Pretratamiento (FGDi) →
+                            {loading ? 'Procesando...' : 'Guardar y Continuar a Fase 2 →'}
                         </Button>
                     </div>
                 </form>
@@ -188,6 +205,12 @@ export default function CaudalesForm({ projectId, initialData }: { projectId: st
                             <p style={{ fontSize: '1.8rem', fontWeight: 800 }}>{results.qmh_max} L/s</p>
                         </div>
                     </div>
+                    {(saved || initialData?.calculated_flows) && (
+                        <div style={{ marginTop: '1.5rem', backgroundColor: 'rgba(255,255,255,0.2)', padding: '1rem', borderRadius: 'var(--radius-sm)', borderLeft: '4px solid #34D399' }}>
+                            <p style={{ fontWeight: 600, fontSize: '0.95rem' }}>✅ Fase de Caudales Completa</p>
+                            <p style={{ fontSize: '0.85rem', opacity: 0.9 }}>Listo para Selección de Tecnología.</p>
+                        </div>
+                    )}
                 </div>
 
                 {message && <div style={{ marginTop: '1.5rem', backgroundColor: 'rgba(255,255,255,0.2)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.9rem', textAlign: 'center' }}>{message}</div>}
@@ -197,6 +220,6 @@ export default function CaudalesForm({ projectId, initialData }: { projectId: st
             <div style={{ gridColumn: '1 / -1' }}>
                 <ModuleNavigation projectId={projectId} currentModuleKey="caudales" />
             </div>
-        </div>
+        </div >
     );
 }

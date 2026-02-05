@@ -90,7 +90,7 @@ export default function SourceForm({ projectId, initialData }: { projectId: stri
     };
 
     const handleNext = () => {
-        router.push(`/dashboard/projects/${projectId}/consumption`);
+        router.push(`/dashboard/projects/${projectId}/quality`);
     };
 
     return (
@@ -247,9 +247,17 @@ export default function SourceForm({ projectId, initialData }: { projectId: stri
                     </p>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
                     <Button type="submit" disabled={loading} variant={saved ? 'secondary' : 'primary'}>
                         {loading ? 'Guardando...' : 'Guardar Información'}
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => router.push(`/dashboard/projects/${projectId}/quality`)}
+                        disabled={!saved}
+                    >
+                        Siguiente: Calidad del Agua →
                     </Button>
                 </div>
             </form>

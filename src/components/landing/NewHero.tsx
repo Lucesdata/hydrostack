@@ -5,12 +5,35 @@ import { Layers, Activity, ChevronDown, Zap, Cpu } from 'lucide-react';
 import Image from 'next/image';
 
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
 
 export default function NewHero() {
     const router = useRouter();
+    const supabase = createClient();
+    const [loading, setLoading] = React.useState(false);
 
     const handleStart = () => {
         router.push('/dashboard');
+    };
+
+    const handleGuestLogin = async () => {
+        setLoading(true);
+        try {
+            const { error } = await supabase.auth.signInAnonymously();
+
+            if (error) {
+                console.error('Error signing in anonymously:', error);
+                // Fallback to regular login page if anonymous is disabled
+                router.push('/login');
+                return;
+            }
+
+            router.push('/dashboard');
+            router.refresh();
+        } catch (error) {
+            console.error('Guest login failed:', error);
+            setLoading(false);
+        }
     };
 
     return (
@@ -102,6 +125,13 @@ export default function NewHero() {
                         >
                             <Zap className="w-5 h-5" />
                             Iniciar Proyecto Ahora
+                        </button>
+                        <button
+                            onClick={handleGuestLogin}
+                            disabled={loading}
+                            className="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold rounded-lg shadow-lg transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2"
+                        >
+                            {loading ? 'Preparando Demo...' : 'Probar Demo (Sin Registro)'}
                         </button>
                     </div>
 

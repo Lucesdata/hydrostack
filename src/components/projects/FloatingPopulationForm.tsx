@@ -123,9 +123,17 @@ export default function FloatingPopulationForm({ projectId }: { projectId: strin
                 </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
                 <Button onClick={handleSave} variant="primary" loading={saving}>
                     {saving ? 'Guardando...' : 'Guardar Información'}
+                </Button>
+                <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => router.push(`/dashboard/projects/${projectId}/consumption`)}
+                    disabled={saving}
+                >
+                    Siguiente: Consumo de Agua →
                 </Button>
             </div>
 

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
 
 interface Fase1DiagnosticoProps {
     projectId: string;
@@ -9,6 +10,7 @@ interface Fase1DiagnosticoProps {
 
 export default function Fase1Diagnostico({ projectId }: Fase1DiagnosticoProps) {
     const router = useRouter();
+    const supabase = createClient();
     const [step, setStep] = useState(1); // 1: Bienvenida, 2: Población, 3: Caudales, 4: Resultados
 
     // Inputs población
@@ -506,17 +508,40 @@ export default function Fase1Diagnostico({ projectId }: Fase1DiagnosticoProps) {
                         padding: '3rem',
                         borderRadius: '20px',
                         color: 'white',
-                        marginBottom: '2rem',
-                        textAlign: 'center'
+                        marginBottom: '1.5rem',
+                        textAlign: 'center',
+                        boxShadow: '0 10px 40px rgba(139, 92, 246, 0.3)'
                     }}>
-                        <div style={{ fontSize: '0.95rem', opacity: 0.9, marginBottom: '0.5rem' }}>
-                            CAUDAL MÁXIMO DIARIO (Q<sub>MD</sub>)
+                        <div style={{ fontSize: '0.85rem', opacity: 0.9, marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '2px' }}>
+                            🎯 CAUDAL MÁXIMO DIARIO DE DISEÑO
                         </div>
-                        <div style={{ fontSize: '4rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-                            {QMD.toFixed(2)} L/s
+                        <div style={{ fontSize: '4.5rem', fontWeight: 700, marginBottom: '0.25rem' }}>
+                            {QMD.toFixed(2)} <span style={{ fontSize: '2rem' }}>L/s</span>
                         </div>
-                        <div style={{ fontSize: '1.05rem', opacity: 0.85 }}>
-                            = {(QMD * 3.6).toFixed(2)} m³/h
+                        <div style={{ fontSize: '1.1rem', opacity: 0.85 }}>
+                            = {(QMD * 3.6).toFixed(2)} m³/h = {(QMD * 86.4).toFixed(1)} m³/día
+                        </div>
+                    </div>
+
+                    {/* Mensaje de Confirmación Importante */}
+                    <div style={{
+                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        padding: '1.5rem',
+                        borderRadius: '12px',
+                        color: 'white',
+                        marginBottom: '2rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1rem'
+                    }}>
+                        <div style={{ fontSize: '2.5rem' }}>✅</div>
+                        <div>
+                            <div style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.25rem' }}>
+                                Este es el caudal de diseño para toda la planta
+                            </div>
+                            <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>
+                                El valor <strong>QMD = {QMD.toFixed(2)} L/s</strong> será utilizado para dimensionar el FGDi, FLA y todos los módulos siguientes.
+                            </div>
                         </div>
                     </div>
 
@@ -587,10 +612,58 @@ export default function Fase1Diagnostico({ projectId }: Fase1DiagnosticoProps) {
                             ← Revisar Cálculos
                         </button>
                         <button
-                            onClick={() => {
-                                // Guardar y continuar a Fase 2
-                                alert('Guardando Fase 1... Próximamente: Fase 2 - Selección de Tecnología');
-                                router.push(`/dashboard/projects/${projectId}/general`);
+                            onClick={async () => {
+                                // Guardar QMD en la base de datos antes de continuar
+                                try {
+                                    // Primero verificamos si ya existe un registro
+                                    const { data: existingData } = await supabase
+                                        .from('project_calculations')
+                                        .select('id, calculated_flows')
+                                        .eq('project_id', projectId)
+                                        .maybeSingle();
+
+                                    const calculationData = {
+                                        final_population: Math.round(poblacionFinal),
+                                        population_method: poblacionSeleccionada,
+                                        net_dotation: dotacionNeta,
+                                        gross_dotation: dotacionBruta,
+                                        losses_percent: perdidas,
+                                        qmd: qmd,
+                                        qmd_max: QMD,
+                                        k1_factor: 1.3,
+                                        additional_flows: consumosAdicionales
+                                    };
+
+                                    if (existingData) {
+                                        // Actualizar registro existente
+                                        const { error } = await supabase
+                                            .from('project_calculations')
+                                            .update({
+                                                calculated_flows: {
+                                                    ...(existingData.calculated_flows || {}),
+                                                    ...calculationData
+                                                },
+                                                updated_at: new Date().toISOString()
+                                            })
+                                            .eq('project_id', projectId);
+                                        if (error) throw error;
+                                    } else {
+                                        // Crear nuevo registro
+                                        const { error } = await supabase
+                                            .from('project_calculations')
+                                            .insert({
+                                                project_id: projectId,
+                                                calculated_flows: calculationData
+                                            });
+                                        if (error) throw error;
+                                    }
+
+                                    alert('✅ Fase 1 guardada exitosamente. Redirigiendo a Fase 2...');
+                                    router.push(`/dashboard/projects/${projectId}/fime-seleccion-tecnologia`);
+                                } catch (error) {
+                                    console.error('Error guardando Fase 1:', error);
+                                    alert('❌ Error al guardar. Por favor intente nuevamente.');
+                                }
                             }}
                             style={{
                                 flex: 1,

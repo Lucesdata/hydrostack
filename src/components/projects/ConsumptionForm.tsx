@@ -171,9 +171,17 @@ export default function ConsumptionForm({ projectId, initialData }: { projectId:
                     </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
                     <Button type="submit" disabled={loading} variant={saved ? 'secondary' : 'primary'}>
                         {loading ? 'Guardando...' : 'Guardar Información'}
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => router.push(`/dashboard/projects/${projectId}/source`)}
+                        disabled={!saved}
+                    >
+                        Siguiente: Fuente de Agua →
                     </Button>
                 </div>
             </form>

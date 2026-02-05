@@ -65,10 +65,13 @@ export default function FgdiDesign({ projectId }: { projectId: string }) {
                 });
             }
 
-            // Fetch Flows (Caudales)
+            // Fetch Flows (Caudales) - with fallback logic
             const { data: cData } = await supabase.from('project_calculations').select('calculated_flows').eq('project_id', projectId).maybeSingle();
             if (cData && cData.calculated_flows) {
-                setQmd(cData.calculated_flows.qmd_max || 0);
+                const flows = cData.calculated_flows;
+                // Try different field names in order of priority
+                const flowValue = flows.qmd_max || flows.QMD || flows.qmd || flows.qmh_max || 0;
+                setQmd(flowValue);
             }
 
             setLoading(false);
@@ -160,8 +163,8 @@ export default function FgdiDesign({ projectId }: { projectId: string }) {
 
             if (updateError) throw updateError;
 
-            alert('Diseño FGDi guardado exitosamente.');
-            router.refresh();
+            alert('Diseño FGDi guardado exitosamente. Redirigiendo a Fase 4 - Filtro Lento (FLA)');
+            router.push(`/dashboard/projects/${projectId}/fime-lento-arena`);
 
         } catch (error) {
             console.error('Error saving FGDi design:', error);
@@ -177,17 +180,47 @@ export default function FgdiDesign({ projectId }: { projectId: string }) {
         <div className="space-y-8">
             <ModuleWarning projectId={projectId} moduleKey="fime_grueso_dinamico" />
 
-            {/* Header */}
+            {/* Header with QMD Status */}
             <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-500">
                 <h1 className="text-2xl font-bold text-gray-800">Diseño de Filtro Grueso Dinámico (FGDi)</h1>
                 <p className="text-gray-600 mt-2">
                     Unidad de pretratamiento que permite remover sólidos suspendidos gruesos y proteger las unidades posteriores.
                     Fundamental ante picos de turbiedad.
                 </p>
-                <div className="mt-4 flex gap-4 text-sm">
-                    <div className="bg-blue-50 px-3 py-1 rounded text-blue-800 font-medium">QMD Diseño: {qmd.toFixed(2)} L/s</div>
-                    <div className="bg-blue-50 px-3 py-1 rounded text-blue-800 font-medium">Tecnología: FIME</div>
-                </div>
+
+                {/* QMD Status Banner */}
+                {qmd > 0 ? (
+                    <div className="mt-4 p-4 bg-gradient-to-r from-violet-500 to-purple-600 rounded-lg text-white flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <span className="text-2xl">🎯</span>
+                            <div>
+                                <div className="text-sm opacity-90">Caudal Máximo Diario de Diseño</div>
+                                <div className="text-2xl font-bold">{qmd.toFixed(2)} L/s</div>
+                            </div>
+                        </div>
+                        <div className="text-right text-sm opacity-90">
+                            = {(qmd * 3.6).toFixed(2)} m³/h
+                        </div>
+                    </div>
+                ) : (
+                    <div className="mt-4 p-4 bg-red-50 border-2 border-red-300 rounded-lg flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <span className="text-3xl">⚠️</span>
+                            <div>
+                                <div className="text-red-800 font-bold text-lg">Falta el Caudal de Diseño (QMD)</div>
+                                <div className="text-red-700 text-sm">
+                                    Complete la <strong>Fase 1 - Diagnóstico y Proyección</strong> y guarde los cálculos.
+                                </div>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => router.push(`/dashboard/projects/${projectId}/fime`)}
+                            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors"
+                        >
+                            Ir a Fase 1 →
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Step 1: Tech Selection Validation */}
@@ -427,8 +460,17 @@ export default function FgdiDesign({ projectId }: { projectId: string }) {
                 </Button>
                 <Button
                     variant="secondary"
-                    onClick={() => router.push(`/dashboard/projects/${projectId}/fime-lento-arena`)}
-                    disabled={!results}
+                    onClick={() => {
+                        if (!qmd || qmd === 0) {
+                            alert('⚠️ No se ha detectado el Caudal Máximo Diario (QMD).\n\nPor favor, complete y guarde la Fase 1 (Diagnóstico y Proyección de Demanda) antes de continuar.');
+                            return;
+                        }
+                        if (!results) {
+                            alert('⚠️ Complete el diseño del FGDi antes de continuar.\n\nVerifique los parámetros de diseño y guarde el diseño.');
+                            return;
+                        }
+                        router.push(`/dashboard/projects/${projectId}/fime-lento-arena`);
+                    }}
                 >
                     Siguiente: Filtro Lento (FLA) →
                 </Button>

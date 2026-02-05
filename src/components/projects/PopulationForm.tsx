@@ -34,6 +34,7 @@ type CENSUS_DATA = {
     initial_population: number | null;
     growth_rate: number | null;
     projection_years: number | null;
+    calculated_flows?: any;
 };
 
 export default function PopulationForm({ projectId, initialData }: { projectId: string; initialData: CENSUS_DATA | null }) {
@@ -233,9 +234,17 @@ export default function PopulationForm({ projectId, initialData }: { projectId: 
                     </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
                     <Button type="submit" disabled={loading} variant={saved ? 'secondary' : 'primary'}>
                         {loading ? 'Guardando...' : 'Guardar y Calcular'}
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => router.push(`/dashboard/projects/${projectId}/floating-population`)}
+                        disabled={!(saved || initialData?.calculated_flows)}
+                    >
+                        Siguiente: Población Flotante →
                     </Button>
                 </div>
             </form>
