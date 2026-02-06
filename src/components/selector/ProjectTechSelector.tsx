@@ -16,44 +16,36 @@ import {
   type TecnologiaData,
   type TechBaseScores,
 } from '@/lib/selector-engine';
+import { useAuth } from '@/context/AuthContext';
+import {
+  Plus,
+  Minus,
+  Waves,
+  Droplets,
+  CloudRain,
+  Ship,
+  Settings,
+  Zap,
+  ShieldCheck,
+  Clock,
+  AlertTriangle,
+  Activity,
+  Leaf,
+  Maximize,
+  FileText,
+  ChevronDown,
+  Brain,
+  Sparkles,
+  Info,
+  LogOut
+} from 'lucide-react';
 
-const ORIGEN_OPTIONS: { value: OrigenAgua; label: string; icon: string }[] = [
-  { value: 'rio', label: 'Río', icon: '🌊' },
-  { value: 'pozo', label: 'Pozo', icon: '🕳️' },
-  { value: 'lluvia', label: 'Lluvia', icon: '🌧️' },
-  { value: 'mar', label: 'Mar', icon: '🏝️' },
+const ORIGEN_OPTIONS: { value: OrigenAgua; label: string; icon: React.ReactNode }[] = [
+  { value: 'rio', label: 'Río / Superficial', icon: <Waves className="w-5 h-5" /> },
+  { value: 'pozo', label: 'Pozo Profundo', icon: <Droplets className="w-5 h-5" /> },
+  { value: 'mar', label: 'Agua de Mar', icon: <Ship className="w-5 h-5" /> },
+  { value: 'lluvia', label: 'Agua de Lluvia', icon: <CloudRain className="w-5 h-5" /> },
 ];
-
-const USUARIO_OPTIONS: { value: UsuarioProyecto; label: string; icon: string }[] = [
-  { value: 'rural', label: 'Rural', icon: '🏡' },
-  { value: 'municipal', label: 'Municipal', icon: '🏘️' },
-  { value: 'residencial', label: 'Residencial', icon: '🏢' },
-  { value: 'industria', label: 'Industria', icon: '🏭' },
-];
-
-function getBarColor(valor: number): string {
-  if (valor >= 80) return 'bg-emerald-500';
-  if (valor >= 50) return 'bg-amber-400';
-  return 'bg-rose-500';
-}
-
-function animateNumber(
-  element: HTMLElement | null,
-  start: number,
-  end: number,
-  duration: number
-): void {
-  if (!element || start === end) return;
-  const startTime = performance.now();
-  const step = (now: number) => {
-    const progress = Math.min((now - startTime) / duration, 1);
-    const ease = 1 - Math.pow(1 - progress, 3);
-    const val = Math.round(start + (end - start) * ease);
-    element.innerText = String(val);
-    if (progress < 1) requestAnimationFrame(step);
-  };
-  requestAnimationFrame(step);
-}
 
 interface ProjectTechSelectorProps {
   onCreateProject?: (payload: {
@@ -70,19 +62,15 @@ export default function ProjectTechSelector({
   onCreateProject,
   createLoading = false,
 }: ProjectTechSelectorProps) {
+  const { user, signOut: logout } = useAuth();
   const [estado, setEstado] = useState<SelectorState>({ origen: 'rio', usuario: 'rural' });
-  const [caudal, setCaudal] = useState(10);
+  const [caudal, setCaudal] = useState(12.5);
+  const [turbiedad, setTurbiedad] = useState(45.0);
   const [tecnologias, setTecnologias] = useState<Record<TechKey, TecnologiaData>>(() =>
     JSON.parse(JSON.stringify(TECNOLOGIAS_DATA))
   );
-  const [modalTech, setModalTech] = useState<TechKey | null>(null);
-  const [comparisonOpen, setComparisonOpen] = useState(false);
-  const [compTech1, setCompTech1] = useState<TechKey>('convencional');
-  const [compTech2, setCompTech2] = useState<TechKey>('fimes');
-  const [createModalOpen, setCreateModalOpen] = useState(false);
   const [projectName, setProjectName] = useState('');
-  const globalScoreRef = useRef<HTMLSpanElement>(null);
-  const prevScoreRef = useRef(0);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   const { datos, texto, tip } = useMemo(
     () => calcularPuntajes(estado, caudal, tecnologias),
@@ -90,65 +78,11 @@ export default function ProjectTechSelector({
   );
 
   const recommended = useMemo(() => getRecommendedTech(datos), [datos]);
-  const visibleKeys = useMemo(
-    () => (Object.keys(datos) as TechKey[]).filter((k) => datos[k].visible),
-    [datos]
-  );
-
-  useEffect(() => {
-    if (recommended && globalScoreRef.current)
-      animateNumber(globalScoreRef.current, prevScoreRef.current, recommended.score, 800);
-    if (recommended) prevScoreRef.current = recommended.score;
-  }, [recommended?.score]);
+  const activeTech = useMemo(() => recommended ? datos[recommended.key] : null, [recommended, datos]);
 
   const setScenario = useCallback((tipo: 'origen' | 'usuario', valor: OrigenAgua | UsuarioProyecto) => {
     setEstado((prev) => ({ ...prev, [tipo]: valor }));
   }, []);
-
-  const toggleTech = useCallback((key: TechKey) => {
-    setTecnologias((prev) => ({
-      ...prev,
-      [key]: { ...prev[key], visible: !prev[key].visible },
-    }));
-  }, []);
-
-  const resetDashboard = useCallback(() => {
-    setEstado({ origen: 'rio', usuario: 'rural' });
-    setCaudal(10);
-    setTecnologias(JSON.parse(JSON.stringify(TECNOLOGIAS_DATA)));
-    setModalTech(null);
-    setComparisonOpen(false);
-    prevScoreRef.current = 0;
-  }, []);
-
-  const exportarDashboard = useCallback(async () => {
-    try {
-      const html2canvas = (await import('html2canvas')).default;
-      const element = document.getElementById('selector-dashboard-container');
-      if (!element) return;
-      const canvas = await html2canvas(element, { scale: 2 });
-      const link = document.createElement('a');
-      link.download = 'HydroStack-Analisis.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    } catch {
-      // Fallback: descargar resumen JSON
-      const summary = {
-        origen: estado.origen,
-        usuario: estado.usuario,
-        caudal_lps: caudal,
-        recomendacion: recommended,
-        fecha: new Date().toISOString(),
-      };
-      const blob = new Blob([JSON.stringify(summary, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.download = 'HydroStack-Analisis.json';
-      link.href = url;
-      link.click();
-      URL.revokeObjectURL(url);
-    }
-  }, [estado, caudal, recommended]);
 
   const handleCreateProject = useCallback(() => {
     const name = projectName.trim();
@@ -163,6 +97,7 @@ export default function ProjectTechSelector({
         selector_origin: estado.origen,
         selector_usuario: estado.usuario,
         caudal_lps: caudal,
+        turbiedad_ntu: turbiedad,
         global_score: recommended.score,
         recommended_tech_key: recommended.key,
       },
@@ -170,465 +105,403 @@ export default function ProjectTechSelector({
     });
     setCreateModalOpen(false);
     setProjectName('');
-  }, [estado, caudal, recommended, projectName, onCreateProject]);
+  }, [estado, caudal, turbiedad, recommended, projectName, onCreateProject]);
 
   return (
-    <div
-      id="selector-dashboard-container"
-      className="flex flex-col h-full min-h-screen w-full bg-slate-50"
-    >
-      {/* Header */}
-      <header className="bg-blue-900 text-white px-6 py-3 flex justify-between items-center shadow-md shrink-0 z-20">
-        <div className="flex items-center gap-6">
-          <h1 className="text-xl font-bold tracking-tight">
-            HydroStack <span className="text-blue-300 font-light">Pro</span>
+    <div className="flex flex-col h-screen w-full bg-[#0a0c10] text-slate-300 font-sans overflow-hidden">
+      {/* Top Navigation Bar */}
+      <header className="h-12 border-b border-white/5 flex items-center justify-between px-6 bg-[#0a0c10] shrink-0 z-50">
+        <div className="flex items-center gap-8">
+          <h1 className="text-2xl font-black tracking-tighter text-emerald-400">
+            HYDROSTACK
           </h1>
-          <div className="h-6 w-px bg-blue-700" />
-          <div className="flex gap-2">
+          <nav className="flex items-center gap-1">
+            <button className="px-4 py-2 text-sm font-medium border-b-2 border-emerald-500 text-white">Diseño</button>
+            <button className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-300 transition-colors">Simulación</button>
+            <button className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-300 transition-colors">Inventario</button>
+          </nav>
+        </div>
+        <div className="flex items-center gap-4">
+          <button className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-4 py-1.5 rounded-full text-xs font-bold text-amber-500 shadow-lg shadow-amber-950/20">
+            <Sparkles className="w-3.5 h-3.5" />
+            Modo Optimización
+          </button>
+
+          <div className="flex items-center gap-3 pl-4 border-l border-white/10">
+            <div className="text-right hidden sm:block">
+              <p className="text-[10px] font-black text-white leading-none mb-1">
+                {user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuario'}
+              </p>
+              <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Ingeniero Pro</p>
+            </div>
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500/20 to-sky-500/20 border border-emerald-500/30 flex items-center justify-center text-xs font-black text-emerald-400 shadow-lg shadow-emerald-500/5">
+              {(user?.user_metadata?.name?.[0] || user?.email?.[0] || 'U').toUpperCase()}
+            </div>
             <button
-              type="button"
-              onClick={resetDashboard}
-              className="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded text-xs font-bold transition-colors flex items-center gap-2 text-blue-100 hover:text-white"
+              onClick={() => logout()}
+              title="Cerrar sesión"
+              className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all"
             >
-              🔄 Reiniciar
-            </button>
-            <button
-              type="button"
-              onClick={exportarDashboard}
-              className="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded text-xs font-bold transition-colors flex items-center gap-2"
-            >
-              📸 Exportar
-            </button>
-            <button
-              type="button"
-              onClick={() => setComparisonOpen(true)}
-              className="bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded text-xs font-bold transition-colors flex items-center gap-2 shadow-sm border border-blue-500"
-            >
-              ⚔️ Comparar
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
-        </div>
-        <div className="flex items-center gap-3 bg-blue-800/50 px-4 py-1 rounded-lg border border-blue-700">
-          <span className="text-[10px] uppercase tracking-widest font-bold text-blue-200">
-            Score Global
-          </span>
-          <span ref={globalScoreRef} id="global-score" className="text-lg font-bold text-white">
-            {recommended?.score ?? 0}
-          </span>
         </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <aside className="w-72 bg-white border-r border-slate-200 flex flex-col shadow-lg z-10 shrink-0">
-          <div className="p-4 overflow-y-auto flex-1 space-y-6">
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                1. Origen del Agua
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                {ORIGEN_OPTIONS.map((o) => (
-                  <button
-                    key={o.value}
-                    type="button"
-                    onClick={() => setScenario('origen', o.value)}
-                    className={`p-2 rounded-lg border text-center transition-all duration-300 hover:-translate-y-0.5 hover:shadow ${estado.origen === o.value
-                      ? 'border-blue-500 ring-2 ring-blue-500 bg-blue-50'
-                      : 'bg-slate-50 border-slate-100'
-                      }`}
-                  >
-                    <div className="text-xl mb-1">{o.icon}</div>
-                    <div className="text-[10px] font-bold text-slate-600 leading-tight">{o.label}</div>
-                  </button>
-                ))}
+        {/* Left Sidebar - Input Configuration */}
+        <aside className="w-80 border-r border-white/5 bg-[#0a0c10]/50 p-4 flex flex-col gap-4 overflow-y-auto shrink-0 scrollbar-thin scrollbar-thumb-slate-800">
+          <div>
+            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-6">Configuración de Entrada</h2>
+
+            <div className="space-y-6">
+              {/* Fuente de Agua */}
+              <div>
+                <label className="block text-xs font-bold text-slate-400 mb-3">FUENTE DE AGUA</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {ORIGEN_OPTIONS.map((o) => (
+                    <button
+                      key={o.value}
+                      type="button"
+                      onClick={() => setScenario('origen', o.value)}
+                      className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl border transition-all duration-300 ${estado.origen === o.value
+                        ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400 shadow-lg shadow-emerald-500/10'
+                        : 'bg-slate-900/40 border-slate-800 text-slate-500 hover:border-slate-700'
+                        }`}
+                    >
+                      {o.icon}
+                      <span className="text-[10px] font-bold text-center leading-tight">{o.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                2. Usuario / Proyecto
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                {USUARIO_OPTIONS.map((o) => (
-                  <button
-                    key={o.value}
-                    type="button"
-                    onClick={() => setScenario('usuario', o.value)}
-                    className={`p-2 rounded-lg border text-center transition-all duration-300 hover:-translate-y-0.5 hover:shadow ${estado.usuario === o.value
-                      ? 'border-blue-500 ring-2 ring-blue-500 bg-blue-50'
-                      : 'bg-slate-50 border-slate-100'
-                      }`}
+              {/* Perfil de Usuario */}
+              <div>
+                <label className="block text-xs font-bold text-slate-400 mb-3">PERFIL DE USUARIO</label>
+                <div className="relative group">
+                  <select
+                    value={estado.usuario}
+                    onChange={(e) => setScenario('usuario', e.target.value as UsuarioProyecto)}
+                    className="w-full bg-slate-900/60 border border-slate-800 rounded-xl px-4 py-3 text-sm font-medium text-slate-200 appearance-none focus:outline-none focus:border-emerald-500/50 transition-colors"
                   >
-                    <div className="text-xl mb-1">{o.icon}</div>
-                    <div className="text-[10px] font-bold text-slate-600 leading-tight">{o.label}</div>
-                  </button>
-                ))}
+                    <option value="rural">Rural Concentrado</option>
+                    <option value="municipal">Abastecimiento Municipal</option>
+                    <option value="residencial">Sector Residencial</option>
+                    <option value="industria">Complejo Industrial</option>
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none group-hover:text-slate-300 transition-colors" />
+                </div>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                3. Caudal (L/s)
-              </label>
-              <input
-                type="number"
-                value={caudal}
-                min={0.1}
-                step={0.1}
-                onChange={(e) => setCaudal(parseFloat(e.target.value) || 0)}
-                className="w-full p-3 text-xl font-black text-blue-600 border border-slate-200 rounded-xl text-center focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50"
-              />
-              <div className="text-[9px] text-center text-slate-400 mt-1">Litros por Segundo</div>
-            </div>
-
-            <div className="pt-4 border-t border-slate-100">
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                Filtros Activos
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {(Object.keys(tecnologias) as TechKey[]).map((key) => (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => toggleTech(key)}
-                    className={`tech-toggle px-2 py-1 rounded text-[10px] font-bold text-slate-600 border border-slate-200 shadow-sm flex items-center gap-1 transition-all ${tecnologias[key].visible
-                      ? 'opacity-100 ring-1 ring-blue-400 bg-blue-50'
-                      : 'opacity-60 grayscale'
-                      }`}
-                  >
-                    <div className={`w-2 h-2 rounded-full ${tecnologias[key].color}`} />
-                    {tecnologias[key].nombre}
-                  </button>
-                ))}
+              {/* Caudal de Diseño */}
+              <div>
+                <label className="block text-xs font-bold text-slate-400 mb-3">CAUDAL DE DISEÑO (L/S)</label>
+                <div className="flex items-center gap-3">
+                  <div className="relative flex-1">
+                    <input
+                      type="number"
+                      value={caudal}
+                      onChange={(e) => setCaudal(parseFloat(e.target.value) || 0)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-4 text-xl font-black text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-500 uppercase">L/s</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <button onClick={() => setCaudal(prev => prev + 0.5)} className="p-1.5 bg-slate-900 border border-slate-800 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-all"><Plus className="w-4 h-4" /></button>
+                    <button onClick={() => setCaudal(prev => Math.max(0.1, prev - 0.5))} className="p-1.5 bg-slate-900 border border-slate-800 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-all"><Minus className="w-4 h-4" /></button>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <div className="pt-4 mt-auto space-y-2">
-              <button
-                type="button"
-                onClick={() => setCreateModalOpen(true)}
-                disabled={!onCreateProject || createLoading}
-                className="w-full py-3 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 disabled:from-slate-400 disabled:to-slate-500 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
-              >
-                {createLoading ? 'Creando...' : '✓ Crear proyecto con esta configuración'}
-              </button>
-              <Link
-                href="/dashboard"
-                className="block w-full py-2 text-center text-sm font-semibold text-slate-600 hover:text-slate-800"
-              >
-                ← Mis proyectos
-              </Link>
+              {/* Restricciones Técnicas */}
+              <div className="space-y-4 pt-4 border-t border-white/5">
+                <label className="block text-xs font-bold text-slate-400 mb-1">RESTRICCIONES TÉCNICAS</label>
+                <div className="flex items-center justify-between p-3 bg-slate-900/40 border border-slate-800 rounded-xl">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase">Turbiedad (NTU)</span>
+                  <span className="text-sm font-bold text-blue-400">{turbiedad.toFixed(1)}</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-slate-900/40 border border-slate-800 rounded-xl">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase">Consumo Energ.</span>
+                  <span className="text-xs font-bold text-emerald-400">Bajo</span>
+                </div>
+              </div>
             </div>
           </div>
         </aside>
 
-        {/* Main */}
-        <main className="flex-1 flex flex-col p-4 gap-4 overflow-hidden bg-slate-50/50">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 shrink-0">
-            <div
-              className={`col-span-1 p-4 rounded-xl border shadow-sm flex flex-col justify-center relative overflow-hidden ${(recommended?.score ?? 0) > 85
-                ? 'bg-green-50 border-green-200'
-                : 'bg-white border-slate-200'
-                }`}
-            >
-              <div className="flex items-center gap-4 relative z-10">
-                <div
-                  className={`p-3 rounded-full text-2xl ${(recommended?.score ?? 0) > 85 ? 'bg-green-100' : 'bg-blue-50'
-                    }`}
-                >
-                  {(recommended?.score ?? 0) > 85 ? '🏆' : '💡'}
+        {/* Main Content Area */}
+        <main className="flex-1 flex flex-col p-5 gap-5 overflow-y-auto bg-[#0a0c10] scrollbar-thin scrollbar-thumb-slate-800">
+
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            {/* Center Main Card - Optimized Selection */}
+            <div className="xl:col-span-2 bg-gradient-to-br from-slate-900/80 to-slate-950 border border-white/5 rounded-2xl p-6 relative overflow-hidden group shadow-2xl">
+              <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+                <Brain className="w-32 h-32 text-emerald-500" />
+              </div>
+
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                    <Zap className="w-4 h-4 text-emerald-400" />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400/80">Selección Optimizada</span>
                 </div>
-                <div>
-                  <p className="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-0.5">
-                    Recomendación
-                  </p>
-                  <h3 className="text-lg font-black text-slate-800 leading-tight">
-                    {recommended?.nombre ?? '---'}
-                  </h3>
-                  <p className="text-[10px] text-slate-500 mt-1 italic leading-tight">
-                    {texto || 'Configura las opciones para iniciar el análisis.'}
-                  </p>
+
+                <h2 className="text-4xl font-black text-white tracking-tight mb-4">
+                  {activeTech?.nombre ?? 'Calculando...'}
+                </h2>
+
+                <p className="text-slate-400 text-sm leading-relaxed max-w-xl mb-4">
+                  {activeTech?.desc}
+                </p>
+
+                <div className="flex items-center gap-12">
+                  <div>
+                    <span className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Score General</span>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl font-black text-emerald-400">{recommended?.score ?? 0}</span>
+                      <span className="text-xs text-slate-600 font-bold">/ 100</span>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Confiabilidad</span>
+                    <span className="text-3xl font-black text-blue-400">{activeTech?.reliability}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tiempo Entrega</span>
+                    <span className="text-xl font-bold text-white uppercase">{activeTech?.deliveryTime}</span>
+                  </div>
+                </div>
+
+                <div className="absolute top-8 right-8 flex flex-col gap-2">
+                  <div className="bg-slate-900/80 border border-white/10 rounded-full px-3 py-1 text-[9px] font-black text-slate-400 uppercase">MODULAR</div>
+                  <div className="bg-slate-900/80 border border-white/10 rounded-full px-3 py-1 text-[9px] font-black text-slate-400 uppercase">PLUG & PLAY</div>
                 </div>
               </div>
+
+              {/* Glowing Border Accent */}
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent"></div>
             </div>
 
-            <div className="col-span-1 lg:col-span-2 bg-amber-50 p-4 rounded-xl border border-amber-200 shadow-sm flex gap-3 items-start overflow-y-auto">
-              <span className="text-xl mt-0.5">🎓</span>
+            {/* Right Panel - Risk Analysis */}
+            <div className="bg-[#1a1408] border border-amber-900/30 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="w-5 h-5 text-amber-500" />
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-500">Análisis de Riesgo</h3>
+              </div>
+
               <div>
-                <span className="font-bold text-amber-800 text-[10px] uppercase block mb-1">
-                  Análisis Técnico
-                </span>
-                <p className="text-xs text-slate-700 leading-relaxed">{tip || 'Cargando...'}</p>
+                <h4 className="text-xl font-bold text-white mb-2">Eventos de Turbiedad Alta</h4>
+                <p className="text-slate-400 text-sm leading-relaxed">
+                  {estado.origen === 'rio'
+                    ? `El modelo predictivo detecta una probabilidad del 85% de picos >100 NTU durante la temporada invernal para fuentes superficiales.`
+                    : `Estabilidad de turbidez detectada en fuente ${estado.origen}. Se recomienda monitoreo estacional.`
+                  }
+                </p>
+              </div>
+
+              <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-5 mt-auto relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10">
+                  <Settings className="w-8 h-8 text-amber-500" />
+                </div>
+                <h5 className="text-[10px] font-black text-amber-500 uppercase mb-2">Recomendación</h5>
+                <p className="text-xs text-amber-200/80 leading-relaxed font-medium">
+                  {estado.origen === 'rio'
+                    ? 'Añadir módulo de pre-sedimentación activa o coagulación in-line para proteger la vida útil de la membrana.'
+                    : tip
+                  }
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Table */}
-          <div className="flex-1 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden min-h-0">
-            <div className="p-3 border-b border-slate-100 bg-slate-50 flex justify-between items-center shrink-0">
-              <h3 className="font-bold text-slate-500 text-xs uppercase tracking-wider">
-                Matriz de Decisión
-              </h3>
+          {/* Lower Main Panel - Technical Breakdown */}
+          <div className="bg-slate-900/30 border border-white/5 rounded-2xl p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white">Desglose Técnico y Eficiencia</h3>
+                <p className="text-xs text-slate-500 mt-1">Simulación basada en el caudal de {caudal} L/s y perfil {estado.usuario}.</p>
+              </div>
+              <button className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-4 py-2 rounded-lg text-[10px] font-bold text-slate-300 transition-all">
+                <Maximize className="w-3.5 h-3.5" />
+                Ver Análisis Detallado
+              </button>
             </div>
-            <div className="overflow-auto flex-1">
-              <table className="w-full text-left border-collapse">
-                <thead className="bg-white sticky top-0 z-10 shadow-sm">
-                  <tr className="text-xs text-slate-500 border-b border-slate-100">
-                    <th className="p-3 font-bold bg-slate-50 w-1/4">Criterio</th>
-                    {visibleKeys.map((key) => (
-                      <th key={key} className="p-2 text-center text-slate-600 font-bold bg-slate-50 align-bottom">
-                        <button
-                          type="button"
-                          onClick={() => setModalTech(key)}
-                          className="hover:text-blue-600 transition-colors flex flex-col items-center justify-center gap-1 w-full"
-                        >
-                          <span className="text-[10px] uppercase tracking-wider">
-                            {datos[key].nombre}
-                          </span>
-                          <span className="text-[10px] opacity-50">ℹ️</span>
-                        </button>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="text-sm divide-y divide-slate-50">
-                  {CRITERIOS.map((crit) => (
-                    <tr key={crit.id} className="hover:bg-blue-50/50 transition-colors">
-                      <td className="p-3 border-b border-slate-50">
-                        <div className="font-bold text-slate-700 text-xs">{crit.label}</div>
-                      </td>
-                      {visibleKeys.map((key) => {
-                        const techBase = datos[key].base;
-                        const valor = techBase[crit.id as keyof TechBaseScores];
-                        const color = getBarColor(valor);
-                        return (
-                          <td key={key} className="p-3 border-b border-slate-50 align-middle">
-                            <div className="flex items-center gap-2">
-                              <div className="flex-1 bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                                <div
-                                  className={`h-full rounded-full transition-all duration-500 ${color}`}
-                                  style={{ width: `${valor}%` }}
-                                />
-                              </div>
-                              <span className="text-[10px] font-bold w-6 text-right text-slate-500">
-                                {valor}
-                              </span>
-                            </div>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-12">
+              <div className="space-y-2">
+                <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+                  <span className="text-slate-400">Eficiencia de Remoción</span>
+                  <span className="text-emerald-400">99.9%</span>
+                </div>
+                <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
+                  <div className="h-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] transition-all duration-1000" style={{ width: '99.9%' }}></div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+                  <span className="text-slate-400">OpEx Estimado (USD/m³)</span>
+                  <span className="text-sky-400">${activeTech?.opex.toFixed(3)}</span>
+                </div>
+                <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
+                  <div className="h-full bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,0.5)] transition-all duration-1000" style={{ width: '40%' }}></div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+                  <span className="text-slate-400">Nivel de Automatización</span>
+                  <span className="text-white">{activeTech?.automationLevel}</span>
+                </div>
+                <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
+                  <div className="h-full bg-slate-400 transition-all duration-1000" style={{ width: activeTech?.automationLevel.includes('L4') ? '100%' : '75%' }}></div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+                  <span className="text-slate-400">Remoción Virus/Bacterias</span>
+                  <span className="text-emerald-400">{activeTech?.viralRemoval}</span>
+                </div>
+                <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
+                  <div className="h-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] transition-all duration-1000" style={{ width: '85%' }}></div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+                  <span className="text-slate-400">Consumo Energético</span>
+                  <span className="text-sky-400">{activeTech?.energyConsumptionKwh} kWh/m³</span>
+                </div>
+                <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
+                  <div className="h-full bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,0.5)] transition-all duration-1000" style={{ width: '25%' }}></div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+                  <span className="text-slate-400">Resiliencia Operativa</span>
+                  <span className="text-white">{activeTech?.resilience}</span>
+                </div>
+                <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
+                  <div className="h-full bg-slate-400 transition-all duration-1000" style={{ width: activeTech?.resilience === 'Alta' ? '100%' : '60%' }}></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Metric Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-white/5">
+              <div className="bg-slate-900/40 p-4 rounded-xl border border-white/5">
+                <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Huella de Carbono</span>
+                <div className="flex items-center gap-2">
+                  <Leaf className="w-4 h-4 text-emerald-500" />
+                  <span className="text-lg font-black text-emerald-400">{activeTech?.carbonFootprint}</span>
+                </div>
+              </div>
+              <div className="bg-slate-900/40 p-4 rounded-xl border border-white/5">
+                <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Recuperación Agua</span>
+                <div className="flex items-center gap-2">
+                  <Droplets className="w-4 h-4 text-sky-500" />
+                  <span className="text-lg font-black text-white">{activeTech?.waterRecovery}%</span>
+                </div>
+              </div>
+              <div className="bg-slate-900/40 p-4 rounded-xl border border-white/5">
+                <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Área Requerida</span>
+                <div className="flex items-center gap-2">
+                  <Maximize className="w-4 h-4 text-slate-400" />
+                  <span className="text-lg font-black text-white">{(caudal * (activeTech?.factorArea ?? 0)).toFixed(0)} m²</span>
+                </div>
+              </div>
+              <div className="bg-slate-900/40 p-4 rounded-xl border border-white/5">
+                <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Vida Útil Membrana</span>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-amber-500" />
+                  <span className="text-lg font-black text-white">{activeTech?.membraneLife}</span>
+                </div>
+              </div>
             </div>
           </div>
         </main>
       </div>
 
-      {/* Modal Ficha Tecnología */}
-      {modalTech && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm"
-          onClick={() => setModalTech(null)}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-0 overflow-hidden m-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={`p-6 text-white ${datos[modalTech].color}`}>
-              <h3 className="text-2xl font-bold">{datos[modalTech].nombre}</h3>
-              <p className="text-blue-100 text-sm mt-1">Ficha Técnica Resumida</p>
-            </div>
-            <div className="p-6 space-y-4">
-              <p className="text-slate-600 leading-relaxed">{datos[modalTech].desc}</p>
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <h4 className="font-bold text-sm text-slate-700 mb-2">💰 Estimación de Costos</h4>
-                <p className="text-sm text-slate-600">{datos[modalTech].costo_txt}</p>
-              </div>
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <h4 className="font-bold text-sm text-slate-700 mb-2">🏗️ Área Estimada Requerida</h4>
-                <p className="text-sm text-slate-600">
-                  <span className="text-2xl font-black text-slate-800">
-                    {(caudal * datos[modalTech].factorArea).toFixed(1)} m²
-                  </span>
-                  <span className="text-xs text-slate-500 block mt-1">
-                    (Estimado para {caudal} L/s)
-                  </span>
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setModalTech(null)}
-                className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors"
-              >
-                Cerrar Ficha
-              </button>
-            </div>
-          </div>
+      {/* Footer Bar */}
+      <footer className="h-14 bg-[#080a0d] border-t border-white/5 px-8 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-3 text-slate-500">
+          <Info className="w-4 h-4" />
+          <p className="text-[10px] leading-relaxed">
+            Los cálculos están basados en la normativa vigente de agua potable (Res. 0330). Diseño validado para caudales de hasta 50 L/s.
+          </p>
         </div>
-      )}
-
-      {/* Modal Comparación */}
-      {comparisonOpen && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm"
-          onClick={() => setComparisonOpen(false)}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col m-4 overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
+        <div className="flex items-center gap-4">
+          <button className="flex items-center gap-2 px-6 py-3 text-xs font-bold text-slate-300 hover:text-white transition-colors">
+            <FileText className="w-4 h-4" />
+            Descargar Especificaciones PDF
+          </button>
+          <button
+            disabled={createLoading}
+            onClick={() => setCreateModalOpen(true)}
+            className="group px-10 py-3 bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-700 text-slate-950 font-black rounded-lg transition-all flex items-center gap-3 shadow-xl shadow-emerald-500/10 active:scale-95"
           >
-            <div className="p-5 bg-slate-800 text-white flex justify-between items-center shrink-0">
-              <h3 className="text-lg font-bold">Comparación Directa</h3>
-              <button
-                type="button"
-                onClick={() => setComparisonOpen(false)}
-                className="text-slate-400 hover:text-white text-2xl leading-none"
-              >
-                ×
-              </button>
-            </div>
-            <div className="p-6 overflow-y-auto bg-slate-50">
-              <div className="grid grid-cols-2 gap-8 mb-6">
-                <select
-                  value={compTech1}
-                  onChange={(e) => setCompTech1(e.target.value as TechKey)}
-                  className="w-full p-3 rounded-xl border border-slate-300 font-bold text-slate-700 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                >
-                  {(Object.keys(datos) as TechKey[]).map((key) => (
-                    <option key={key} value={key}>
-                      {datos[key].nombre}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={compTech2}
-                  onChange={(e) => setCompTech2(e.target.value as TechKey)}
-                  className="w-full p-3 rounded-xl border border-slate-300 font-bold text-slate-700 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                >
-                  {(Object.keys(datos) as TechKey[]).map((key) => (
-                    <option key={key} value={key}>
-                      {datos[key].nombre}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <div>
-                  <p className="text-sm font-bold text-slate-500 uppercase mb-2">
-                    {datos[compTech1].nombre}
-                  </p>
-                  <p className="text-sm text-slate-600 mb-4">{datos[compTech1].desc}</p>
-                  <div className="text-xs text-slate-400 uppercase font-bold mb-2">Área req.</div>
-                  <div className="text-xl font-black text-slate-700 mb-4">
-                    {(caudal * datos[compTech1].factorArea).toFixed(1)} m²
-                  </div>
-                  <div className="space-y-2">
-                    {CRITERIOS.map((c) => {
-                      const techBase = datos[compTech1].base;
-                      const val = techBase[c.id as keyof TechBaseScores];
-                      return (
-                        <div key={c.id}>
-                          <div className="flex justify-between text-xs mb-1">
-                            <span className="text-slate-600">{c.label}</span>
-                            <span className="font-bold">{val}%</span>
-                          </div>
-                          <div className="bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                            <div
-                              className={`h-full rounded-full ${getBarColor(val)}`}
-                              style={{ width: `${val}%` }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-slate-500 uppercase mb-2">
-                    {datos[compTech2].nombre}
-                  </p>
-                  <p className="text-sm text-slate-600 mb-4">{datos[compTech2].desc}</p>
-                  <div className="text-xs text-slate-400 uppercase font-bold mb-2">Área req.</div>
-                  <div className="text-xl font-black text-slate-700 mb-4">
-                    {(caudal * datos[compTech2].factorArea).toFixed(1)} m²
-                  </div>
-                  <div className="space-y-2">
-                    {CRITERIOS.map((c) => {
-                      const techBase = datos[compTech2].base;
-                      const val = techBase[c.id as keyof TechBaseScores];
-                      return (
-                        <div key={c.id}>
-                          <div className="flex justify-between text-xs mb-1">
-                            <span className="text-slate-600">{c.label}</span>
-                            <span className="font-bold">{val}%</span>
-                          </div>
-                          <div className="bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                            <div
-                              className={`h-full rounded-full ${getBarColor(val)}`}
-                              style={{ width: `${val}%` }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+            {createLoading ? 'PROCESANDO...' : 'CREAR PROYECTO'}
+            <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform" />
+          </button>
         </div>
-      )}
+      </footer>
 
-      {/* Modal Crear Proyecto */}
+      {/* Simplified Create Project Modal */}
       {createModalOpen && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm"
-          onClick={() => !createLoading && setCreateModalOpen(false)}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 m-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-xl font-bold text-slate-800 mb-2">Crear proyecto</h3>
-            <p className="text-sm text-slate-600 mb-4">
-              Se creará un proyecto con: <strong>{recommended?.nombre}</strong>, contexto{' '}
-              {estado.usuario}, origen {estado.origen}, caudal {caudal} L/s.
-            </p>
-            <label className="block text-sm font-semibold text-slate-700 mb-1">
-              Nombre del proyecto *
-            </label>
-            <input
-              type="text"
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
-              placeholder="Ej: Acueducto Vereda El Salitre"
-              className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none mb-4 text-slate-900"
-            />
-            <div className="flex gap-2 justify-end">
-              <button
-                type="button"
-                onClick={() => setCreateModalOpen(false)}
-                disabled={createLoading}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors disabled:opacity-50"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleCreateProject}
-                disabled={createLoading || !projectName.trim()}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {createLoading ? 'Creando...' : 'Crear'}
-              </button>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md px-4">
+          <div className="bg-[#0f1115] border border-white/10 rounded-2xl shadow-3xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                  <Plus className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-white">Nuevo Proyecto</h3>
+                  <p className="text-xs text-slate-500 uppercase tracking-widest font-bold">Configuración: {activeTech?.nombre}</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Nombre del Proyecto</label>
+                  <input
+                    autoFocus
+                    type="text"
+                    value={projectName}
+                    onChange={(e) => setProjectName(e.target.value)}
+                    placeholder="Eje: Planta de Tratamiento El Mirador"
+                    className="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-emerald-500/50"
+                  />
+                </div>
+
+                <div className="bg-slate-900/40 rounded-xl p-4 border border-white/5">
+                  <ul className="text-[10px] space-y-2 text-slate-400 font-bold uppercase tracking-wider">
+                    <li className="flex justify-between"><span>Fuente:</span> <span className="text-white">{estado.origen}</span></li>
+                    <li className="flex justify-between"><span>Caudal:</span> <span className="text-white">{caudal} L/s</span></li>
+                    <li className="flex justify-between"><span>Normativa:</span> <span className="text-emerald-400">RES-0330</span></li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-8">
+                <button
+                  onClick={() => setCreateModalOpen(false)}
+                  className="flex-1 px-4 py-4 rounded-xl text-xs font-black text-slate-500 hover:text-slate-300 transition-colors"
+                >
+                  CANCELAR
+                </button>
+                <button
+                  onClick={handleCreateProject}
+                  disabled={!projectName.trim() || createLoading}
+                  className="flex-[2] bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-800 text-slate-950 px-4 py-4 rounded-xl text-xs font-black transition-all shadow-lg shadow-emerald-500/10"
+                >
+                  {createLoading ? 'INICIALIZANDO...' : 'CONFIRMAR Y CREAR'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

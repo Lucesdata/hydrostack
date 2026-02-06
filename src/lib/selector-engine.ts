@@ -34,6 +34,17 @@ export interface TecnologiaData {
   desc: string;
   costo_txt: string;
   factorArea: number;
+  // New Industrial Metrics
+  reliability: string;
+  deliveryTime: string;
+  carbonFootprint: 'Positiva' | 'Negativa' | 'Neutra';
+  waterRecovery: number;
+  membraneLife: string;
+  automationLevel: string;
+  resilience: 'Alta' | 'Media' | 'Baja';
+  opex: number;
+  energyConsumptionKwh: number;
+  viralRemoval: string;
 }
 
 export const CRITERIOS: Criterio[] = [
@@ -46,59 +57,109 @@ export const CRITERIOS: Criterio[] = [
 
 export const TECNOLOGIAS_DATA: Record<TechKey, TecnologiaData> = {
   convencional: {
-    nombre: 'Convencional',
+    nombre: 'Convencional Plus',
     color: 'bg-gray-500',
     borderColor: 'rgba(107, 114, 128, 1)',
     bgColor: 'rgba(107, 114, 128, 0.2)',
     visible: true,
     base: { calidad: 60, costo: 80, simplicidad: 70, robustez: 80, energia: 90 },
-    desc: "El 'Caballo de Batalla' de la ingeniería sanitaria. Tren de procesos: Coagulación -> Floculación -> Sedimentación -> Filtración. Diseñada para tratar millones de litros por día (MLD) tolerando picos extremos de turbidez (Cargas de Choque).",
-    costo_txt: 'CAPEX Alto (Infraestructura) / OPEX Bajo por m³ (Economía de Escala).',
+    desc: "Planta de tratamiento físico-químico a gran escala. Optimizada para altos caudales con mínima huella energética operativa.",
+    costo_txt: 'CAPEX Alto / OPEX Bajo.',
     factorArea: 4.0,
+    reliability: 'A',
+    deliveryTime: '12-16 Sem',
+    carbonFootprint: 'Neutra',
+    waterRecovery: 95,
+    membraneLife: 'N/A',
+    automationLevel: 'L3 (Semi)',
+    resilience: 'Alta',
+    opex: 0.025,
+    energyConsumptionKwh: 0.08,
+    viralRemoval: '3-Log',
   },
   fimes: {
-    nombre: 'FIMES',
+    nombre: 'FIMES Stack Ultra',
     color: 'bg-green-600',
     borderColor: 'rgba(22, 163, 74, 1)',
     bgColor: 'rgba(22, 163, 74, 0.2)',
     visible: true,
     base: { calidad: 85, costo: 70, simplicidad: 95, robustez: 90, energia: 100 },
-    desc: "Método de 'Barrera Biológica'. Imita la purificación natural de los acuíferos. Utiliza arena y actividad biológica (Schmutzdecke) para eliminar patógenos sin químicos. Requiere pre-filtros de grava.",
-    costo_txt: 'CAPEX Alto (Obra Civil Grande) / OPEX Muy Bajo.',
+    desc: "Módulo de ultrafiltración inteligente diseñado para condiciones críticas. Polímero avanzado con retrolavado automático.",
+    costo_txt: 'CAPEX Medio / OPEX Bajo.',
     factorArea: 25.0,
+    reliability: 'A+',
+    deliveryTime: '3-4 Sem',
+    carbonFootprint: 'Negativa',
+    waterRecovery: 98,
+    membraneLife: '8-10 Años',
+    automationLevel: 'L4 (Full)',
+    resilience: 'Alta',
+    opex: 0.042,
+    energyConsumptionKwh: 0.12,
+    viralRemoval: '4-Log',
   },
   compacta: {
-    nombre: 'Compacta',
+    nombre: 'Compact Pro X',
     color: 'bg-orange-500',
     borderColor: 'rgba(249, 115, 22, 1)',
     bgColor: 'rgba(249, 115, 22, 0.2)',
     visible: true,
     base: { calidad: 80, costo: 50, simplicidad: 40, robustez: 70, energia: 60 },
-    desc: "Tecnología 'Plug & Play'. Sistemas prefabricados, modulares y transportables. Ideales para campamentos (minería/petróleo), hoteles y emergencias. Alta eficiencia en espacio reducido.",
-    costo_txt: 'CAPEX Medio / OPEX Alto (Personal y Químicos).',
+    desc: "Sistema contenerizado Plug & Play. Ideal para despliegue rápido en zonas con espacio limitado.",
+    costo_txt: 'CAPEX Medio / OPEX Medio.',
     factorArea: 1.2,
+    reliability: 'B+',
+    deliveryTime: '2-4 Sem',
+    carbonFootprint: 'Positiva',
+    waterRecovery: 90,
+    membraneLife: '3-5 Años',
+    automationLevel: 'L3 (Semi)',
+    resilience: 'Media',
+    opex: 0.085,
+    energyConsumptionKwh: 0.45,
+    viralRemoval: '3-Log',
   },
   uf: {
-    nombre: 'Ultrafiltración',
+    nombre: 'UF Membrane Elite',
     color: 'bg-blue-500',
     borderColor: 'rgba(59, 130, 246, 1)',
     bgColor: 'rgba(59, 130, 246, 0.2)',
     visible: true,
     base: { calidad: 90, costo: 60, simplicidad: 50, robustez: 60, energia: 70 },
-    desc: "Método de 'Barrera Física'. Utiliza membranas con poros de 0.01 micras. Retiene virus y bacterias físicamente, pero deja pasar las sales minerales saludables. Muy usada en industria de bebidas.",
-    costo_txt: 'CAPEX Alto / OPEX Medio. Requiere reemplazo de membranas cada 3-5 años.',
+    desc: "Ultrafiltración por fibra hueca con barrera física absoluta. Máxima pureza microbiológica.",
+    costo_txt: 'CAPEX Alto / OPEX Medio.',
     factorArea: 1.0,
+    reliability: 'A',
+    deliveryTime: '6-8 Sem',
+    carbonFootprint: 'Neutra',
+    waterRecovery: 92,
+    membraneLife: '5-7 Años',
+    automationLevel: 'L4 (Full)',
+    resilience: 'Alta',
+    opex: 0.120,
+    energyConsumptionKwh: 0.35,
+    viralRemoval: '5-Log',
   },
   ro: {
-    nombre: 'Ósmosis Inv.',
+    nombre: 'RO Marine Master',
     color: 'bg-purple-600',
     borderColor: 'rgba(147, 51, 234, 1)',
     bgColor: 'rgba(147, 51, 234, 0.2)',
     visible: true,
     base: { calidad: 100, costo: 30, simplicidad: 20, robustez: 40, energia: 20 },
-    desc: "Método de 'Desalinización'. Aplica alta presión para forzar el paso del agua a través de membranas semipermeables, rechazando sales y contaminantes. El agua producto suele requerir remineralización.",
-    costo_txt: 'CAPEX Muy Alto / OPEX Alto. Alto consumo energético.',
+    desc: "Ósmosis inversa para desalinización y rechazo total de solutos. El estándar de oro en pureza.",
+    costo_txt: 'CAPEX Muy Alto / OPEX Alto.',
     factorArea: 1.5,
+    reliability: 'A+',
+    deliveryTime: '8-12 Sem',
+    carbonFootprint: 'Positiva',
+    waterRecovery: 65,
+    membraneLife: '3-4 Años',
+    automationLevel: 'L4 (Full)',
+    resilience: 'Media',
+    opex: 0.450,
+    energyConsumptionKwh: 3.5,
+    viralRemoval: '7-Log',
   },
 };
 

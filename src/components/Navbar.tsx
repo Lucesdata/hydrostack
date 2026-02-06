@@ -14,7 +14,10 @@ export default function Navbar() {
     const pathname = usePathname();
     const isHome = pathname === '/';
     const isAuth = pathname === '/login' || pathname === '/register';
+    const isDashboardSelector = pathname === '/dashboard/new/selector';
     const isDarkPage = isHome || isAuth;
+
+    if (isDashboardSelector) return null;
 
     return (
         <nav className={`transition-colors duration-300 border-b z-50 ${isDarkPage
