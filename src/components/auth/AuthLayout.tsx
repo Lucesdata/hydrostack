@@ -15,6 +15,7 @@ export default function AuthLayout({ children, title, subtitle }: { children: Re
                     fill
                     className="object-cover opacity-40"
                     priority
+                    sizes="100vw"
                 />
                 <div className="absolute inset-0 bg-gradient-to-b from-slate-900/50 via-slate-900/80 to-slate-900"></div>
                 {/* Grid Overlay Effect */}

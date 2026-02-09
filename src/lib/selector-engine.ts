@@ -290,7 +290,7 @@ export function calcularPuntajes(
 function normalizar(resultados: Record<TechKey, TecnologiaData>): void {
   (Object.keys(resultados) as TechKey[]).forEach((key) => {
     (Object.keys(resultados[key].base) as (keyof TechBaseScores)[]).forEach((crit) => {
-      let val = resultados[key].base[crit];
+      const val = resultados[key].base[crit];
       resultados[key].base[crit] = clamp(val, 5, 100);
     });
   });

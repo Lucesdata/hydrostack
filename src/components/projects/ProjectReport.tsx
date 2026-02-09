@@ -45,7 +45,7 @@ const Section = ({ title, children }: { title: string; children: React.ReactNode
     </div>
 );
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const DataPoint = ({ label, value }: { label: string; value: any }) => (
     <div style={{ marginBottom: '0.5rem' }}>
         <p style={{ fontSize: '0.8rem', color: 'var(--color-gray-dark)', fontWeight: 600, marginBottom: '0.1rem' }}>{label}</p>

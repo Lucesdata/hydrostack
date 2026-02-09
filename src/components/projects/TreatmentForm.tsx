@@ -55,7 +55,7 @@ export default function TreatmentForm({
         if (selectedTech.length === 0 && recs.length > 0) {
             setSelectedTech(recs);
         }
-    }, [qualityData]);
+    }, [qualityData, selectedTech.length]);
 
     const toggleTech = (techId: string) => {
         if (selectedTech.includes(techId)) {

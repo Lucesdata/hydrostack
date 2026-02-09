@@ -97,8 +97,10 @@ export default function CaudalesForm({ projectId, initialData }: { projectId: st
         try {
             const { error: upsertError } = await supabase
                 .from('project_calculations')
-                .update(updateData)
-                .eq('project_id', projectId);
+                .upsert({
+                    project_id: projectId,
+                    ...updateData
+                }, { onConflict: 'project_id' });
 
             if (upsertError) throw upsertError;
 

@@ -171,6 +171,7 @@ export default function DigitalTwinsCarousel() {
                                             alt={plant.name}
                                             fill
                                             className="object-cover"
+                                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 33vw"
                                             onError={(e) => {
                                                 const target = e.target as HTMLImageElement;
                                                 target.src = '/hero-bg.jpg';

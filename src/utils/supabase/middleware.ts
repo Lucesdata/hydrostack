@@ -47,10 +47,15 @@ export async function updateSession(request: NextRequest) {
     // Protected routes checking
     if (request.nextUrl.pathname.startsWith('/dashboard')) {
         if (!user) {
-            return NextResponse.redirect(new URL('/authentication', request.url))
+            return NextResponse.redirect(new URL('/login', request.url))
         }
 
-        // Check approval status
+        // Allow anonymous users (Demo) to access without approval
+        if (user.is_anonymous) {
+            return response
+        }
+
+        // Check approval status - ONLY for registered users
         const { data: profile } = await supabase
             .from('profiles')
             .select('is_approved')

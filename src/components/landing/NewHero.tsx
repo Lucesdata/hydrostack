@@ -44,8 +44,12 @@ export default function NewHero() {
                 }, 30);
                 return () => clearTimeout(timeout);
             } else {
-                setPlaceholderIndex((prev) => (prev + 1) % agentExamples.length);
-                setIsTyping(true);
+                // Avoid calling setState synchronously
+                const initialTimeout = setTimeout(() => {
+                    setPlaceholderIndex((prev) => (prev + 1) % agentExamples.length);
+                    setIsTyping(true);
+                }, 0);
+                return () => clearTimeout(initialTimeout);
             }
         }
     }, [displayText, isTyping, placeholderIndex]);
@@ -56,16 +60,47 @@ export default function NewHero() {
 
     const handleDemoClick = async () => {
         setLoading(true);
+        console.log("Iniciando acceso demo..."); // DEBUG
+
         try {
-            const { error } = await supabase.auth.signInAnonymously();
+            // Create a timeout promise
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Timeout: El servidor tardó demasiado en responder')), 10000)
+            );
+
+            // Race between sign in and timeout
+            const signInPromise = supabase.auth.signInAnonymously();
+
+            // @ts-ignore
+            const result = await Promise.race([signInPromise, timeoutPromise]) as { data: any, error: any };
+            const { error } = result;
+
             if (error) {
-                router.push('/login');
+                console.error("Error en signInAnonymously:", error); // DEBUG
+                // Check for network error
+                if (error.message?.includes('fetch') || error.message?.includes('Failed to fetch')) {
+                    alert('Error de conexión con el servidor. Por favor verifica tu internet.');
+                } else {
+                    alert(`Error de autenticación: ${error.message} - Verifica que "Enable Anonymous Sign-ins" esté activado en Supabase.`);
+                    router.push('/login');
+                }
+                setLoading(false);
                 return;
             }
+
+            console.log("Login anónimo exitoso, redirigiendo..."); // DEBUG
             router.push('/dashboard');
             router.refresh();
-        } catch (error) {
-            console.error('Demo login failed:', error);
+        } catch (error: any) {
+            console.error('Demo login failed (CATCH):', error); // DEBUG
+
+            if (error.message?.includes('Timeout')) {
+                alert('El servidor tardó demasiado en responder. Verifica tu conexión o intenta nuevamente.');
+            } else if (error.message?.includes('fetch') || error.message?.includes('Failed to fetch')) {
+                alert('No se pudo conectar con el servidor (Supabase). Verifica tu conexión.');
+            } else {
+                alert(`Error inesperado: ${error.message}`);
+            }
             setLoading(false);
         }
     };
@@ -80,6 +115,7 @@ export default function NewHero() {
                     fill
                     className="object-cover opacity-60"
                     priority
+                    sizes="100vw"
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-900/80 to-slate-900/30"></div>
                 {/* Grid Overlay Effect */}

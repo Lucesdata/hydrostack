@@ -156,12 +156,14 @@ export default function FgdiDesign({ projectId }: { projectId: string }) {
                 }
             };
 
-            const { error: updateError } = await supabase
+            const { error: upsertError } = await supabase
                 .from('project_calculations')
-                .update({ calculated_flows: updatedFlows })
-                .eq('project_id', projectId);
+                .upsert({
+                    project_id: projectId,
+                    calculated_flows: updatedFlows
+                }, { onConflict: 'project_id' });
 
-            if (updateError) throw updateError;
+            if (upsertError) throw upsertError;
 
             alert('Diseño FGDi guardado exitosamente. Redirigiendo a Fase 4 - Filtro Lento (FLA)');
             router.push(`/dashboard/projects/${projectId}/fime-lento-arena`);

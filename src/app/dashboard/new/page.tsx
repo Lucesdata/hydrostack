@@ -158,6 +158,18 @@ export default function NewProjectPage() {
                     .insert(moduleStatuses);
 
                 if (statusError) console.error('Error al inicializar módulos:', statusError);
+
+                // 4. Initialize Project Calculations (CRITICAL for sizing fix)
+                const { error: calcError } = await supabase
+                    .from('project_calculations')
+                    .insert({
+                        project_id: project.id,
+                        calculated_flows: {},
+                        updated_at: new Date().toISOString()
+                    });
+
+                if (calcError) console.error('Error al inicializar cálculos:', calcError);
+
                 router.push(`/dashboard/projects/${project.id}/general`);
             }
             router.refresh();

@@ -69,30 +69,31 @@ export default function ProjectCard({ project, moduleStatuses, onDelete }: Proje
 
     return (
         <div style={{
-            backgroundColor: 'white',
+            backgroundColor: '#12151c',
             padding: '1.5rem',
-            borderRadius: 'var(--radius-md)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-            border: '1px solid var(--color-gray-medium)',
+            borderRadius: '1rem',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+            border: '1px solid #1e293b',
             display: 'flex',
             flexDirection: 'column',
             gap: '1rem',
-            transition: 'transform 0.2s ease',
-        }}>
+            transition: 'all 0.3s ease',
+        }} className="group hover:border-emerald-500/30">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <span style={{
-                    fontSize: '0.65rem',
+                    fontSize: '0.6rem',
                     textTransform: 'uppercase',
-                    fontWeight: 800,
-                    color: progress === 100 ? 'var(--color-success)' : 'var(--color-primary)',
-                    backgroundColor: progress === 100 ? '#ecfdf5' : '#f0f7ff',
-                    padding: '0.2rem 0.6rem',
-                    borderRadius: '1rem',
-                    border: `1px solid ${progress === 100 ? '#10b98140' : '#22548340'}`
+                    fontWeight: 900,
+                    color: progress === 100 ? '#10b981' : '#3b82f6',
+                    backgroundColor: progress === 100 ? 'rgba(16,185,129,0.1)' : 'rgba(59,130,246,0.1)',
+                    padding: '0.25rem 0.75rem',
+                    borderRadius: '2rem',
+                    border: `1px solid ${progress === 100 ? 'rgba(16,185,129,0.2)' : 'rgba(59,130,246,0.2)'}`,
+                    letterSpacing: '0.05em'
                 }}>
-                    {progress}% GRADO DE DEFINICIÓN TÉCNICA
+                    {progress}% INTEGRIDAD TÉCNICA
                 </span>
-                <span style={{ fontSize: '0.75rem', color: 'var(--color-gray-dark)' }}>
+                <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>
                     {new Date(project.created_at).toLocaleDateString()}
                 </span>
             </div>
@@ -100,70 +101,81 @@ export default function ProjectCard({ project, moduleStatuses, onDelete }: Proje
             <div style={{ flex: 1 }}>
                 <Link href={`/dashboard/projects/${project.id}/general`} style={{ textDecoration: 'none' }}>
                     <h3 style={{
-                        fontSize: '1.15rem',
+                        fontSize: '1.25rem',
                         fontWeight: 700,
-                        marginBottom: '0.4rem',
-                        color: 'var(--color-foreground)',
+                        marginBottom: '0.5rem',
+                        color: 'white',
                         lineHeight: 1.2
-                    }}>
+                    }} className="group-hover:text-emerald-400 transition-colors">
                         {project.name}
                     </h3>
                 </Link>
                 <p style={{
-                    color: 'var(--color-primary)',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
+                    color: '#10b981',
+                    fontSize: '0.7rem',
+                    fontWeight: 800,
                     textTransform: 'uppercase',
-                    letterSpacing: '0.02em',
-                    marginBottom: '0.8rem'
+                    letterSpacing: '0.05em',
+                    marginBottom: '1rem'
                 }}>
                     {techDescription}
                 </p>
 
                 {/* Progress Bar */}
-                <div style={{ height: '6px', backgroundColor: 'var(--color-gray-light)', borderRadius: '3px', marginBottom: '1rem', overflow: 'hidden' }}>
+                <div style={{ height: '4px', backgroundColor: '#1e293b', borderRadius: '2px', marginBottom: '1.25rem', overflow: 'hidden' }}>
                     <div style={{
                         height: '100%',
-                        backgroundColor: progress === 100 ? 'var(--color-success)' : 'var(--color-primary)',
+                        backgroundColor: progress === 100 ? '#10b981' : '#3b82f6',
                         width: `${progress}%`,
-                        transition: 'width 0.5s ease'
+                        transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                        boxShadow: progress === 100 ? '0 0 10px rgba(16,185,129,0.5)' : 'none'
                     }} />
                 </div>
 
                 {/* Technical Observation */}
                 <div style={{
-                    backgroundColor: '#fafafa',
-                    padding: '0.75rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid #eee',
+                    backgroundColor: 'rgba(30,41,59,0.3)',
+                    padding: '1rem',
+                    borderRadius: '0.75rem',
+                    border: '1px solid rgba(51,65,85,0.5)',
                     fontSize: '0.8rem'
                 }}>
-                    <p style={{ fontWeight: 700, color: 'var(--color-gray-dark)', marginBottom: '0.25rem', fontSize: '0.7rem', textTransform: 'uppercase' }}>
-                        Estado de Modelado Técnico:
+                    <p style={{ fontWeight: 800, color: '#64748b', marginBottom: '0.5rem', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Estado de Modelado:
                     </p>
                     {missingEssential.length > 0 ? (
-                        <p style={{ color: '#444', lineHeight: 1.4 }}>
+                        <p style={{ color: '#94a3b8', lineHeight: 1.5, fontSize: '0.75rem' }}>
                             {project.project_context === 'rural' && project.project_domain === 'water_treatment' ? (
                                 <span>
-                                    <strong>Observación técnica:</strong> El proyecto aún no valida componentes esenciales para un sistema rural de agua potable, como el esquema completo de tratamiento o la caracterización de la fuente.
+                                    <strong style={{ color: '#cbd5e1' }}>Observación técnica:</strong> El proyecto aún no valida componentes esenciales para un sistema rural de agua potable, como el esquema completo de tratamiento.
                                 </span>
                             ) : (
-                                <>Componentes en consolidación técnica: <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>{missingEssential.slice(0, 3).join(', ')}{missingEssential.length > 3 ? '...' : ''}</span></>
+                                <><span style={{ color: '#cbd5e1' }}>Pendiente:</span> <span style={{ color: '#3b82f6', fontWeight: 600 }}>{missingEssential.slice(0, 3).join(', ')}{missingEssential.length > 3 ? '...' : ''}</span></>
                             )}
                         </p>
                     ) : (
-                        <p style={{ color: 'var(--color-success)', fontWeight: 600 }}>
-                            ✓ El proyecto cuenta con una definición técnica base consolidada.
+                        <p style={{ color: '#10b981', fontWeight: 700, fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontSize: '1rem' }}>✓</span> Ingeniería de base consolidada
                         </p>
                     )}
                 </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem', paddingTop: '1rem', borderTop: '1px solid #eee' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem', paddingTop: '1rem', borderTop: '1px solid rgba(51,65,85,0.5)' }}>
                 <Link href={`/dashboard/projects/${project.id}/general`} style={{ textDecoration: 'none' }}>
-                    <Button variant="outline" style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}>
+                    <button style={{
+                        fontSize: '0.75rem',
+                        padding: '0.5rem 1rem',
+                        backgroundColor: 'transparent',
+                        border: '1px solid #334155',
+                        borderRadius: '0.5rem',
+                        color: 'white',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                    }} className="hover:bg-slate-800 hover:border-slate-600">
                         Abrir Ingeniería
-                    </Button>
+                    </button>
                 </Link>
                 <button
                     onClick={() => onDelete(project.id)}
@@ -171,12 +183,15 @@ export default function ProjectCard({ project, moduleStatuses, onDelete }: Proje
                         background: 'none',
                         border: 'none',
                         cursor: 'pointer',
-                        color: '#ef444490',
-                        fontSize: '0.75rem',
-                        fontWeight: 600
+                        color: 'rgba(239,68,68,0.6)',
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.02em'
                     }}
+                    className="hover:text-red-500 transition-colors"
                 >
-                    Eliminar Proyecto
+                    Eliminar
                 </button>
             </div>
         </div>

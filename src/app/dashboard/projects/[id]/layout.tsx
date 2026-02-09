@@ -13,13 +13,8 @@ export default async function ProjectLayout({
     const { id } = await params;
 
     return (
-        <div style={{
-            width: '100%',
-            minHeight: '100vh',
-            backgroundColor: '#f8fafc',
-            padding: '2rem'
-        }}>
-            <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+        <div className="w-full min-h-screen bg-[#0a0c10] py-4">
+            <div className="max-w-[1600px] mx-auto px-4">
                 {children}
             </div>
         </div>

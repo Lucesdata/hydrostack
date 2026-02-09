@@ -63,57 +63,67 @@ export default function DashboardPage() {
     }
 
     return (
-        <div className="container" style={{ padding: '4rem 1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                <div>
-                    <h1 style={{ color: 'var(--color-primary)', fontSize: '2rem', marginBottom: '0.5rem' }}>Mis Proyectos Existentes</h1>
-                    <p style={{ color: 'var(--color-gray-dark)' }}>
-                        Administra y consulta tus diseños guardados.
-                    </p>
-                </div>
-                <Link href="/dashboard/new">
-                    <Button variant="secondary">← Volver al inicio</Button>
-                </Link>
-            </div>
-
-            {loading ? (
-                <p>Cargando proyectos...</p>
-            ) : projects.length === 0 ? (
-                <div style={{
-                    backgroundColor: 'white',
-                    padding: '4rem',
-                    borderRadius: 'var(--radius-lg)',
-                    textAlign: 'center',
-                    border: '1px dashed var(--color-gray-dark)'
-                }}>
-                    <p style={{ marginBottom: '1.5rem', fontSize: '1.1rem', color: 'var(--color-gray-dark)' }}>
-                        Aún no tienes proyectos creados.
-                    </p>
+        <div className="min-h-screen bg-[#0a0c10] font-sans" style={{ padding: '4rem 1rem' }}>
+            <div className="max-w-7xl mx-auto">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' }}>
+                    <div>
+                        <h1 className="text-3xl md:text-4xl font-bold tracking-tight" style={{ color: '#10b981', marginBottom: '0.75rem' }}>
+                            Mis Proyectos Existentes
+                        </h1>
+                        <p className="text-slate-400 text-lg">
+                            Administra y consulta tus diseños de ingeniería.
+                        </p>
+                    </div>
                     <Link href="/dashboard/new">
-                        <Button>Crear mi primer proyecto</Button>
+                        <button className="flex items-center gap-2 bg-[#12151c] hover:bg-slate-800 text-slate-200 border border-slate-700 px-4 py-2 rounded-lg text-sm font-bold transition-all">
+                            ← Volver al inicio
+                        </button>
                     </Link>
                 </div>
-            ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '2rem' }}>
-                    {projects.map((project) => (
-                        <ProjectCard
-                            key={project.id}
-                            project={project}
-                            moduleStatuses={moduleStatuses.filter(s => s.project_id === project.id)}
-                            onDelete={async (id) => {
-                                if (confirm('¿Estás seguro de que deseas eliminar este proyecto? Esta acción no se puede deshacer.')) {
-                                    const { error } = await supabase.from('projects').delete().eq('id', id);
-                                    if (!error) {
-                                        setProjects(projects.filter(p => p.id !== id));
-                                    } else {
-                                        alert('Error al eliminar el proyecto');
+
+                {loadingProjects ? (
+                    <div className="flex items-center justify-center py-20">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+                    </div>
+                ) : projects.length === 0 ? (
+                    <div style={{
+                        backgroundColor: '#12151c',
+                        padding: '6rem 2rem',
+                        borderRadius: '1rem',
+                        textAlign: 'center',
+                        border: '1px dashed #334155'
+                    }}>
+                        <p style={{ marginBottom: '2rem', fontSize: '1.25rem', color: '#94a3b8' }}>
+                            Aún no tienes proyectos técnicos creados.
+                        </p>
+                        <Link href="/dashboard/new">
+                            <button className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/20">
+                                Crear mi primer proyecto
+                            </button>
+                        </Link>
+                    </div>
+                ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '2rem' }}>
+                        {projects.map((project) => (
+                            <ProjectCard
+                                key={project.id}
+                                project={project}
+                                moduleStatuses={moduleStatuses.filter(s => s.project_id === project.id)}
+                                onDelete={async (id) => {
+                                    if (confirm('¿Estás seguro de que deseas eliminar este proyecto técnico? Esta acción borrará todos los cálculos permanentemente.')) {
+                                        const { error } = await supabase.from('projects').delete().eq('id', id);
+                                        if (!error) {
+                                            setProjects(projects.filter(p => p.id !== id));
+                                        } else {
+                                            alert('Error al eliminar el proyecto');
+                                        }
                                     }
-                                }
-                            }}
-                        />
-                    ))}
-                </div>
-            )}
+                                }}
+                            />
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

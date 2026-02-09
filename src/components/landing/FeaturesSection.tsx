@@ -38,13 +38,21 @@ export default function FeaturesSection() {
             }, 150);
             return () => clearTimeout(timeout);
         } else {
-            setShowBadges(true);
+            // Avoid calling setState synchronously
+            const initialTimeout = setTimeout(() => {
+                setShowBadges(true);
+            }, 0);
+
             // Reset after pause
             const resetTimeout = setTimeout(() => {
                 setVisibleLines(0);
                 setShowBadges(false);
             }, 5000);
-            return () => clearTimeout(resetTimeout);
+
+            return () => {
+                clearTimeout(initialTimeout);
+                clearTimeout(resetTimeout);
+            };
         }
     }, [visibleLines, isTyping]);
 

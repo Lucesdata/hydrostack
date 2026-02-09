@@ -15,14 +15,17 @@ export default function Navbar() {
     const isHome = pathname === '/';
     const isAuth = pathname === '/login' || pathname === '/register';
     const isDashboardSelector = pathname === '/dashboard/new/selector';
-    const isDarkPage = isHome || isAuth;
+    const isProjectDashboard = pathname?.includes('/dashboard/projects/');
+    const isDarkPage = isHome || isAuth || isProjectDashboard;
 
     if (isDashboardSelector) return null;
 
     return (
-        <nav className={`transition-colors duration-300 border-b z-50 ${isDarkPage
-            ? 'absolute top-0 left-0 w-full border-white/5 bg-slate-950/20 backdrop-blur-md'
-            : 'sticky top-0 bg-white/90 backdrop-blur-md border-gray-200'
+        <nav className={`transition-colors duration-300 border-b z-50 ${isProjectDashboard
+            ? 'sticky top-0 bg-slate-950/20 backdrop-blur-md border-white/5'
+            : isDarkPage
+                ? 'absolute top-0 left-0 w-full border-white/5 bg-slate-950/20 backdrop-blur-md'
+                : 'sticky top-0 bg-white/90 backdrop-blur-md border-gray-200'
             }`}>
             <div className="container px-4 mx-auto navbar-container h-16 flex items-center justify-between">
                 <Link href="/" className={`text-xl font-bold tracking-tight transition-colors ${isDarkPage ? 'text-white' : 'text-primary'

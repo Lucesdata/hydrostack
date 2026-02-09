@@ -393,7 +393,7 @@ export default function FgacDesign({ projectId }: { projectId: string }) {
                     <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
                         <h4 className="font-bold text-purple-900 mb-2">Importante (Operación)</h4>
                         <p className="text-sm text-purple-800 italic">
-                            "El lavado se realiza por descarga hidráulica de fondo (Shock). Requiere una apertura violenta de la válvula para fluidificar el lecho y arrastrar los lodos acumulados."
+                            &quot;El lavado se realiza por descarga hidráulica de fondo (Shock). Requiere una apertura violenta de la válvula para fluidificar el lecho y arrastrar los lodos acumulados.&quot;
                         </p>
                     </div>
                 </div>

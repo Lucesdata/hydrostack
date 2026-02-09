@@ -35,7 +35,12 @@ export default function LoginPage() {
 
             router.push('/dashboard/new');
         } catch (err: any) {
-            setError(err.message || 'Error al iniciar sesión. Verifique sus credenciales.');
+            console.error('Login error:', err);
+            if (err.message?.includes('fetch') || err.message?.includes('Failed to fetch')) {
+                setError('No se pudo conectar con el servidor (Supabase). Verifique su conexión a internet.');
+            } else {
+                setError(err.message || 'Error al iniciar sesión. Verifique sus credenciales.');
+            }
         } finally {
             setLoading(false);
         }
