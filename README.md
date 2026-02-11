@@ -1,72 +1,77 @@
-# HYDROSTACK
+# HYDROSTACK 🛠️💧
 
-**Plataforma digital para el diseño y desarrollo de proyectos de agua y saneamiento.**
+**The Industrial SaaS for Rural Water Engineering.**
 
-HYDROSTACK es un entorno integral que acompaña a comunidades, acueductos rurales, ingenieros y empresas en la formulación y gestión de proyectos de agua potable, desde soluciones comunitarias hasta sistemas industriales.
+HYDROSTACK es una plataforma de ingeniería avanzada diseñada para democratizar el acceso a herramientas de diseño profesional. Enfocada inicialmente en sistemas de **Filtración en Múltiples Etapas (FIME)** para comunidades rurales, HydroStack combina el cumplimiento normativo (RAS 0330) con una estética industrial de alto rendimiento.
 
-![HydroStack Logic](./docs/assets/quality_layer_summary.png)
+![HydroStack Industrial Mockup](./docs/assets/hydrostack_industrial_mockup.png)
 
-## 🚀 Características
+## 🚀 Características (Industrial SaaS)
 
-- **Landing Page Profesional**: Diseño minimalista y técnico que comunica la visión y el alcance de la plataforma.
-- **Gestión de Identidad**: Sistema de registro e inicio de sesión para múltiples roles (Comunidades, Profesionales, Empresas, ONGs).
-- **Dashboard**: Área privada para usuarios autenticados (MVP).
-- **Diseño Adaptable**: Interfaz totalmente responsiva construida con Vanilla CSS para un rendimiento óptimo y una estética personalizada.
+- **Interfaz Zero-Scroll**: Layout optimizado para productividad técnica sin distracciones.
+- **Cumplimiento Normativo Automatizado**: Motores de cálculo basados en la resolución RAS 0330.
+- **Visualización Técnica Premium**: Diagramas y esquemas de ingeniería en tiempo real.
+- **Gestión Multi-Perfil**: Flujos optimizados para comunidades, consultores y entidades gubernamentales.
 
 ## 🛠️ Tecnologías
 
-- **Framework**: [Next.js](https://nextjs.org/) (App Router)
-- **Lenguaje**: TypeScript
-- **Estilos**: Vanilla CSS (CSS Variables & Modules)
-- **Autenticación**: Supabase Auth
-- **Base de Datos**: Supabase (PostgreSQL) con RLS
+- **Framework**: [Next.js](https://nextjs.org/) (App Router & Server Actions)
+- **Lenguaje**: TypeScript (Safe-Typing para lógica de ingeniería)
+- **Estilos**: Vanilla CSS (Industrial Dark Theme + Glassmorphism)
+- **Backend**: Supabase (Auth, DB PostgreSQL, RLS Policies)
 
-## 🗺️ Mapa del Sitio (Sitemap)
+## 🗺️ Mapa de Navegación
 
 ```mermaid
 graph TD
-    A[Inicio / Landing Page] --> B[Iniciar Sesión]
-    A --> C[Crear Cuenta]
-    A --> D[Secciones Informativas]
+    A[Landing Page] --> B[Registro/Login]
+    B --> C[Dashboard Principal]
+    C --> D[Wizard de Proyecto]
     
-    B -->|Credenciales Válidas| E[Dashboard]
-    C -->|Registro Exitoso| E
-    
-    E --> F[Bienvenida Usuario]
-    E --> G[Cerrar Sesión]
-    G --> A
-    
-    subgraph Público
-    A
-    B
-    C
-    D
+    subgraph "Flujo de Diseño (16 Pasos)"
+    D --> E[1. Contexto & Población]
+    E --> F[2. Fuente & Calidad]
+    F --> G[3. Selección Tecnológica]
+    G --> H[4. Módulos Técnicos - FGDi/FGAC/FLA]
+    H --> I[5. Resultados & Costos]
     end
     
-    subgraph Privado
-    E
-    F
-    G
-    end
+    I --> J[Informe Técnico PDF]
+```
+
+## 🧠 Flujo de Decisión Técnica (FIME)
+
+```mermaid
+graph LR
+    A[Calidad de Fuente] --> B{Turbiedad > 5 NTU?}
+    B -- Sí --> C[Pretratamiento/FGDi]
+    B -- No --> D[Diseño Directo]
+    
+    C --> E{Color > 20 UPC?}
+    D --> E
+    
+    E -- Sí --> F[Adsorción/Filtro Carbon]
+    E -- No --> G[Filtración Lenta]
+    
+    F --> H[Desinfección Final]
+    G --> H
 ```
 
 ## 🏗️ Estructura del Proyecto
 
-Cada proyecto en HydroStack sigue un flujo de trabajo técnico denominado **"Estructura del Proyecto"**, compuesto por **16 módulos** organizados en **7 bloques conceptuales**:
+Cada proyecto en HydroStack sigue un flujo de trabajo técnico robusto, organizado en **7 bloques técnicos**:
 
-### Bloques Técnicos
+| Bloque | Módulos Clave | Propósito de Ingeniería |
+|--------|---------------|-------------------------|
+| **A. Contexto** | Información General | Definición de coordenadas y datos base del proyecto. |
+| **B. Demanda** | Población y Consumo | Cálculo de dotaciones y variaciones de consumo. |
+| **C. Fuente** | Fuente y Calidad | Caracterización físico-química de la captación. |
+| **D. Hidráulica** | Caudales y Conducción | Cálculo de pérdidas de energía y diámetros nominales. |
+| **E. Tratamiento** | FGDi, FGAC, FLA | Dimensionamiento automatizado de unidades FIME. |
+| **F. Evaluación** | Costos y Viabilidad | Análisis de OPEX/CAPEX y matriz de selección. |
+| **G. Reporte** | Memoria Técnica | Generación de documento final consolidado. |
 
-| Bloque | Módulos | Propósito |
-|--------|---------|-----------|
-| **A. Contexto** | 1. Información General | Definir alcance y características del proyecto |
-| **B. Demanda** | 2-3. Población y Consumo | Cuantificar beneficiarios y demanda de agua |
-| **C. Fuente** | 4-6. Fuente, Consumo y Calidad | Caracterizar la oferta hídrica |
-| **D. Hidráulica** | 7-9. Caudales, Almacenamiento y Conducción | Diseñar infraestructura hidráulica |
-| **E. Tratamiento** | 10-13. Desarenador, Jarras, Filtros y Compacta | Dimensionar unidades de tratamiento |
-| **F. Evaluación** | 14-16. Costos, Viabilidad y Selección | Evaluar viabilidad técnica y económica |
-| **G. Documentación** | 📄 Informe Final | Consolidar memoria técnica |
-
-## 🏗️ Principios Arquitectónicos
+## 🏗️ Principios de Diseño
 
 1. **Flujo Único Universal**: Un solo flujo para todos los tipos de proyecto.
 2. **Context over Configuration**: El tipo de proyecto es contexto, no configuración.
