@@ -1,12 +1,23 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
-import ModuleWarning from './ModuleWarning';
-import ModuleNavigation from './ModuleNavigation';
+import {
+    Activity,
+    Save,
+    ChevronRight,
+    Users,
+    Droplet,
+    ArrowRightCircle,
+    CheckCircle2,
+    AlertCircle,
+    Info,
+    Gauge,
+    Zap,
+    TrendingDown,
+    Calculator
+} from 'lucide-react';
 
 export default function CaudalesForm({ projectId, initialData }: { projectId: string; initialData: any }) {
     const [formData, setFormData] = useState({
@@ -105,10 +116,9 @@ export default function CaudalesForm({ projectId, initialData }: { projectId: st
             if (upsertError) throw upsertError;
 
             if (shouldRedirect) {
-                // Navegación directa a la siguiente fase
                 router.push(`/dashboard/projects/${projectId}/fime-seleccion-tecnologia`);
             } else {
-                setMessage('Cálculos de caudales guardados exitosamente.');
+                setMessage('Cálculos actualizados.');
                 setSaved(true);
                 router.refresh();
             }
@@ -123,105 +133,174 @@ export default function CaudalesForm({ projectId, initialData }: { projectId: st
 
     if (!pfutura) {
         return (
-            <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#FEF2F2', borderRadius: 'var(--radius-lg)', border: '1px solid #FCA5A5' }}>
-                <p style={{ color: '#B91C1C', fontWeight: 600 }}>Población no definida</p>
-                <p style={{ color: '#7F1D1D', fontSize: '0.9rem', marginTop: '0.5rem' }}>
-                    Primero debes completar la sección de <strong>1. Censo y Comunidad</strong> para obtener la población futura proyectada.
-                </p>
-                <Button onClick={() => router.push(`/dashboard/projects/${projectId}/population`)} style={{ marginTop: '1rem' }}>
+            <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-8 text-center space-y-4">
+                <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
+                <div className="space-y-2">
+                    <h3 className="text-red-400 font-bold text-lg">Población no definida</h3>
+                    <p className="text-red-400/70 text-sm max-w-md mx-auto">
+                        Primero debes completar la sección de <strong>Censo y Comunidad</strong> para obtener la población futura proyectada.
+                    </p>
+                </div>
+                <button
+                    onClick={() => router.push(`/dashboard/projects/${projectId}/population`)}
+                    className="px-6 py-2.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20"
+                >
                     Ir a Censo
-                </Button>
+                </button>
             </div>
         );
     }
 
-    return (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-            <div style={{ backgroundColor: 'white', padding: '2rem', borderRadius: 'var(--radius-lg)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                <ModuleWarning projectId={projectId} moduleKey="caudales" />
-                <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', color: 'var(--color-primary)', borderBottom: '1px solid var(--color-gray-medium)', paddingBottom: '0.5rem' }}>
-                    Parámetros de Diseño
-                </h2>
+    const ResultItem = ({ label, value, unit, icon: Icon, primary = false }: any) => (
+        <div className={`p-4 rounded-xl border transition-all ${primary ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-slate-950/40 border-white/5'}`}>
+            <p className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2 mb-1">
+                {Icon && <Icon className={`w-3 h-3 ${primary ? 'text-emerald-400' : 'text-slate-600'}`} />}
+                {label}
+            </p>
+            <div className="flex items-baseline gap-2">
+                <span className={`text-2xl font-black tracking-tighter ${primary ? 'text-emerald-400' : 'text-white'}`}>
+                    {value.toLocaleString()}
+                </span>
+                <span className="text-[10px] font-bold text-slate-500 uppercase">{unit}</span>
+            </div>
+        </div>
+    );
 
-                <form>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '2rem' }}>
-                        <Input id="net_dotation" name="net_dotation" type="number" label="Dotación Neta (L/hab/día)" value={formData.net_dotation} onChange={handleChange} />
-                        <Input id="losses_index" name="losses_index" type="number" label="Índice de Pérdidas (%)" value={formData.losses_index} onChange={handleChange} />
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                            <Input id="k1_coef" name="k1_coef" type="number" step="0.1" label="Coeficiente K1" value={formData.k1_coef} onChange={handleChange} />
-                            <Input id="k2_coef" name="k2_coef" type="number" step="0.1" label="Coeficiente K2" value={formData.k2_coef} onChange={handleChange} />
+    return (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in duration-700">
+            {/* Input Parameters Section */}
+            <div className="lg:col-span-7 bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-2xl p-6 shadow-2xl relative overflow-hidden flex flex-col">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500/20 via-emerald-500/50 to-emerald-500/20"></div>
+
+                <h3 className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
+                    <Gauge className="w-4 h-4 text-emerald-500" /> Parámetros de Diseño
+                </h3>
+
+                {message && (
+                    <div className="mb-6 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-3 text-emerald-400 text-[10px] font-bold uppercase tracking-wider animate-in slide-in-from-top-2">
+                        <CheckCircle2 className="w-4 h-4" /> {message}
+                    </div>
+                )}
+
+                <form className="flex-1 flex flex-col gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <Zap className="w-3 h-3 text-emerald-500" /> Dotación Neta
+                            </label>
+                            <div className="relative group">
+                                <input
+                                    name="net_dotation"
+                                    type="number"
+                                    value={formData.net_dotation}
+                                    onChange={handleChange}
+                                    className="w-full bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-3 text-sm font-mono text-white outline-none focus:border-emerald-500/50 transition-all"
+                                />
+                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-bold text-slate-600">L/HAB/D</span>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <TrendingDown className="w-3 h-3 text-emerald-500" /> Índice de Pérdidas
+                            </label>
+                            <div className="relative group">
+                                <input
+                                    name="losses_index"
+                                    type="number"
+                                    value={formData.losses_index}
+                                    onChange={handleChange}
+                                    className="w-full bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-3 text-sm font-mono text-white outline-none focus:border-emerald-500/50 transition-all"
+                                />
+                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-bold text-slate-600">%</span>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Coeficiente K1</label>
+                            <input
+                                name="k1_coef"
+                                type="number"
+                                step="0.1"
+                                value={formData.k1_coef}
+                                onChange={handleChange}
+                                className="w-full bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-3 text-sm font-mono text-white outline-none focus:border-emerald-500/50 transition-all"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Coeficiente K2</label>
+                            <input
+                                name="k2_coef"
+                                type="number"
+                                step="0.1"
+                                value={formData.k2_coef}
+                                onChange={handleChange}
+                                className="w-full bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-3 text-sm font-mono text-white outline-none focus:border-emerald-500/50 transition-all"
+                            />
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-                        <Button
+                    <div className="mt-auto pt-8 flex gap-3">
+                        <button
                             type="button"
                             onClick={(e) => handleSave(e, false)}
                             disabled={loading}
-                            variant="secondary"
+                            className="flex-1 py-3 px-6 rounded-xl border border-slate-700 bg-slate-800/50 text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:bg-slate-700 hover:text-white transition-all disabled:opacity-50"
                         >
                             {loading && !saved ? 'Guardando...' : 'Guardar Cálculos'}
-                        </Button>
-                        <Button
+                        </button>
+                        <button
                             type="button"
-                            variant="primary"
                             onClick={(e) => handleSave(e, true)}
                             disabled={loading}
-                            style={{
-                                fontWeight: 600,
-                                boxShadow: '0 0 15px rgba(0, 204, 153, 0.3)',
-                                transition: 'all 0.3s ease'
-                            }}
+                            className="flex-[1.5] py-3 px-6 rounded-xl bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 group disabled:opacity-50"
                         >
-                            {loading ? 'Procesando...' : 'Guardar y Continuar a Fase 2 →'}
-                        </Button>
+                            {loading ? 'Procesando...' : 'Guardar y Continuar'}
+                            <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                        </button>
                     </div>
                 </form>
             </div>
 
-            <div style={{ backgroundColor: 'var(--color-primary)', color: 'white', padding: '2rem', borderRadius: 'var(--radius-lg)', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-                <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.2)', paddingBottom: '0.5rem' }}>
-                    Resultados de Demanda
-                </h2>
+            {/* Results Display Section */}
+            <div className="lg:col-span-5 flex flex-col gap-4">
+                <div className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-2xl p-6 shadow-2xl space-y-4">
+                    <h3 className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                        <Calculator className="w-4 h-4 text-emerald-500" /> Resultados de Demanda
+                    </h3>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    <div>
-                        <p style={{ opacity: 0.8, fontSize: '0.9rem', marginBottom: '0.25rem' }}>Población Futura</p>
-                        <p style={{ fontSize: '1.5rem', fontWeight: 700 }}>{pfutura.toLocaleString()} hab.</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <ResultItem label="Población Futura" value={pfutura} unit="hab" icon={Users} />
+                        <ResultItem label="Dotación Bruta" value={results.gross_dotation} unit="l/h/d" icon={Droplet} />
                     </div>
-                    <div>
-                        <p style={{ opacity: 0.8, fontSize: '0.9rem', marginBottom: '0.25rem' }}>Dotación Bruta</p>
-                        <p style={{ fontSize: '1.5rem', fontWeight: 700 }}>{results.gross_dotation} L/hab/d</p>
+
+                    <div className="space-y-3 pt-4 border-t border-white/5">
+                        <ResultItem label="Caudal Medio Diario (Qmd)" value={results.qmd} unit="L/S" primary />
+                        <ResultItem label="Caudal Máximo Diario (QMD)" value={results.qmd_max} unit="L/S" primary />
+                        <ResultItem label="Caudal Máximo Horario (QMH)" value={results.qmh_max} unit="L/S" primary />
                     </div>
-                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem' }}>
-                        <div style={{ marginBottom: '1rem' }}>
-                            <p style={{ opacity: 0.8, fontSize: '0.9rem', marginBottom: '0.25rem' }}>Caudal Medio Diario (Qmd)</p>
-                            <p style={{ fontSize: '1.8rem', fontWeight: 800 }}>{results.qmd} L/s</p>
-                        </div>
-                        <div style={{ marginBottom: '1rem' }}>
-                            <p style={{ opacity: 0.8, fontSize: '0.9rem', marginBottom: '0.25rem' }}>Caudal Máximo Diario (QMD)</p>
-                            <p style={{ fontSize: '1.8rem', fontWeight: 800 }}>{results.qmd_max} L/s</p>
-                        </div>
-                        <div>
-                            <p style={{ opacity: 0.8, fontSize: '0.9rem', marginBottom: '0.25rem' }}>Caudal Máximo Horario (QMH)</p>
-                            <p style={{ fontSize: '1.8rem', fontWeight: 800 }}>{results.qmh_max} L/s</p>
-                        </div>
-                    </div>
+
                     {(saved || initialData?.calculated_flows) && (
-                        <div style={{ marginTop: '1.5rem', backgroundColor: 'rgba(255,255,255,0.2)', padding: '1rem', borderRadius: 'var(--radius-sm)', borderLeft: '4px solid #34D399' }}>
-                            <p style={{ fontWeight: 600, fontSize: '0.95rem' }}>✅ Fase de Caudales Completa</p>
-                            <p style={{ fontSize: '0.85rem', opacity: 0.9 }}>Listo para Selección de Tecnología.</p>
+                        <div className="mt-4 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-4 group">
+                            <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.4)]">
+                                <CheckCircle2 className="w-5 h-5 text-slate-950 stroke-[3]" />
+                            </div>
+                            <div className="space-y-0.5">
+                                <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Fase Completa</p>
+                                <p className="text-[9px] text-emerald-400/60 uppercase font-bold tracking-tight">Listo para Selección de Tecnología</p>
+                            </div>
                         </div>
                     )}
                 </div>
 
-                {message && <div style={{ marginTop: '1.5rem', backgroundColor: 'rgba(255,255,255,0.2)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.9rem', textAlign: 'center' }}>{message}</div>}
-                {error && <div style={{ marginTop: '1.5rem', backgroundColor: '#FEE2E2', color: '#991B1B', padding: '0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.9rem', textAlign: 'center' }}>{error}</div>}
+                <div className="bg-slate-950/30 border border-white/5 rounded-2xl p-4 flex gap-4 items-start">
+                    <Info className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
+                    <p className="text-[10px] text-slate-500 leading-relaxed italic">
+                        Los cálculos incluyen demandas estacionales y factores de mayoración según la normativa vigente (RAS). Verifique los coeficientes de consumo pico antes de continuar.
+                    </p>
+                </div>
             </div>
-
-            <div style={{ gridColumn: '1 / -1' }}>
-                <ModuleNavigation projectId={projectId} currentModuleKey="caudales" />
-            </div>
-        </div >
+        </div>
     );
 }

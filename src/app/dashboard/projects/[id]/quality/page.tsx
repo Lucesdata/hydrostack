@@ -1,12 +1,13 @@
 import { createClient } from '@/utils/supabase/server';
 import QualityForm from '@/components/projects/QualityForm';
 import { redirect } from 'next/navigation';
+import { ChevronRight, Droplets } from 'lucide-react';
+import Link from 'next/link';
 
 export default async function QualityPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const supabase = await createClient();
 
-    // Verify project
     const { data: project, error } = await supabase
         .from('projects')
         .select('id, name')
@@ -17,7 +18,6 @@ export default async function QualityPage({ params }: { params: Promise<{ id: st
         redirect('/dashboard');
     }
 
-    // Fetch existing quality data
     const { data: qualityData } = await supabase
         .from('project_water_quality')
         .select('*')
@@ -25,11 +25,26 @@ export default async function QualityPage({ params }: { params: Promise<{ id: st
         .single();
 
     return (
-        <div>
-            <h1 style={{ fontSize: '1.5rem', color: 'var(--color-primary)', marginBottom: '0.5rem' }}>Calidad del Agua</h1>
-            <p style={{ marginBottom: '2rem', color: 'var(--color-gray-dark)' }}>
-                Sección 4: Percepción y análisis de la calidad del agua.
-            </p>
+        <div className="max-w-6xl mx-auto space-y-4 pb-10 px-4 sm:px-0">
+            {/* Compact Header */}
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-white/5 pb-4">
+                <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-[10px] font-mono text-slate-500 uppercase tracking-[0.2em]">
+                        <Link href="/dashboard" className="hover:text-emerald-400 transition-colors">Proyectos</Link>
+                        <ChevronRight className="w-3 h-3 translate-y-[0.5px]" />
+                        <span className="text-emerald-400/80 truncate max-w-[150px]">{project.name}</span>
+                    </div>
+                    <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
+                        Calidad del Agua
+                        <div className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] text-emerald-400 font-mono hidden sm:block">
+                            Modulo 3
+                        </div>
+                    </h1>
+                </div>
+                <p className="text-slate-400 text-xs max-w-sm sm:text-right hidden sm:block leading-tight">
+                    Percepción, diagnóstico físico-químico y riesgo sanitario.
+                </p>
+            </div>
 
             <QualityForm projectId={id} initialData={qualityData} />
         </div>

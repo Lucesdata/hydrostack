@@ -3,10 +3,26 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import ModuleWarning from './ModuleWarning';
-import ModuleNavigation from './ModuleNavigation';
+import {
+    Activity,
+    Settings2,
+    Wind,
+    Waves,
+    Target,
+    Trash2,
+    ChevronRight,
+    AlertCircle,
+    ShieldAlert,
+    CheckCircle2,
+    Box,
+    Layers,
+    Ruler,
+    Zap,
+    ArrowUpCircle,
+    Thermometer,
+    Gauge,
+    Save
+} from 'lucide-react';
 
 // Types
 type WaterQuality = {
@@ -16,19 +32,19 @@ type WaterQuality = {
 };
 
 type DesignParams = {
-    vf: number; // Velocidad de filtración (m/h)
-    num_units: number; // Número de unidades
-    ratio_l_a: number; // Relación Largo/Ancho (L=3a usually)
+    vf: number;
+    num_units: number;
+    ratio_l_a: number;
 };
 
 type DesignResults = {
-    q_unit_lps: number; // Q por unidad (L/s)
-    q_unit_m3h: number; // Q por unidad (m3/h)
-    area_m2: number; // Area requerida
-    width_a: number; // Ancho a (m)
-    length_l: number; // Largo L (m)
-    real_vf: number; // Velocidad real
-    wash_velocity_check: number; // Vs check (assume some standard wash flow or calc req wash flow)
+    q_unit_lps: number;
+    q_unit_m3h: number;
+    area_m2: number;
+    width_a: number;
+    length_l: number;
+    real_vf: number;
+    wash_velocity_check: number;
 };
 
 export default function FgdiDesign({ projectId }: { projectId: string }) {
@@ -36,13 +52,11 @@ export default function FgdiDesign({ projectId }: { projectId: string }) {
     const supabase = createClient();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [saved, setSaved] = useState(false);
 
     // Data States
     const [quality, setQuality] = useState<WaterQuality>({ turbidity: null, color: null, fecal_coliforms: null });
     const [qmd, setQmd] = useState<number>(0);
-
-    // UI States
-    const [step, setStep] = useState<1 | 2>(1); // 1: Tech Selection, 2: Hydraulic Design
 
     // Design Inputs
     const [designParams, setDesignParams] = useState<DesignParams>({
@@ -51,11 +65,9 @@ export default function FgdiDesign({ projectId }: { projectId: string }) {
         ratio_l_a: 3
     });
 
-
     // Initial Load
     useEffect(() => {
         async function loadData() {
-            // Fetch Quality
             const { data: qData } = await supabase.from('project_water_quality').select('*').eq('project_id', projectId).maybeSingle();
             if (qData) {
                 setQuality({
@@ -65,21 +77,21 @@ export default function FgdiDesign({ projectId }: { projectId: string }) {
                 });
             }
 
-            // Fetch Flows (Caudales) - with fallback logic
             const { data: cData } = await supabase.from('project_calculations').select('calculated_flows').eq('project_id', projectId).maybeSingle();
             if (cData && cData.calculated_flows) {
                 const flows = cData.calculated_flows;
-                // Try different field names in order of priority
                 const flowValue = flows.qmd_max || flows.QMD || flows.qmd || flows.qmh_max || 0;
                 setQmd(flowValue);
+                if (flows.fgdi?.params) {
+                    setDesignParams(flows.fgdi.params);
+                    setSaved(true);
+                }
             }
-
             setLoading(false);
         }
         loadData();
     }, [projectId, supabase]);
 
-    // Derived State: Tech Selection Recommendation
     const recommendation = React.useMemo(() => {
         if (quality.turbidity !== null && quality.color !== null) {
             const t = quality.turbidity;
@@ -87,30 +99,17 @@ export default function FgdiDesign({ projectId }: { projectId: string }) {
 
             if (t <= 15 && c <= 25) {
                 if (t < 10 && c < 20) {
-                    return {
-                        recommended: true,
-                        message: '¡Ideal! La calidad del agua permite un tren FIME estándar: FGDi + FLA.',
-                        type: 'success' as const
-                    };
+                    return { recommended: true, message: 'FIME Estándar: FGDi + FLA', type: 'success' as const };
                 } else {
-                    return {
-                        recommended: true,
-                        message: 'Aceptable. Calidad en rango límite, el FGDi es crucial como protección.',
-                        type: 'warning' as const
-                    };
+                    return { recommended: true, message: 'Bajo Riesgo: FGDi mandatorio', type: 'warning' as const };
                 }
             } else {
-                return {
-                    recommended: false,
-                    message: 'Atención: Turbiedad o Color altos. Se recomienda añadir filtración gruesa adicional (FGAC/FGAS) antes del FGDi.',
-                    type: 'error' as const
-                };
+                return { recommended: false, message: 'Requiere FGAC Adicional', type: 'error' as const };
             }
         }
-        return { recommended: false, message: '', type: 'warning' as const };
+        return { recommended: false, message: 'Sin datos de calidad', type: 'warning' as const };
     }, [quality]);
 
-    // Derived State: Hydraulic Design Results
     const results = React.useMemo(() => {
         if (!qmd || designParams.num_units < 1) return null;
 
@@ -131,21 +130,12 @@ export default function FgdiDesign({ projectId }: { projectId: string }) {
         };
     }, [designParams, qmd]);
 
-    const handleSave = async () => {
+    const handleSave = async (redirect: boolean = false) => {
         if (!results) return;
         setSaving(true);
         try {
-            // Fetch current calculations to preserve other data
-            const { data: latestData, error: fetchError } = await supabase
-                .from('project_calculations')
-                .select('calculated_flows')
-                .eq('project_id', projectId)
-                .single();
-
-            if (fetchError) throw fetchError;
-
+            const { data: latestData } = await supabase.from('project_calculations').select('calculated_flows').eq('project_id', projectId).single();
             const currentFlows = latestData?.calculated_flows || {};
-
             const updatedFlows = {
                 ...currentFlows,
                 fgdi: {
@@ -156,329 +146,285 @@ export default function FgdiDesign({ projectId }: { projectId: string }) {
                 }
             };
 
-            const { error: upsertError } = await supabase
-                .from('project_calculations')
-                .upsert({
-                    project_id: projectId,
-                    calculated_flows: updatedFlows
-                }, { onConflict: 'project_id' });
+            const { error: upsertError } = await supabase.from('project_calculations').upsert({
+                project_id: projectId,
+                calculated_flows: updatedFlows
+            }, { onConflict: 'project_id' });
 
             if (upsertError) throw upsertError;
-
-            alert('Diseño FGDi guardado exitosamente. Redirigiendo a Fase 4 - Filtro Lento (FLA)');
-            router.push(`/dashboard/projects/${projectId}/fime-lento-arena`);
-
+            setSaved(true);
+            if (redirect) router.push(`/dashboard/projects/${projectId}/fime-lento-arena`);
         } catch (error) {
             console.error('Error saving FGDi design:', error);
-            alert('Error al guardar el diseño. Por favor intente nuevamente.');
         } finally {
             setSaving(false);
         }
     };
 
-    if (loading) return <div className="p-8 text-center text-gray-500">Cargando datos del proyecto...</div>;
+    if (loading) return (
+        <div className="flex flex-col items-center justify-center p-20 space-y-4">
+            <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
+            <p className="text-slate-500 font-mono text-[10px] uppercase tracking-widest animate-pulse">Cargando Parámetros...</p>
+        </div>
+    );
+
+    const errors = [];
+    if (designParams.vf < 2.0 || designParams.vf > 3.0) errors.push(`Vf (${designParams.vf} m/h) fuera de rango (2.0 - 3.0 m/h)`);
+    if (results && results.area_m2 > 10) errors.push(`Área (${results.area_m2.toFixed(2)} m²) excede máx. 10 m²`);
+    if (designParams.ratio_l_a < 3 || designParams.ratio_l_a > 6) errors.push(`Relación L/a fuera de rango (3-6)`);
+
+    const ResultItem = ({ label, value, unit, icon: Icon, primary = false }: any) => (
+        <div className={`p-3 rounded-xl border transition-all ${primary ? 'bg-violet-500/10 border-violet-500/20' : 'bg-slate-950/40 border-white/5'}`}>
+            <p className="text-[9px] font-mono font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2 mb-1">
+                {Icon && <Icon className={`w-3 h-3 ${primary ? 'text-violet-400' : 'text-slate-600'}`} />}
+                {label}
+            </p>
+            <div className="flex items-baseline gap-1.5">
+                <span className={`text-xl font-black tracking-tight ${primary ? 'text-violet-400' : 'text-white'}`}>
+                    {typeof value === 'number' ? value.toFixed(2) : value}
+                </span>
+                <span className="text-[9px] font-bold text-slate-500 uppercase">{unit}</span>
+            </div>
+        </div>
+    );
 
     return (
-        <div className="space-y-8">
-            <ModuleWarning projectId={projectId} moduleKey="fime_grueso_dinamico" />
-
-            {/* Header with QMD Status */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-500">
-                <h1 className="text-2xl font-bold text-gray-800">Diseño de Filtro Grueso Dinámico (FGDi)</h1>
-                <p className="text-gray-600 mt-2">
-                    Unidad de pretratamiento que permite remover sólidos suspendidos gruesos y proteger las unidades posteriores.
-                    Fundamental ante picos de turbiedad.
-                </p>
-
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in duration-700">
+            {/* Left Column: Form & Config */}
+            <div className="lg:col-span-12 space-y-6">
                 {/* QMD Status Banner */}
                 {qmd > 0 ? (
-                    <div className="mt-4 p-4 bg-gradient-to-r from-violet-500 to-purple-600 rounded-lg text-white flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <span className="text-2xl">🎯</span>
-                            <div>
-                                <div className="text-sm opacity-90">Caudal Máximo Diario de Diseño</div>
-                                <div className="text-2xl font-bold">{qmd.toFixed(2)} L/s</div>
+                    <div className="bg-gradient-to-r from-violet-600/20 via-fuchsia-600/20 to-violet-600/20 border border-violet-500/30 rounded-2xl p-4 flex items-center justify-between backdrop-blur-xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-64 h-full bg-violet-500/5 skew-x-[-20deg] translate-x-32 group-hover:translate-x-16 transition-transform duration-1000"></div>
+                        <div className="flex items-center gap-6 relative z-10">
+                            <div className="w-12 h-12 rounded-xl bg-violet-500/20 border border-violet-500/40 flex items-center justify-center shadow-lg shadow-violet-500/10">
+                                <Target className="w-6 h-6 text-violet-400" />
                             </div>
-                        </div>
-                        <div className="text-right text-sm opacity-90">
-                            = {(qmd * 3.6).toFixed(2)} m³/h
-                        </div>
-                    </div>
-                ) : (
-                    <div className="mt-4 p-4 bg-red-50 border-2 border-red-300 rounded-lg flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <span className="text-3xl">⚠️</span>
                             <div>
-                                <div className="text-red-800 font-bold text-lg">Falta el Caudal de Diseño (QMD)</div>
-                                <div className="text-red-700 text-sm">
-                                    Complete la <strong>Fase 1 - Diagnóstico y Proyección</strong> y guarde los cálculos.
+                                <p className="text-[10px] font-black text-violet-400/80 uppercase tracking-widest mb-0.5">Caudal Máximo Diario de Diseño</p>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-3xl font-black text-white tracking-tighter">{qmd.toFixed(2)}</span>
+                                    <span className="text-sm font-bold text-violet-400">L/s</span>
+                                    <span className="mx-3 text-slate-700 font-light">|</span>
+                                    <span className="text-xl font-bold text-slate-300">{(qmd * 3.6).toFixed(2)}</span>
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase">m³/h</span>
                                 </div>
                             </div>
                         </div>
-                        <button
-                            onClick={() => router.push(`/dashboard/projects/${projectId}/fime`)}
-                            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors"
-                        >
-                            Ir a Fase 1 →
+                        <div className="hidden md:flex items-center gap-3 bg-slate-950/40 px-4 py-2 rounded-xl border border-white/5 relative z-10">
+                            <Activity className="w-4 h-4 text-violet-400" />
+                            <div className="text-right">
+                                <p className="text-[8px] font-bold text-slate-500 uppercase">Estado Hidráulico</p>
+                                <p className="text-[10px] font-black text-emerald-400 uppercase">Caudal Validado</p>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div className="flex items-center gap-5 text-center md:text-left">
+                            <div className="w-14 h-14 rounded-2xl bg-red-500/20 flex items-center justify-center shrink-0">
+                                <ShieldAlert className="w-8 h-8 text-red-500" />
+                            </div>
+                            <div>
+                                <h4 className="text-white font-black text-lg">Caudal de Diseño Ausente</h4>
+                                <p className="text-slate-400 text-sm">Debe completar la Fase 1 para habilitar el dimensionamiento del FGDi.</p>
+                            </div>
+                        </div>
+                        <button onClick={() => router.push(`/dashboard/projects/${projectId}/population`)} className="px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-black text-[11px] uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-red-500/20 active:scale-95">
+                            Completar Fase 1
                         </button>
                     </div>
                 )}
             </div>
 
-            {/* Step 1: Tech Selection Validation */}
-            <section className="bg-white p-6 rounded-lg shadow-sm">
-                <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">1. Validación de Tecnología (CINARA)</h2>
+            {/* Step 1 & 2 Container */}
+            <div className="lg:col-span-7 space-y-6">
+                {/* 1. Tech Validation (Compact) */}
+                <div className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-2xl p-6 shadow-2xl relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500/20 via-emerald-500/50 to-emerald-500/20"></div>
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                            <ShieldAlert className="w-4 h-4 text-emerald-500" /> Validación CINARA
+                        </h3>
+                        <div className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter shadow-sm
+                            ${recommendation.type === 'success' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                                recommendation.type === 'warning' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                                    'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                            {recommendation.recommended ? 'Apto' : 'Riesgo Alto'}
+                        </div>
+                    </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                        <span className="block text-sm text-gray-500">Turbiedad Media</span>
-                        <span className={`text-xl font-bold ${quality.turbidity && quality.turbidity > 15 ? 'text-red-600' : 'text-gray-800'}`}>
-                            {quality.turbidity ?? 'N/A'} <span className="text-sm font-normal text-gray-500">UNT</span>
-                        </span>
+                    <div className="grid grid-cols-3 gap-3 mb-6">
+                        <div className="bg-slate-950/40 p-3 rounded-xl border border-white/5 text-center">
+                            <p className="text-[8px] font-bold text-slate-600 uppercase mb-1">Turbiedad</p>
+                            <p className="text-sm font-black text-white">{quality.turbidity ?? '-'} <span className="text-[8px] text-slate-500">UNT</span></p>
+                        </div>
+                        <div className="bg-slate-950/40 p-3 rounded-xl border border-white/5 text-center">
+                            <p className="text-[8px] font-bold text-slate-600 uppercase mb-1">Color</p>
+                            <p className="text-sm font-black text-white">{quality.color ?? '-'} <span className="text-[8px] text-slate-500">UPC</span></p>
+                        </div>
+                        <div className="bg-slate-950/40 p-3 rounded-xl border border-white/5 text-center">
+                            <p className="text-[8px] font-bold text-slate-600 uppercase mb-1">Coliformes</p>
+                            <p className="text-sm font-black text-white text-xs">{quality.fecal_coliforms ?? '-'}</p>
+                        </div>
                     </div>
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                        <span className="block text-sm text-gray-500">Color Real</span>
-                        <span className={`text-xl font-bold ${quality.color && quality.color > 25 ? 'text-red-600' : 'text-gray-800'}`}>
-                            {quality.color ?? 'N/A'} <span className="text-sm font-normal text-gray-500">UPC</span>
-                        </span>
-                    </div>
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                        <span className="block text-sm text-gray-500">Coliformes Fecales</span>
-                        <span className="text-xl font-bold text-gray-800">
-                            {quality.fecal_coliforms ?? 'N/A'} <span className="text-sm font-normal text-gray-500">UFC/100mL</span>
-                        </span>
+
+                    <div className={`p-3 rounded-xl border text-[10px] font-bold uppercase tracking-wide flex items-center gap-3
+                        ${recommendation.type === 'success' ? 'bg-emerald-500/5 border-emerald-500/10 text-emerald-400' :
+                            recommendation.type === 'warning' ? 'bg-amber-500/5 border-amber-500/10 text-amber-400' :
+                                'bg-red-500/5 border-red-500/10 text-red-400'}`}>
+                        {recommendation.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                        {recommendation.message}
                     </div>
                 </div>
 
-                <div className={`p-4 rounded-lg border flex items-start gap-3 ${recommendation.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' :
-                    recommendation.type === 'warning' ? 'bg-yellow-50 border-yellow-200 text-yellow-800' :
-                        'bg-red-50 border-red-200 text-red-800'
-                    }`}>
-                    <span className="text-2xl">{recommendation.type === 'success' ? '✅' : recommendation.type === 'warning' ? '⚠️' : '🛑'}</span>
-                    <div>
-                        <h3 className="font-bold">Recomendación del Modelo</h3>
-                        <p>{recommendation.message}</p>
-                    </div>
-                </div>
-            </section>
+                {/* 2. Hydraulic Config */}
+                <div className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-2xl p-6 shadow-2xl relative flex flex-col">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-violet-500/20 via-violet-500/50 to-violet-500/20"></div>
+                    <h3 className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
+                        <Settings2 className="w-4 h-4 text-violet-500" /> Configuración Hidráulica
+                    </h3>
 
-            {/* Step 2: Hydraulic Design */}
-            <section className="bg-white p-6 rounded-lg shadow-sm">
-                <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">2. Dimensionamiento Hidráulico (Normativo)</h2>
-
-                {/* Validation Errors Display */}
-                {(() => {
-                    const errors = [];
-                    if (designParams.vf < 2.0 || designParams.vf > 3.0)
-                        errors.push(`Velocidad de Filtración ${designParams.vf} m/h fuera de rango normativo (2.0 - 3.0 m/h) [Guía FIME Tabla 3]`);
-
-                    if (results && results.area_m2 > 10)
-                        errors.push(`Área por unidad (${results.area_m2.toFixed(2)} m²) excede el máximo permitido de 10 m² [Guía FIME Tabla 3]`);
-
-                    if (designParams.ratio_l_a < 3 || designParams.ratio_l_a > 6)
-                        errors.push(`Relación Largo/Ancho ${designParams.ratio_l_a} fuera de rango (3:1 a 6:1) [Sección 10.2.a]`);
-
-                    if (errors.length > 0) {
-                        return (
-                            <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded shadow-sm">
-                                <h3 className="font-bold mb-2">⛔ RESTRICCIONES NORMATIVAS DETECTADAS</h3>
-                                <ul className="list-disc pl-5 space-y-1">
-                                    {errors.map((err, i) => <li key={i}>{err}</li>)}
-                                </ul>
-                                <p className="text-xs mt-3 font-semibold">El diseño no podrá guardarse hasta corregir estos parámetros.</p>
-                            </div>
-                        );
-                    }
-                    return null;
-                })()}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* Inputs */}
-                    <div className="space-y-6">
-                        <h3 className="font-semibold text-gray-700">Parámetros de Entrada</h3>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Velocidad de Filtración (Vf)</label>
-                            <div className="flex items-center gap-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <Wind className="w-3 h-3 text-violet-400" /> Vel. Filtración (Vf)
+                            </label>
+                            <div className="relative group">
                                 <input
-                                    type="number"
-                                    step="0.1"
-                                    min="2.0"
-                                    max="3.0"
-                                    value={designParams.vf}
-                                    onChange={(e) => setDesignParams({ ...designParams, vf: parseFloat(e.target.value) })}
-                                    className={`w-full p-2 border rounded focus:ring-2 outline-none text-black ${designParams.vf < 2.0 || designParams.vf > 3.0 ? 'border-red-500 bg-red-50' : 'border-gray-300'
-                                        }`}
+                                    type="number" step="0.1" value={designParams.vf}
+                                    onChange={(e) => setDesignParams({ ...designParams, vf: parseFloat(e.target.value) || 0 })}
+                                    className="w-full bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-3 text-sm font-mono text-white outline-none focus:border-violet-500/50 transition-all"
                                 />
-                                <span className="text-gray-500 text-sm w-12">m/h</span>
+                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-bold text-slate-600">M/H</span>
                             </div>
-                            <p className="text-xs text-gray-500 mt-1">Rango Normativo Estricto: 2.0 - 3.0 m/h</p>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Número de Unidades (n)</label>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <Layers className="w-3 h-3 text-violet-400" /> No. Unidades
+                            </label>
                             <input
-                                type="number"
-                                min="2"
-                                value={designParams.num_units}
-                                onChange={(e) => setDesignParams({ ...designParams, num_units: parseInt(e.target.value) })}
-                                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none text-black"
+                                type="number" value={designParams.num_units}
+                                onChange={(e) => setDesignParams({ ...designParams, num_units: parseInt(e.target.value) || 0 })}
+                                className="w-full bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-3 text-sm font-mono text-white outline-none focus:border-violet-500/50 transition-all"
                             />
-                            <p className="text-xs text-gray-500 mt-1">Mínimo 2 unidades (Guía Sección 10.2.a)</p>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Relación Largo/Ancho (L/a)</label>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <Ruler className="w-3 h-3 text-violet-400" /> Relación Largo/Ancho (L:a)
+                            </label>
                             <input
-                                type="number"
-                                step="0.5"
-                                min="3"
-                                max="6"
-                                value={designParams.ratio_l_a}
-                                onChange={(e) => setDesignParams({ ...designParams, ratio_l_a: parseFloat(e.target.value) })}
-                                className={`w-full p-2 border rounded focus:ring-2 outline-none text-black ${designParams.ratio_l_a < 3 || designParams.ratio_l_a > 6 ? 'border-red-500 bg-red-50' : 'border-gray-300'
-                                    }`}
+                                type="number" step="0.1" value={designParams.ratio_l_a}
+                                onChange={(e) => setDesignParams({ ...designParams, ratio_l_a: parseFloat(e.target.value) || 0 })}
+                                className="w-full bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-3 text-sm font-mono text-white outline-none focus:border-violet-500/50 transition-all"
                             />
-                            <p className="text-xs text-gray-500 mt-1">Rango Normativo: 3:1 a 6:1</p>
                         </div>
                     </div>
 
-                    {/* Results */}
-                    <div className="bg-blue-50 p-6 rounded-lg border border-blue-100">
-                        <h3 className="font-semibold text-blue-900 mb-4">Resultados de Diseño (Por Unidad)</h3>
+                    {errors.length > 0 && (
+                        <div className="p-4 bg-red-500/5 border border-red-500/20 rounded-xl space-y-2">
+                            <p className="text-[9px] font-black text-red-400 uppercase tracking-widest flex items-center gap-2">
+                                <AlertCircle className="w-3.5 h-3.5" /> Errores Normativos
+                            </p>
+                            <ul className="space-y-1">
+                                {errors.map((err, i) => (
+                                    <li key={i} className="text-[9px] text-red-400/80 font-bold uppercase tracking-tight">• {err}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
 
-                        {results ? (
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-center border-b border-blue-200 pb-2">
-                                    <span className="text-blue-800">Caudal por unidad</span>
-                                    <span className="font-bold text-blue-900">{results.q_unit_lps.toFixed(2)} L/s</span>
-                                </div>
-                                <div className="flex justify-between items-center border-b border-blue-200 pb-2">
-                                    <span className="text-blue-800">Área Filtración Requerida</span>
-                                    <span className={`font-bold text-lg ${results.area_m2 > 10 ? 'text-red-600' : 'text-blue-900'}`}>
-                                        {results.area_m2.toFixed(2)} m²
-                                    </span>
-                                </div>
-                                {results.area_m2 > 10 && (
-                                    <p className="text-xs text-red-600 font-bold mb-2">⚠ Excede máximo de 10 m². Aumente el número de unidades.</p>
-                                )}
-
-                                <div className="grid grid-cols-2 gap-4 mt-4">
-                                    <div className="bg-white p-3 rounded border border-blue-200">
-                                        <span className="block text-xs text-blue-600 uppercase font-bold">Ancho (a)</span>
-                                        <span className="text-xl font-bold text-gray-800">{results.width_a.toFixed(2)} m</span>
-                                    </div>
-                                    <div className="bg-white p-3 rounded border border-blue-200">
-                                        <span className="block text-xs text-blue-600 uppercase font-bold">Largo (L)</span>
-                                        <span className="text-xl font-bold text-gray-800">{results.length_l.toFixed(2)} m</span>
-                                    </div>
-                                </div>
-
-                                <div className="mt-4 pt-4 border-t border-blue-200">
-                                    <h4 className="text-sm font-bold text-blue-900 mb-2">Verificación Lavado (Vs)</h4>
-                                    <p className="text-sm text-blue-800 mb-2">
-                                        Para cumplir Vs entre 0.15 y 0.30 m/s:
-                                    </p>
-                                    <div className="text-sm bg-white p-2 rounded text-black">
-                                        Q Lavado Requerido:
-                                        <strong> {(0.15 * results.area_m2 * 1000).toFixed(0)} - {(0.30 * results.area_m2 * 1000).toFixed(0)} L/s</strong>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            <p className="text-blue-400 italic">Defina caudal y parámetros...</p>
-                        )}
+                    <div className="mt-8 flex gap-3 pt-4 border-t border-white/5">
+                        <button
+                            onClick={() => handleSave(false)}
+                            disabled={saving || errors.length > 0}
+                            className="flex-1 py-3 px-6 rounded-xl border border-slate-700 bg-slate-800/50 text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:bg-slate-700 hover:text-white transition-all disabled:opacity-30"
+                        >
+                            {saving ? 'Procesando...' : 'Guardar Diseño'}
+                        </button>
+                        <button
+                            onClick={() => handleSave(true)}
+                            disabled={saving || errors.length > 0}
+                            className="flex-[1.5] py-3 px-6 rounded-xl bg-violet-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-violet-500 transition-all shadow-lg shadow-violet-500/20 flex items-center justify-center gap-2 group disabled:opacity-30"
+                        >
+                            Finalizar e Ir a FLA
+                            <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                        </button>
                     </div>
                 </div>
-            </section>
-
-            {/* Step 3: Material Specifications */}
-            <section className="bg-white p-6 rounded-lg shadow-sm">
-                <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">3. Especificaciones Constructivas</h2>
-
-                <div className="overflow-x-auto">
-                    <h3 className="font-semibold text-gray-700 mb-3">Lecho Filtrante (Tabla 6.2)</h3>
-                    <table className="w-full text-sm text-left border rounded-lg overflow-hidden">
-                        <thead className="bg-gray-100 text-gray-700">
-                            <tr>
-                                <th className="p-3 border-b">Capa</th>
-                                <th className="p-3 border-b">Material</th>
-                                <th className="p-3 border-b">Espesor (m)</th>
-                                <th className="p-3 border-b">Tamaño Grava (mm)</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                            <tr>
-                                <td className="p-3">Superior</td>
-                                <td className="p-3">Grava Fina</td>
-                                <td className="p-3">0.20</td>
-                                <td className="p-3">3 - 6 mm</td>
-                            </tr>
-                            <tr>
-                                <td className="p-3">Intermedia</td>
-                                <td className="p-3">Grava Media</td>
-                                <td className="p-3">0.20</td>
-                                <td className="p-3">6 - 13 mm</td>
-                            </tr>
-                            <tr>
-                                <td className="p-3">Inferior</td>
-                                <td className="p-3">Grava Gruesa</td>
-                                <td className="p-3">0.20</td>
-                                <td className="p-3">13 - 25 mm</td>
-                            </tr>
-                            <tr className="bg-gray-50 font-bold">
-                                <td className="p-3 text-right" colSpan={2}>Altura Total Lecho</td>
-                                <td className="p-3 text-blue-600">0.60 m</td>
-                                <td className="p-3"></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                        <h4 className="font-bold text-gray-800 mb-2">Cámara de Aquietamiento</h4>
-                        <ul className="text-sm space-y-2 text-gray-600">
-                            <li>• Tiempo Retención: <strong>50 seg</strong></li>
-                            <li>• Velocidad Ascensional: <strong>0.01 m/s</strong></li>
-                            <li>• Volumen Req: <strong>{qmd && results ? (qmd * 50 / 1000).toFixed(2) : '-'} m³</strong></li>
-                        </ul>
-                    </div>
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                        <h4 className="font-bold text-gray-800 mb-2">Sistema de Aforo</h4>
-                        <ul className="text-sm space-y-2 text-gray-600">
-                            <li>• Tipo: <strong>Vertedero Triangular</strong></li>
-                            <li>• Ángulo: <strong>60°</strong></li>
-                            <li>• Material: <strong>Acero Inoxidable / PVC</strong></li>
-                        </ul>
-                    </div>
-                </div>
-            </section>
-
-            <div className="flex justify-end gap-4 pt-4">
-                {/* <Button variant="secondary" onClick={() => router.back()}>Atrás</Button> */}
-                <Button variant="primary" onClick={handleSave} disabled={saving || !results}>
-                    {saving ? 'Guardando...' : 'Guardar Diseño FGDi'}
-                </Button>
-                <Button
-                    variant="secondary"
-                    onClick={() => {
-                        if (!qmd || qmd === 0) {
-                            alert('⚠️ No se ha detectado el Caudal Máximo Diario (QMD).\n\nPor favor, complete y guarde la Fase 1 (Diagnóstico y Proyección de Demanda) antes de continuar.');
-                            return;
-                        }
-                        if (!results) {
-                            alert('⚠️ Complete el diseño del FGDi antes de continuar.\n\nVerifique los parámetros de diseño y guarde el diseño.');
-                            return;
-                        }
-                        router.push(`/dashboard/projects/${projectId}/fime-lento-arena`);
-                    }}
-                >
-                    Siguiente: Filtro Lento (FLA) →
-                </Button>
             </div>
 
-            <ModuleNavigation projectId={projectId} currentModuleKey="fime_grueso_dinamico" />
+            {/* Right Column: Results & Build Specs */}
+            <div className="lg:col-span-5 space-y-6">
+                {/* Results Panel */}
+                <div className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-2xl p-6 shadow-2xl space-y-4">
+                    <h3 className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                        <Activity className="w-4 h-4 text-violet-500" /> Resultados Dimensionamiento
+                    </h3>
+
+                    <div className="grid grid-cols-2 gap-3">
+                        <ResultItem label="Área Unitaria" value={results?.area_m2} unit="m²" icon={Box} />
+                        <ResultItem label="Velocidad Real" value={results?.real_vf} unit="m/h" icon={Gauge} />
+                        <ResultItem label="Ancho (a)" value={results?.width_a} unit="m" />
+                        <ResultItem label="Largo (L)" value={results?.length_l} unit="m" />
+                    </div>
+
+                    {results && (
+                        <div className="pt-4 border-t border-white/5">
+                            <div className="bg-slate-950/40 p-4 rounded-xl border border-white/5 space-y-3">
+                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                    <Waves className="w-3 h-3 text-violet-400" /> Verificación de Lavado
+                                </p>
+                                <div className="flex justify-between items-center text-[10px] font-bold">
+                                    <span className="text-slate-500 uppercase">Q Lavado Req (L/s)</span>
+                                    <span className="text-white text-xs">{(0.15 * results.area_m2 * 1000).toFixed(0)} - {(0.30 * results.area_m2 * 1000).toFixed(0)}</span>
+                                </div>
+                                <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                                    <div className="w-2/3 h-full bg-violet-500"></div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Build Specs Table */}
+                <div className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-2xl p-6 shadow-2xl relative">
+                    <h3 className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                        <Layers className="w-4 h-4 text-emerald-500" /> Lecho Filtrante (Normativo)
+                    </h3>
+
+                    <div className="space-y-3">
+                        {[
+                            { name: 'Capa Superior', material: 'Grava Fina', h: '0.20m', size: '3-6mm' },
+                            { name: 'Capa Media', material: 'Grava Media', h: '0.20m', size: '6-13mm' },
+                            { name: 'Capa Inferior', material: 'Grava Gruesa', h: '0.20m', size: '13-25mm' },
+                        ].map((layer, idx) => (
+                            <div key={idx} className="bg-slate-950/30 p-3 rounded-lg border border-white/5 flex items-center justify-between text-[10px]">
+                                <div className="flex flex-col gap-0.5">
+                                    <span className="text-slate-500 font-bold uppercase tracking-tight">{layer.name}</span>
+                                    <span className="text-white font-black">{layer.material}</span>
+                                </div>
+                                <div className="text-right flex items-center gap-4">
+                                    <div className="flex flex-col">
+                                        <span className="text-slate-600 font-bold uppercase text-[8px]">Espesor</span>
+                                        <span className="text-emerald-400 font-mono font-bold">{layer.h}</span>
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-slate-600 font-bold uppercase text-[8px]">Tamaño</span>
+                                        <span className="text-slate-400 font-mono italic">{layer.size}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                        <div className="p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-lg flex justify-between items-center">
+                            <span className="text-[10px] font-black text-emerald-400 uppercase">Altura Total Lecho</span>
+                            <span className="text-sm font-black text-white">0.60 m</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }

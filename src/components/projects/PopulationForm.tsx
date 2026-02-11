@@ -3,26 +3,21 @@
 /**
  * MÓDULO: Población y Censo
  * BLOQUE: B — Caracterización de Demanda
- * 
- * Función técnica:
- * - Proyección demográfica mediante método geométrico o exponencial (según RAS).
- * - Cálculo de población inicial basado en censo de viviendas.
- * - Determinación de la población de diseño para el horizonte del proyecto.
- * 
- * Tabla de base de datos: project_calculations
- * 
- * Aplicabilidad:
- * - ✅ Agua potable: Siempre (base para dimensionar caudales).
- * - ✅ Aguas residuales: Siempre (base para caudales de vertimiento).
  */
 
 import React, { useState } from 'react';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
-import ModuleWarning from './ModuleWarning';
-import ModuleNavigation from './ModuleNavigation';
+import {
+    Users,
+    Home,
+    TrendingUp,
+    Calculator,
+    ChevronRight,
+    Save,
+    AlertCircle,
+    CheckCircle2
+} from 'lucide-react';
 
 type CENSUS_DATA = {
     project_id: string;
@@ -30,7 +25,6 @@ type CENSUS_DATA = {
     municipality: string | null;
     dwellings_number: number | null;
     people_per_dwelling: number | null;
-    // Calculated
     initial_population: number | null;
     growth_rate: number | null;
     projection_years: number | null;
@@ -48,7 +42,6 @@ export default function PopulationForm({ projectId, initialData }: { projectId: 
         projection_method: 'Geometrico'
     });
 
-    // Calculate estimated population on the fly for display
     const estimatedPop = (Number(formData.dwellings_number) || 0) * (Number(formData.people_per_dwelling) || 0);
 
     const [loading, setLoading] = useState(false);
@@ -74,22 +67,19 @@ export default function PopulationForm({ projectId, initialData }: { projectId: 
         const years = Number(formData.projection_years);
 
         if (!formData.community_name || !formData.municipality || !dwellings || !ppd) {
-            setError('Por favor complete los campos obligatorios (Comunidad, Municipio, Viviendas, Personas por vivienda).');
+            setError('Por favor complete los campos obligatorios.');
             setLoading(false);
             return;
         }
 
         const initial_population = Math.round(dwellings * ppd);
-
         let final_population = 0;
         const r = rate / 100;
         const t = years;
 
         if (formData.projection_method === 'Exponencial') {
-            // Exponential: Pf = P0 * e^(r*t)
             final_population = Math.round(initial_population * Math.exp(r * t));
         } else {
-            // Geometric: Pf = P0 * (1 + r)^t
             final_population = Math.round(initial_population * Math.pow((1 + r), t));
         }
 
@@ -116,7 +106,7 @@ export default function PopulationForm({ projectId, initialData }: { projectId: 
 
             if (upsertError) throw upsertError;
 
-            setMessage(`Datos guardados. Población estimada: ${initial_population}, Proyectada: ${final_population.toLocaleString()}.`);
+            setMessage(`Población Proyectada: ${final_population.toLocaleString()} hab.`);
             setSaved(true);
             router.refresh();
         } catch (err: any) {
@@ -126,130 +116,172 @@ export default function PopulationForm({ projectId, initialData }: { projectId: 
         }
     };
 
-    const handleNext = () => {
-        router.push(`/dashboard/projects/${projectId}/source`);
-    };
-
     return (
-        <div style={{ backgroundColor: 'white', padding: '2rem', borderRadius: 'var(--radius-lg)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-            <ModuleWarning projectId={projectId} moduleKey="population" />
-            <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', color: 'var(--color-primary)', borderBottom: '1px solid var(--color-gray-medium)', paddingBottom: '0.5rem' }}>
-                Censo y Comunidad
-            </h2>
+        <div className="space-y-4 animate-in fade-in duration-700">
+            {/* Form Section */}
+            <div className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+                {/* Header Style Accent */}
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500/50 via-emerald-500 to-emerald-500/50"></div>
 
-            {message && <div style={{ backgroundColor: '#D1FAE5', color: 'var(--color-success)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem' }}>{message}</div>}
-            {error && <div style={{ backgroundColor: '#FEE2E2', color: 'var(--color-error)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem' }}>{error}</div>}
-
-            <form onSubmit={calculateAndSave}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
-                    <Input
-                        id="community_name"
-                        name="community_name"
-                        label="Nombre de la comunidad *"
-                        value={formData.community_name}
-                        onChange={handleChange}
-                        placeholder="Ej: Vereda El Silencio"
-                        className="text-black"
-                    />
-                    <Input
-                        id="municipality"
-                        name="municipality"
-                        label="Municipio / vereda *"
-                        value={formData.municipality}
-                        onChange={handleChange}
-                        placeholder="Ej: San Roque"
-                        className="text-black"
-                    />
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
-                    <Input
-                        id="dwellings_number"
-                        name="dwellings_number"
-                        type="number"
-                        label="Número de viviendas *"
-                        value={formData.dwellings_number}
-                        onChange={handleChange}
-                        placeholder="0"
-                        className="text-black"
-                    />
-                    <Input
-                        id="people_per_dwelling"
-                        name="people_per_dwelling"
-                        type="number"
-                        step="0.1"
-                        label="Promedio personas por vivienda *"
-                        value={formData.people_per_dwelling}
-                        onChange={handleChange}
-                        placeholder="Ej: 3.5"
-                        className="text-black"
-                    />
-                </div>
-
-                <div style={{ marginBottom: '2rem', padding: '1rem', backgroundColor: 'var(--color-gray-light)', borderRadius: 'var(--radius-md)' }}>
-                    <p style={{ fontWeight: 600, color: 'var(--color-foreground)' }}>
-                        Población Estimada Actual: <span style={{ color: 'var(--color-primary)', fontSize: '1.2rem' }}>{estimatedPop}</span> habitantes
-                    </p>
-                </div>
-
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--color-foreground)' }}>Proyección</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
-                    <Input
-                        id="growth_rate"
-                        name="growth_rate"
-                        type="number"
-                        step="0.01"
-                        label="Tasa de Crecimiento anual (%)"
-                        value={formData.growth_rate}
-                        onChange={handleChange}
-                        className="text-black"
-                    />
-                    <Input
-                        id="projection_years"
-                        name="projection_years"
-                        type="number"
-                        label="Período de Diseño (Años)"
-                        value={formData.projection_years}
-                        onChange={handleChange}
-                        className="text-black"
-                    />
-
-                    <div className="input-group">
-                        <label className="label" style={{ fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.5rem', display: 'block' }}>Método de Proyección</label>
-                        <select
-                            name="projection_method"
-                            value={formData.projection_method}
-                            onChange={handleChange}
-                            style={{
-                                width: '100%',
-                                padding: '0.625rem',
-                                borderRadius: 'var(--radius-sm)',
-                                border: '1px solid var(--color-gray-medium)',
-                                backgroundColor: 'white'
-                            }}
-                        >
-                            <option value="Geometrico">Método Geométrico (RAS)</option>
-                            <option value="Exponencial">Método Exponencial (RAS)</option>
-                        </select>
+                {message && (
+                    <div className="mb-6 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-3 text-emerald-400 text-xs font-medium animate-in slide-in-from-top-1">
+                        <CheckCircle2 className="w-4 h-4" />
+                        {message}
                     </div>
-                </div>
+                )}
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
-                    <Button type="submit" disabled={loading} variant={saved ? 'secondary' : 'primary'}>
-                        {loading ? 'Guardando...' : 'Guardar y Calcular'}
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() => router.push(`/dashboard/projects/${projectId}/floating-population`)}
-                        disabled={!(saved || initialData?.calculated_flows)}
-                    >
-                        Siguiente: Población Flotante →
-                    </Button>
-                </div>
-            </form>
+                {error && (
+                    <div className="mb-6 p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-400 text-xs font-medium animate-in shake duration-300">
+                        <AlertCircle className="w-4 h-4" />
+                        {error}
+                    </div>
+                )}
 
-            <ModuleNavigation projectId={projectId} currentModuleKey="population" />
+                <form onSubmit={calculateAndSave} className="space-y-8">
+                    {/* Compact Grid 1: Community & Census */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+                        <div className="md:col-span-2 space-y-2">
+                            <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <Home className="w-3 h-3" /> Comunidad y Municipio *
+                            </label>
+                            <div className="grid grid-cols-2 gap-3">
+                                <input
+                                    name="community_name"
+                                    value={formData.community_name}
+                                    onChange={handleChange}
+                                    placeholder="Nombre"
+                                    className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:border-emerald-500/50 transition-all outline-none"
+                                    required
+                                />
+                                <input
+                                    name="municipality"
+                                    value={formData.municipality}
+                                    onChange={handleChange}
+                                    placeholder="Municipio"
+                                    className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:border-emerald-500/50 transition-all outline-none"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">
+                                Viviendas / Personas *
+                            </label>
+                            <div className="grid grid-cols-2 gap-3">
+                                <input
+                                    type="number"
+                                    name="dwellings_number"
+                                    value={formData.dwellings_number}
+                                    onChange={handleChange}
+                                    placeholder="0"
+                                    className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:border-emerald-500/30 transition-all outline-none"
+                                    required
+                                />
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    name="people_per_dwelling"
+                                    value={formData.people_per_dwelling}
+                                    onChange={handleChange}
+                                    placeholder="3.5"
+                                    className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:border-emerald-500/30 transition-all outline-none"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl px-4 py-2.5 flex items-center justify-between">
+                            <div>
+                                <p className="text-[9px] font-mono font-bold text-emerald-500 uppercase tracking-wider mb-1">Población Base</p>
+                                <div className="text-xl font-bold text-white leading-tight">
+                                    {estimatedPop} <span className="text-[10px] font-mono text-emerald-400/60 uppercase ml-1">hab</span>
+                                </div>
+                            </div>
+                            <Users className="w-6 h-6 text-emerald-500/20" />
+                        </div>
+                    </div>
+
+                    <div className="h-px bg-white/5 w-full"></div>
+
+                    {/* Compact Grid 2: Projections */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <TrendingUp className="w-3 h-3" /> Tasa (%)
+                            </label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                name="growth_rate"
+                                value={formData.growth_rate}
+                                onChange={handleChange}
+                                className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500/30"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">Años de Diseño</label>
+                            <input
+                                type="number"
+                                name="projection_years"
+                                value={formData.projection_years}
+                                onChange={handleChange}
+                                className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500/30"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">Método RAS</label>
+                            <select
+                                name="projection_method"
+                                value={formData.projection_method}
+                                onChange={handleChange}
+                                className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-[11px] text-sm text-white outline-none focus:border-emerald-500/30 appearance-none cursor-pointer"
+                            >
+                                <option value="Geometrico">Método Geométrico</option>
+                                <option value="Exponencial">Método Exponencial</option>
+                            </select>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-2">
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className={`flex-1 min-w-[140px] py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-lg
+                                    ${saved
+                                        ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
+                                        : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20'}`}
+                            >
+                                {loading ? (
+                                    <span className="animate-pulse">...</span>
+                                ) : (
+                                    <>
+                                        <Calculator className="w-4 h-4" />
+                                        {saved ? 'Recalcular' : 'Calcular'}
+                                    </>
+                                )}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => router.push(`/dashboard/projects/${projectId}/floating-population`)}
+                                disabled={!(saved || initialData?.initial_population)}
+                                className="w-10 h-10 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-xl transition-all flex items-center justify-center disabled:opacity-40"
+                                title="Siguiente"
+                            >
+                                <ChevronRight className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            {/* Context Note - Compact */}
+            <div className="flex items-center gap-3 px-4 py-2 bg-slate-900/30 rounded-xl border border-white/5 max-w-fit">
+                <AlertCircle className="w-3 h-3 text-slate-500 shrink-0" />
+                <p className="text-[9px] text-slate-500 italic tracking-wide">
+                    Cálculos basados en el Título B del RAS-2000. Recomendado: Método Geométrico para zonas rurales.
+                </p>
+            </div>
         </div>
     );
 }

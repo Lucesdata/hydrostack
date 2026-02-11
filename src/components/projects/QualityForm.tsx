@@ -1,12 +1,25 @@
 "use client";
 
 import React, { useState } from 'react';
-import Button from '@/components/ui/Button';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
-import ModuleWarning from './ModuleWarning';
+import {
+    Droplets,
+    Beaker,
+    AlertTriangle,
+    ShieldCheck,
+    Home,
+    CheckCircle2,
+    AlertCircle,
+    ChevronRight,
+    Save,
+    Check,
+    Waves,
+    Eye,
+    Zap,
+    Thermometer
+} from 'lucide-react';
 import QualityAnalysisForm from './QualityAnalysisForm';
-import ModuleNavigation from './ModuleNavigation';
 
 type QUALITY_DATA = {
     project_id: string;
@@ -31,17 +44,16 @@ export default function QualityForm({ projectId, initialData }: { projectId: str
     const router = useRouter();
     const supabase = createClient();
 
-    const handleRadioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+    const handleRadioChange = (val: string, name: string) => {
+        setFormData({ ...formData, [name]: val });
     };
 
-    const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'perceived_problems' | 'home_treatment') => {
-        const { value, checked } = e.target;
+    const handleCheckboxChange = (val: string, field: 'perceived_problems' | 'home_treatment') => {
         let newArray = [...formData[field]];
-        if (checked) {
-            newArray.push(value);
+        if (newArray.includes(val)) {
+            newArray = newArray.filter(item => item !== val);
         } else {
-            newArray = newArray.filter(item => item !== value);
+            newArray.push(val);
         }
         setFormData({ ...formData, [field]: newArray });
     };
@@ -68,124 +80,186 @@ export default function QualityForm({ projectId, initialData }: { projectId: str
 
             if (upsertError) throw upsertError;
 
-            setMessage('Datos de calidad guardados exitosamente.');
+            setMessage('Diagnóstico cualitativo actualizado.');
             setSaved(true);
             router.refresh();
         } catch (err: any) {
-            setError(err.message || 'Error al guardar los datos de calidad');
+            setError(err.message || 'Error al guardar los datos');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleNext = () => {
-        router.push(`/dashboard/projects/${projectId}/caudales`);
-    };
+    const CompactRadio = ({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) => (
+        <button
+            type="button"
+            onClick={onClick}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-widest transition-all
+                ${active
+                    ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
+                    : 'bg-slate-900/50 border-slate-700 text-slate-500 hover:border-slate-500'}`}
+        >
+            <div className={`w-3 h-3 rounded-full border flex items-center justify-center transition-all
+                ${active ? 'border-emerald-500' : 'border-slate-700'}`}>
+                {active && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />}
+            </div>
+            {label}
+        </button>
+    );
+
+    const CompactCheckbox = ({ label, active, onClick, icon: Icon }: { label: string; active: boolean; onClick: () => void; icon?: any }) => (
+        <button
+            type="button"
+            onClick={onClick}
+            className={`flex-1 flex items-center gap-3 px-4 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-widest transition-all
+                ${active
+                    ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
+                    : 'bg-slate-900/50 border-slate-700 text-slate-500 hover:border-slate-500'}`}
+        >
+            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all
+                ${active ? 'bg-emerald-500 border-emerald-500' : 'border-slate-700'}`}>
+                {active && <Check className="w-3 h-3 text-slate-950 stroke-[3]" />}
+            </div>
+            {Icon && <Icon className={`w-3 h-3 ${active ? 'text-emerald-400' : 'text-slate-600'}`} />}
+            {label}
+        </button>
+    );
 
     return (
-        <div style={{ backgroundColor: 'white', padding: '2rem', borderRadius: 'var(--radius-lg)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-            <ModuleWarning projectId={projectId} moduleKey="quality" />
-            <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', color: 'var(--color-primary)', borderBottom: '1px solid var(--color-gray-medium)', paddingBottom: '0.5rem' }}>
-                Calidad del Agua
-            </h2>
+        <div className="space-y-6 animate-in fade-in duration-700">
+            {/* Qualitative Assessment Section */}
+            <div className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500/50 via-emerald-500 to-emerald-500/50 opacity-50"></div>
 
-            {message && <div style={{ backgroundColor: '#D1FAE5', color: 'var(--color-success)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem' }}>{message}</div>}
-            {error && <div style={{ backgroundColor: '#FEE2E2', color: 'var(--color-error)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem' }}>{error}</div>}
-
-            <form onSubmit={handleSubmit}>
-
-                {/* Análisis formal */}
-                <div className="input-group" style={{ marginBottom: '1.5rem' }}>
-                    <label className="label">¿Se han realizado análisis físico-químicos o microbiológicos?</label>
-                    <div style={{ display: 'flex', gap: '1.5rem' }}>
-                        {['Sí', 'No'].map(opt => (
-                            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                <input
-                                    type="radio"
-                                    name="has_analysis"
-                                    value={opt}
-                                    checked={formData.has_analysis === opt}
-                                    onChange={handleRadioChange}
-                                    style={{ accentColor: 'var(--color-primary)', width: '1.2em', height: '1.2em' }}
-                                />
-                                {opt}
-                            </label>
-                        ))}
+                {message && (
+                    <div className="mb-4 p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-3 text-emerald-400 text-[10px] font-medium animate-in slide-in-from-top-1">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        {message}
                     </div>
-                </div>
+                )}
 
-                {/* Percepción de problemas */}
-                <div className="input-group" style={{ marginBottom: '1.5rem' }}>
-                    <label className="label">Problemas percibidos en el agua</label>
-                    <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
-                        {['Turbidez', 'Olor', 'Sabor', 'Color', 'Ninguno'].map(opt => (
-                            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                <input
-                                    type="checkbox"
-                                    value={opt}
-                                    checked={formData.perceived_problems.includes(opt)}
-                                    onChange={(e) => handleCheckboxChange(e, 'perceived_problems')}
-                                    style={{ accentColor: 'var(--color-primary)', width: '1.2em', height: '1.2em' }}
-                                />
-                                {opt}
-                            </label>
-                        ))}
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                        {/* Column 1: Analysis & Problems */}
+                        <div className="space-y-6">
+                            {/* Has Analysis */}
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                    <Beaker className="w-3 h-3 text-emerald-500" /> ¿Cuenta con Análisis Lab? *
+                                </label>
+                                <div className="flex gap-2">
+                                    {['Sí', 'No'].map(opt => (
+                                        <CompactRadio
+                                            key={opt}
+                                            label={opt}
+                                            active={formData.has_analysis === opt}
+                                            onClick={() => handleRadioChange(opt, 'has_analysis')}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Perceived Problems */}
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                    <Eye className="w-3 h-3 text-emerald-500" /> Percepción de la Comunidad
+                                </label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {['Turbidez', 'Olor', 'Sabor', 'Color'].map(opt => (
+                                        <CompactCheckbox
+                                            key={opt}
+                                            label={opt}
+                                            active={formData.perceived_problems.includes(opt)}
+                                            onClick={() => handleCheckboxChange(opt, 'perceived_problems')}
+                                            icon={Waves}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Column 2: Pollution & Treatment */}
+                        <div className="space-y-6">
+                            {/* Pollution Sources */}
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                    <AlertTriangle className="w-3 h-3 text-emerald-500" /> Riesgos de Contaminación *
+                                </label>
+                                <div className="flex gap-2">
+                                    {['Sí', 'No'].map(opt => (
+                                        <CompactRadio
+                                            key={opt}
+                                            label={opt}
+                                            active={formData.pollution_sources === opt}
+                                            onClick={() => handleRadioChange(opt, 'pollution_sources')}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Home Treatment */}
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                    <Home className="w-3 h-3 text-emerald-500" /> Prácticas en el Hogar
+                                </label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {['Hervido', 'Cloro', 'Filtro'].map(opt => (
+                                        <CompactCheckbox
+                                            key={opt}
+                                            label={opt}
+                                            active={formData.home_treatment.includes(opt)}
+                                            onClick={() => handleCheckboxChange(opt, 'home_treatment')}
+                                            icon={Zap}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                {/* Fuentes de contaminación */}
-                <div className="input-group" style={{ marginBottom: '1.5rem' }}>
-                    <label className="label">¿Existen fuentes de contaminación cercanas a la captación?</label>
-                    <div style={{ display: 'flex', gap: '1.5rem' }}>
-                        {['Sí', 'No'].map(opt => (
-                            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                <input
-                                    type="radio"
-                                    name="pollution_sources"
-                                    value={opt}
-                                    checked={formData.pollution_sources === opt}
-                                    onChange={handleRadioChange}
-                                    style={{ accentColor: 'var(--color-primary)', width: '1.2em', height: '1.2em' }}
-                                />
-                                {opt}
-                            </label>
-                        ))}
+                    <div className="flex justify-end pt-2">
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className={`py-2.5 px-6 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-lg
+                                ${saved
+                                    ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
+                                    : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20'}`}
+                        >
+                            {loading ? (
+                                <span className="animate-pulse">Guardando...</span>
+                            ) : (
+                                <>
+                                    <Save className="w-3.5 h-3.5" />
+                                    {saved ? 'Diagnóstico Guardado' : 'Guardar Diagnóstico'}
+                                </>
+                            )}
+                        </button>
                     </div>
-                </div>
+                </form>
+            </div>
 
-                {/* Tratamiento en el hogar */}
-                <div className="input-group" style={{ marginBottom: '1.5rem' }}>
-                    <label className="label">¿Las familias realizan algún tratamiento en casa?</label>
-                    <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
-                        {['Hervido', 'Cloro', 'Filtro', 'Ninguno'].map(opt => (
-                            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                <input
-                                    type="checkbox"
-                                    value={opt}
-                                    checked={formData.home_treatment.includes(opt)}
-                                    onChange={(e) => handleCheckboxChange(e, 'home_treatment')}
-                                    style={{ accentColor: 'var(--color-primary)', width: '1.2em', height: '1.2em' }}
-                                />
-                                {opt}
-                            </label>
-                        ))}
-                    </div>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginBottom: '2rem' }}>
-                    <Button type="submit" disabled={loading} variant={saved ? 'secondary' : 'primary'}>
-                        {loading ? 'Guardando...' : 'Guardar Diagnóstico Cualitativo'}
-                    </Button>
-                </div>
-            </form>
-
+            {/* Expanded Quantitative Section */}
             {formData.has_analysis === 'Sí' && (
-                <div style={{ marginTop: '3rem', borderTop: '2px dashed var(--color-gray-medium)', paddingTop: '3rem' }}>
+                <div className="animate-in slide-in-from-top-4 duration-500">
                     <QualityAnalysisForm projectId={projectId} initialData={initialData} />
                 </div>
             )}
 
-            <ModuleNavigation projectId={projectId} currentModuleKey="quality" />
+            {/* Navigation Placeholder if no analysis */}
+            {formData.has_analysis !== 'Sí' && (
+                <div className="flex justify-end pt-4">
+                    <button
+                        type="button"
+                        onClick={() => router.push(`/dashboard/projects/${projectId}/caudales`)}
+                        disabled={!saved && !initialData}
+                        className="px-6 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-40"
+                    >
+                        Continuar a Caudales
+                        <ChevronRight className="w-4 h-4" />
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

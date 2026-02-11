@@ -120,7 +120,7 @@ export default function DigitalTwinsCarousel() {
     const visibleIndices = getVisibleIndices();
 
     return (
-        <section className="bg-white py-20 font-sans">
+        <section id="digital-twins" className="bg-white py-20 font-sans">
             <div className="max-w-7xl mx-auto px-6">
                 {/* Header */}
                 <div className="text-center mb-12">

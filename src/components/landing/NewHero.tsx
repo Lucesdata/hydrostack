@@ -134,9 +134,8 @@ export default function NewHero() {
                     <h1 className="text-5xl md:text-6xl lg:text-7xl font-semibold text-white tracking-tight leading-[1.1]">
                         Diseña y optimiza sistemas de{' '}
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-sky-500">
-                            Agua Potable
-                        </span>{' '}
-                        con criterio normativo.
+                            tratamiento de agua
+                        </span>.
                     </h1>
 
                     <p className="text-lg text-slate-300 leading-relaxed max-w-xl">
@@ -175,13 +174,29 @@ export default function NewHero() {
                 </div>
 
                 {/* AI Agent Card - ORIGINAL GLASS PANEL STYLE */}
-                <div className="glass-panel p-8 rounded-2xl text-white">
+                <div className="glass-panel p-8 rounded-2xl text-white relative overflow-hidden">
+                    {/* Status Warning Badge */}
+                    <div className="absolute top-0 right-0">
+                        <div className="bg-amber-500/20 border-b border-l border-amber-500/30 px-3 py-1 rounded-bl-lg">
+                            <span className="text-[10px] font-mono font-bold text-amber-500 uppercase tracking-tighter animate-pulse">
+                                Mantenimiento
+                            </span>
+                        </div>
+                    </div>
+
                     <div className="flex justify-between items-center mb-6">
                         <div>
                             <h3 className="text-xl font-semibold tracking-tight">🧠 Agente de Ingeniería HYDROSTACK</h3>
                             <p className="text-slate-400 text-xs mt-1">Diseña, valida y transforma sistemas de agua potable.</p>
                         </div>
                         <Cpu className="w-6 h-6 text-emerald-400" />
+                    </div>
+
+                    <div className="mt-2 mb-4 p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-center gap-2.5">
+                        <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></div>
+                        <p className="text-[11px] text-amber-200/80 leading-tight">
+                            <span className="font-bold">Aviso:</span> El agente de IA está experimentando fallos técnicos y no está procesando solicitudes en este momento.
+                        </p>
                     </div>
 
                     <p className="text-slate-300 text-sm leading-relaxed mb-6">

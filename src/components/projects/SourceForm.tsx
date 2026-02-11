@@ -1,12 +1,26 @@
 "use client";
 
 import React, { useState } from 'react';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
-import ModuleWarning from './ModuleWarning';
-import ModuleNavigation from './ModuleNavigation';
+import {
+    Wind,
+    Droplets,
+    Waves,
+    Mountain,
+    CircleDot,
+    CloudRain,
+    ShieldCheck,
+    MapPin,
+    ArrowRight,
+    Save,
+    CheckCircle2,
+    AlertCircle,
+    Layers,
+    Navigation2,
+    Check,
+    ChevronRight
+} from 'lucide-react';
 
 type SOURCE_DATA = {
     project_id: string;
@@ -36,17 +50,20 @@ export default function SourceForm({ projectId, initialData }: { projectId: stri
     const router = useRouter();
     const supabase = createClient();
 
-    const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { value, checked } = e.target;
+    const handleRadioChange = (val: string, name: string) => {
+        setFormData({ ...formData, [name]: val });
+    };
+
+    const handleCheckboxChange = (val: string) => {
         let newQuality = [...formData.water_quality_rainy];
-        if (checked) {
-            newQuality.push(value);
+        if (newQuality.includes(val)) {
+            newQuality = newQuality.filter(item => item !== val);
         } else {
-            newQuality = newQuality.filter(item => item !== value);
+            newQuality.push(val);
         }
         setFormData({ ...formData, water_quality_rainy: newQuality });
     };
@@ -57,15 +74,13 @@ export default function SourceForm({ projectId, initialData }: { projectId: stri
         setMessage('');
         setError('');
 
-        const distance = Number(formData.distance_to_community);
-
         const sourceData = {
             project_id: projectId,
             source_type: formData.source_type,
             is_permanent: formData.is_permanent,
             water_quality_rainy: formData.water_quality_rainy,
             is_protected: formData.is_protected,
-            distance_to_community: distance || null,
+            distance_to_community: Number(formData.distance_to_community) || null,
             water_table_level: parseFloat(formData.water_table_level.toString()) || null,
             well_depth: parseFloat(formData.well_depth.toString()) || null,
             seasonal_risk_factor: formData.seasonal_risk_factor,
@@ -79,190 +94,243 @@ export default function SourceForm({ projectId, initialData }: { projectId: stri
 
             if (upsertError) throw upsertError;
 
-            setMessage('Datos de fuente guardados exitosamente.');
+            setMessage('Diagnóstico de fuente guardado exitosamente.');
             setSaved(true);
             router.refresh();
         } catch (err: any) {
-            setError(err.message || 'Error al guardar los datos de la fuente');
+            setError(err.message || 'Error al guardar los datos');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleNext = () => {
-        router.push(`/dashboard/projects/${projectId}/quality`);
-    };
+    const SourceOption = ({ label, icon: Icon, active, onClick }: { label: string; icon: any; active: boolean; onClick: () => void }) => (
+        <button
+            type="button"
+            onClick={onClick}
+            className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all gap-2 group
+                ${active
+                    ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
+                    : 'bg-slate-900/50 border-slate-700 text-slate-500 hover:border-slate-500 hover:text-slate-300'}`}
+        >
+            <Icon className={`w-5 h-5 transition-transform group-hover:scale-110 ${active ? 'text-emerald-400' : 'text-slate-600'}`} />
+            <span className="text-[10px] font-bold uppercase tracking-wider">{label}</span>
+        </button>
+    );
+
+    const CompactRadio = ({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) => (
+        <button
+            type="button"
+            onClick={onClick}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-widest transition-all
+                ${active
+                    ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
+                    : 'bg-slate-900/50 border-slate-700 text-slate-500 hover:border-slate-500'}`}
+        >
+            <div className={`w-3 h-3 rounded-full border flex items-center justify-center transition-all
+                ${active ? 'border-emerald-500' : 'border-slate-700'}`}>
+                {active && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />}
+            </div>
+            {label}
+        </button>
+    );
+
+    const CompactCheckbox = ({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) => (
+        <button
+            type="button"
+            onClick={onClick}
+            className={`flex-1 flex items-center gap-3 px-4 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-widest transition-all
+                ${active
+                    ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
+                    : 'bg-slate-900/50 border-slate-700 text-slate-500 hover:border-slate-500'}`}
+        >
+            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all
+                ${active ? 'bg-emerald-500 border-emerald-500' : 'border-slate-700'}`}>
+                {active && <Check className="w-3 h-3 text-slate-950 stroke-[3]" />}
+            </div>
+            {label}
+        </button>
+    );
 
     return (
-        <div style={{ backgroundColor: 'white', padding: '2rem', borderRadius: 'var(--radius-lg)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-            <ModuleWarning projectId={projectId} moduleKey="source" />
-            <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', color: 'var(--color-primary)', borderBottom: '1px solid var(--color-gray-medium)', paddingBottom: '0.5rem' }}>
-                Fuente de Agua
-            </h2>
+        <div className="space-y-4 animate-in fade-in duration-700">
+            {/* Form Section */}
+            <div className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+                {/* Header Style Accent */}
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500/50 via-emerald-500 to-emerald-500/50"></div>
 
-            {message && <div style={{ backgroundColor: '#D1FAE5', color: 'var(--color-success)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem' }}>{message}</div>}
-            {error && <div style={{ backgroundColor: '#FEE2E2', color: 'var(--color-error)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem' }}>{error}</div>}
-
-            <form onSubmit={handleSubmit}>
-
-                {/* Tipo de fuente */}
-                <div className="input-group" style={{ marginBottom: '1.5rem' }}>
-                    <label className="label">Tipo de fuente de agua</label>
-                    <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
-                        {['Quebrada', 'Río', 'Nacimiento', 'Pozo', 'Otra'].map(opt => (
-                            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                <input
-                                    type="radio"
-                                    name="source_type"
-                                    value={opt}
-                                    checked={formData.source_type === opt}
-                                    onChange={handleTextChange}
-                                    style={{ accentColor: 'var(--color-primary)', width: '1.2em', height: '1.2em' }}
-                                />
-                                {opt}
-                            </label>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Permanente */}
-                <div className="input-group" style={{ marginBottom: '1.5rem' }}>
-                    <label className="label">¿La fuente es permanente todo el año?</label>
-                    <div style={{ display: 'flex', gap: '1.5rem' }}>
-                        {['Sí', 'No', 'No se sabe'].map(opt => (
-                            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                <input
-                                    type="radio"
-                                    name="is_permanent"
-                                    value={opt}
-                                    checked={formData.is_permanent === opt}
-                                    onChange={handleTextChange}
-                                    style={{ accentColor: 'var(--color-primary)', width: '1.2em', height: '1.2em' }}
-                                />
-                                {opt}
-                            </label>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Calidad en lluvias */}
-                <div className="input-group" style={{ marginBottom: '1.5rem' }}>
-                    <label className="label">En época de lluvias, el agua:</label>
-                    <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
-                        {['Se mantiene clara', 'Se vuelve turbia', 'Aumenta mucho el caudal'].map(opt => (
-                            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                <input
-                                    type="checkbox"
-                                    value={opt}
-                                    checked={formData.water_quality_rainy.includes(opt)}
-                                    onChange={handleCheckboxChange}
-                                    style={{ accentColor: 'var(--color-primary)', width: '1.2em', height: '1.2em' }}
-                                />
-                                {opt}
-                            </label>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Protegida */}
-                <div className="input-group" style={{ marginBottom: '1.5rem' }}>
-                    <label className="label">¿La fuente está protegida?</label>
-                    <div style={{ display: 'flex', gap: '1.5rem' }}>
-                        {['Sí', 'No', 'Parcialmente'].map(opt => (
-                            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                <input
-                                    type="radio"
-                                    name="is_protected"
-                                    value={opt}
-                                    checked={formData.is_protected === opt}
-                                    onChange={handleTextChange}
-                                    style={{ accentColor: 'var(--color-primary)', width: '1.2em', height: '1.2em' }}
-                                />
-                                {opt}
-                            </label>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Distancia */}
-                <div style={{ marginBottom: '2rem' }}>
-                    <Input
-                        id="distance_to_community"
-                        name="distance_to_community"
-                        type="number"
-                        label="Distancia aproximada entre la fuente y la comunidad (metros)"
-                        value={formData.distance_to_community}
-                        onChange={handleTextChange}
-                        placeholder="Ej: 500"
-                    />
-                </div>
-
-                {/* Valle del Cauca Specific: Groundwater */}
-                {formData.source_type === 'Pozo' && (
-                    <div style={{ padding: '1.5rem', backgroundColor: '#F0F9FF', borderRadius: 'var(--radius-md)', marginBottom: '2rem', border: '1px solid #BAE6FD' }}>
-                        <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem', color: '#0369A1' }}>Detalles de Captación Subterránea</h4>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                            <Input
-                                id="well_depth"
-                                name="well_depth"
-                                type="number"
-                                label="Profundidad del Pozo (m)"
-                                value={formData.well_depth}
-                                onChange={handleTextChange}
-                                placeholder="Ej: 60"
-                            />
-                            <Input
-                                id="water_table_level"
-                                name="water_table_level"
-                                type="number"
-                                label="Nivel Dinámico / Freático (m)"
-                                value={formData.water_table_level}
-                                onChange={handleTextChange}
-                                placeholder="Ej: 15"
-                            />
-                        </div>
+                {message && (
+                    <div className="mb-6 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-3 text-emerald-400 text-xs font-medium animate-in slide-in-from-top-1">
+                        <CheckCircle2 className="w-4 h-4" />
+                        {message}
                     </div>
                 )}
 
-                {/* Risk Factor */}
-                <div className="input-group" style={{ marginBottom: '2rem' }}>
-                    <label className="label">Factor de Riesgo Estacional (Valle del Cauca)</label>
-                    <div style={{ display: 'flex', gap: '1.5rem' }}>
-                        {['Bajo', 'Medio', 'Alto'].map(opt => (
-                            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                <input
-                                    type="radio"
-                                    name="seasonal_risk_factor"
-                                    value={opt}
-                                    checked={formData.seasonal_risk_factor === opt}
-                                    onChange={handleTextChange}
-                                    style={{ accentColor: 'var(--color-primary)', width: '1.2em', height: '1.2em' }}
-                                />
-                                {opt}
-                            </label>
-                        ))}
+                {error && (
+                    <div className="mb-6 p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-400 text-xs font-medium animate-in shake duration-300">
+                        <AlertCircle className="w-4 h-4" />
+                        {error}
                     </div>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--color-gray-dark)', marginTop: '0.5rem' }}>
-                        * Considere variaciones de caudal en ríos (época seca) o turbinidad extrema (época de lluvias).
-                    </p>
-                </div>
+                )}
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
-                    <Button type="submit" disabled={loading} variant={saved ? 'secondary' : 'primary'}>
-                        {loading ? 'Guardando...' : 'Guardar Información'}
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() => router.push(`/dashboard/projects/${projectId}/quality`)}
-                        disabled={!saved}
-                    >
-                        Siguiente: Calidad del Agua →
-                    </Button>
-                </div>
-            </form>
+                <form onSubmit={handleSubmit} className="space-y-8">
+                    {/* Grid 1: Source Type & Permanence */}
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+                        {/* Source Selection */}
+                        <div className="md:col-span-7 space-y-4">
+                            <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <Waves className="w-3 h-3 text-emerald-500" /> Tipo de Fuente *
+                            </label>
+                            <div className="grid grid-cols-5 gap-3">
+                                <SourceOption label="Quebrada" icon={Wind} active={formData.source_type === 'Quebrada'} onClick={() => handleRadioChange('Quebrada', 'source_type')} />
+                                <SourceOption label="Río" icon={Droplets} active={formData.source_type === 'Río'} onClick={() => handleRadioChange('Río', 'source_type')} />
+                                <SourceOption label="Nacimiento" icon={Mountain} active={formData.source_type === 'Nacimiento'} onClick={() => handleRadioChange('Nacimiento', 'source_type')} />
+                                <SourceOption label="Pozo" icon={CircleDot} active={formData.source_type === 'Pozo'} onClick={() => handleRadioChange('Pozo', 'source_type')} />
+                                <SourceOption label="Otra" icon={Layers} active={formData.source_type === 'Otra'} onClick={() => handleRadioChange('Otra', 'source_type')} />
+                            </div>
+                        </div>
 
-            <ModuleNavigation projectId={projectId} currentModuleKey="source" />
+                        {/* Permanence */}
+                        <div className="md:col-span-5 space-y-4">
+                            <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <CloudRain className="w-3 h-3 text-emerald-500" /> Disponibilidad Permanente *
+                            </label>
+                            <div className="flex gap-2">
+                                {['Sí', 'No', 'N/D'].map(opt => (
+                                    <CompactRadio
+                                        key={opt}
+                                        label={opt}
+                                        active={formData.is_permanent === (opt === 'N/D' ? 'No se sabe' : opt)}
+                                        onClick={() => handleRadioChange(opt === 'N/D' ? 'No se sabe' : opt, 'is_permanent')}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="h-px bg-white/5 w-full"></div>
+
+                    {/* Grid 2: Quality & Protection */}
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+                        {/* Rain Effects */}
+                        <div className="md:col-span-7 space-y-4">
+                            <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <Layers className="w-3 h-3 text-emerald-500" /> Comportamiento en lluvia
+                            </label>
+                            <div className="grid grid-cols-1 gap-2">
+                                {['Se mantiene clara', 'Se vuelve turbia', 'Aumenta caudal'].map(opt => (
+                                    <CompactCheckbox
+                                        key={opt}
+                                        label={opt}
+                                        active={formData.water_quality_rainy.includes(opt)}
+                                        onClick={() => handleCheckboxChange(opt)}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Protection & Distance */}
+                        <div className="md:col-span-5 space-y-6">
+                            <div className="space-y-4">
+                                <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                    <ShieldCheck className="w-3 h-3 text-emerald-500" /> ¿Fuente protegida?
+                                </label>
+                                <div className="flex gap-2">
+                                    {['Sí', 'No', 'Parcial'].map(opt => (
+                                        <CompactRadio
+                                            key={opt}
+                                            label={opt}
+                                            active={formData.is_protected === (opt === 'Parcial' ? 'Parcialmente' : opt)}
+                                            onClick={() => handleRadioChange(opt === 'Parcial' ? 'Parcialmente' : opt, 'is_protected')}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                    <Navigation2 className="w-3 h-3 text-emerald-500" /> Distancia a Red (m)
+                                </label>
+                                <input
+                                    type="number"
+                                    name="distance_to_community"
+                                    value={formData.distance_to_community}
+                                    onChange={handleTextChange}
+                                    placeholder="Ej: 500"
+                                    className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500/30 transition-all font-mono"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Pozo Expansion */}
+                    {formData.source_type === 'Pozo' && (
+                        <div className="grid grid-cols-2 gap-4 p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-xl animate-in slide-in-from-top-2">
+                            <div className="space-y-2">
+                                <label className="text-[9px] font-mono font-bold text-emerald-500 uppercase tracking-widest">Profundidad (m)</label>
+                                <input
+                                    type="number"
+                                    name="well_depth"
+                                    value={formData.well_depth}
+                                    onChange={handleTextChange}
+                                    className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white outline-none"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[9px] font-mono font-bold text-emerald-500 uppercase tracking-widest">Nivel Freático (m)</label>
+                                <input
+                                    type="number"
+                                    name="water_table_level"
+                                    value={formData.water_table_level}
+                                    onChange={handleTextChange}
+                                    className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white outline-none"
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="h-px bg-white/5 w-full"></div>
+
+                    {/* Actions */}
+                    <div className="flex gap-4 pt-2">
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className={`flex-1 py-3 px-6 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-lg
+                                ${saved
+                                    ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
+                                    : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20'}`}
+                        >
+                            {loading ? (
+                                <span className="animate-pulse">Guardando...</span>
+                            ) : (
+                                <>
+                                    <Save className="w-4 h-4" />
+                                    {saved ? 'Diagnóstico Actualizado' : 'Guardar Diagnóstico'}
+                                </>
+                            )}
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => router.push(`/dashboard/projects/${projectId}/quality`)}
+                            disabled={!saved && !initialData}
+                            className="px-6 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-40"
+                        >
+                            Siguiente: Calidad
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            {/* Context Note - Compact */}
+            <div className="flex items-center gap-3 px-4 py-2 bg-slate-900/30 rounded-xl border border-white/5 max-w-fit">
+                <AlertCircle className="w-3 h-3 text-slate-500 shrink-0" />
+                <p className="text-[9px] text-slate-500 italic tracking-wide">
+                    La caracterización de la fuente determina la complejidad del sistema de tratamiento.
+                </p>
+            </div>
         </div>
     );
 }

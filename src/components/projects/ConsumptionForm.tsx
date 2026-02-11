@@ -1,11 +1,19 @@
 "use client";
 
 import React, { useState } from 'react';
-import Button from '@/components/ui/Button';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
-import ModuleWarning from './ModuleWarning';
-import ModuleNavigation from './ModuleNavigation';
+import {
+    Droplets,
+    Calendar,
+    Clock,
+    Database,
+    ChevronRight,
+    Save,
+    CheckCircle2,
+    AlertCircle,
+    Check
+} from 'lucide-react';
 
 type CONSUMPTION_DATA = {
     project_id: string;
@@ -30,17 +38,16 @@ export default function ConsumptionForm({ projectId, initialData }: { projectId:
     const router = useRouter();
     const supabase = createClient();
 
-    const handleRadioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+    const handleRadioChange = (val: string, name: string) => {
+        setFormData({ ...formData, [name]: val });
     };
 
-    const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'main_uses' | 'peak_hours') => {
-        const { value, checked } = e.target;
+    const handleCheckboxChange = (val: string, field: 'main_uses' | 'peak_hours') => {
         let newArray = [...formData[field]];
-        if (checked) {
-            newArray.push(value);
+        if (newArray.includes(val)) {
+            newArray = newArray.filter(item => item !== val);
         } else {
-            newArray = newArray.filter(item => item !== value);
+            newArray.push(val);
         }
         setFormData({ ...formData, [field]: newArray });
     };
@@ -67,126 +74,186 @@ export default function ConsumptionForm({ projectId, initialData }: { projectId:
 
             if (upsertError) throw upsertError;
 
-            setMessage('Datos de consumo guardados exitosamente.');
+            setMessage('Información de consumo sintetizada y guardada.');
             setSaved(true);
             router.refresh();
         } catch (err: any) {
-            setError(err.message || 'Error al guardar los datos de consumo');
+            setError(err.message || 'Error al guardar los datos');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleNext = () => {
-        router.push(`/dashboard/projects/${projectId}/quality`);
-    };
+    const CheckboxOption = ({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) => (
+        <button
+            type="button"
+            onClick={onClick}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-xs font-medium transition-all
+                ${active
+                    ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
+                    : 'bg-slate-900/50 border-slate-700 text-slate-400 hover:border-slate-500'}`}
+        >
+            <div className={`w-4 h-4 rounded flex items-center justify-center border transition-all
+                ${active ? 'bg-emerald-500 border-emerald-500' : 'border-slate-600'}`}>
+                {active && <Check className="w-3 h-3 text-slate-950 stroke-[3]" />}
+            </div>
+            {label}
+        </button>
+    );
+
+    const RadioOption = ({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) => (
+        <button
+            type="button"
+            onClick={onClick}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-medium transition-all
+                ${active
+                    ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
+                    : 'bg-slate-900/50 border-slate-700 text-slate-400 hover:border-slate-500'}`}
+        >
+            <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all
+                ${active ? 'border-emerald-500' : 'border-slate-600'}`}>
+                {active && <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />}
+            </div>
+            {label}
+        </button>
+    );
 
     return (
-        <div style={{ backgroundColor: 'white', padding: '2rem', borderRadius: 'var(--radius-lg)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-            <ModuleWarning projectId={projectId} moduleKey="consumption" />
-            <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', color: 'var(--color-primary)', borderBottom: '1px solid var(--color-gray-medium)', paddingBottom: '0.5rem' }}>
-                Consumo de Agua
-            </h2>
+        <div className="space-y-4 animate-in fade-in duration-700">
+            {/* Form Section */}
+            <div className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+                {/* Header Style Accent */}
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500/50 via-emerald-500 to-emerald-500/50"></div>
 
-            {message && <div style={{ backgroundColor: '#D1FAE5', color: 'var(--color-success)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem' }}>{message}</div>}
-            {error && <div style={{ backgroundColor: '#FEE2E2', color: 'var(--color-error)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem' }}>{error}</div>}
-
-            <form onSubmit={handleSubmit}>
-
-                {/* Uso Principal */}
-                <div className="input-group" style={{ marginBottom: '1.5rem' }}>
-                    <label className="label">Uso principal del agua</label>
-                    <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
-                        {['Uso doméstico', 'Riego', 'Animales'].map(opt => (
-                            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                <input
-                                    type="checkbox"
-                                    value={opt}
-                                    checked={formData.main_uses.includes(opt)}
-                                    onChange={(e) => handleCheckboxChange(e, 'main_uses')}
-                                    style={{ accentColor: 'var(--color-primary)', width: '1.2em', height: '1.2em' }}
-                                />
-                                {opt}
-                            </label>
-                        ))}
+                {message && (
+                    <div className="mb-6 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-3 text-emerald-400 text-xs font-medium animate-in slide-in-from-top-1">
+                        <CheckCircle2 className="w-4 h-4" />
+                        {message}
                     </div>
-                </div>
+                )}
 
-                {/* Disponibilidad Diaria */}
-                <div className="input-group" style={{ marginBottom: '1.5rem' }}>
-                    <label className="label">¿Tienen agua todos los días actualmente?</label>
-                    <div style={{ display: 'flex', gap: '1.5rem' }}>
-                        {['Sí', 'No'].map(opt => (
-                            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                <input
-                                    type="radio"
-                                    name="daily_availability"
-                                    value={opt}
-                                    checked={formData.daily_availability === opt}
-                                    onChange={handleRadioChange}
-                                    style={{ accentColor: 'var(--color-primary)', width: '1.2em', height: '1.2em' }}
-                                />
-                                {opt}
-                            </label>
-                        ))}
+                {error && (
+                    <div className="mb-6 p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-400 text-xs font-medium animate-in shake duration-300">
+                        <AlertCircle className="w-4 h-4" />
+                        {error}
                     </div>
-                </div>
+                )}
 
-                {/* Horarios Mayor Consumo */}
-                <div className="input-group" style={{ marginBottom: '1.5rem' }}>
-                    <label className="label">Horarios de mayor consumo</label>
-                    <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
-                        {['Mañana', 'Tarde', 'Noche'].map(opt => (
-                            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                <input
-                                    type="checkbox"
-                                    value={opt}
-                                    checked={formData.peak_hours.includes(opt)}
-                                    onChange={(e) => handleCheckboxChange(e, 'peak_hours')}
-                                    style={{ accentColor: 'var(--color-primary)', width: '1.2em', height: '1.2em' }}
-                                />
-                                {opt}
-                            </label>
-                        ))}
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Column 1: Uses & Availability */}
+                        <div className="space-y-6">
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                    <Droplets className="w-3 h-3 text-emerald-500/50" /> Uso principal del agua
+                                </label>
+                                <div className="flex flex-wrap gap-2">
+                                    {['Uso doméstico', 'Riego', 'Animales'].map(opt => (
+                                        <CheckboxOption
+                                            key={opt}
+                                            label={opt}
+                                            active={formData.main_uses.includes(opt)}
+                                            onClick={() => handleCheckboxChange(opt, 'main_uses')}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                    <Calendar className="w-3 h-3 text-emerald-500/50" /> ¿Tienen agua todos los días?
+                                </label>
+                                <div className="flex gap-3">
+                                    {['Sí', 'No'].map(opt => (
+                                        <RadioOption
+                                            key={opt}
+                                            label={opt}
+                                            active={formData.daily_availability === opt}
+                                            onClick={() => handleRadioChange(opt, 'daily_availability')}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Column 2: Peak Hours & Storage */}
+                        <div className="space-y-6">
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                    <Clock className="w-3 h-3 text-emerald-500/50" /> Horarios de mayor consumo
+                                </label>
+                                <div className="flex flex-wrap gap-2">
+                                    {['Mañana', 'Tarde', 'Noche'].map(opt => (
+                                        <CheckboxOption
+                                            key={opt}
+                                            label={opt}
+                                            active={formData.peak_hours.includes(opt)}
+                                            onClick={() => handleCheckboxChange(opt, 'peak_hours')}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                    <Database className="w-3 h-3 text-emerald-500/50" /> ¿Tienen tanque de almacenamiento?
+                                </label>
+                                <div className="flex gap-3">
+                                    {['Sí', 'No'].map(opt => (
+                                        <RadioOption
+                                            key={opt}
+                                            label={opt}
+                                            active={formData.has_storage === opt}
+                                            onClick={() => handleRadioChange(opt, 'has_storage')}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                {/* Tanque Almacenamiento */}
-                <div className="input-group" style={{ marginBottom: '1.5rem' }}>
-                    <label className="label">¿Las viviendas tienen tanque de almacenamiento?</label>
-                    <div style={{ display: 'flex', gap: '1.5rem' }}>
-                        {['Sí', 'No'].map(opt => (
-                            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                <input
-                                    type="radio"
-                                    name="has_storage"
-                                    value={opt}
-                                    checked={formData.has_storage === opt}
-                                    onChange={handleRadioChange}
-                                    style={{ accentColor: 'var(--color-primary)', width: '1.2em', height: '1.2em' }}
-                                />
-                                {opt}
-                            </label>
-                        ))}
+                    <div className="h-px bg-white/5 w-full"></div>
+
+                    {/* Actions */}
+                    <div className="flex gap-4 pt-2">
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className={`flex-1 py-3 px-6 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-lg
+                                ${saved
+                                    ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
+                                    : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20'}`}
+                        >
+                            {loading ? (
+                                <span className="animate-pulse">Guardando...</span>
+                            ) : (
+                                <>
+                                    <Save className="w-4 h-4" />
+                                    {saved ? 'Información Actualizada' : 'Guardar Información'}
+                                </>
+                            )}
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => router.push(`/dashboard/projects/${projectId}/source`)}
+                            disabled={!saved && !initialData}
+                            className="px-6 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-40"
+                        >
+                            Siguiente: Fuente de Agua
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
                     </div>
-                </div>
+                </form>
+            </div>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
-                    <Button type="submit" disabled={loading} variant={saved ? 'secondary' : 'primary'}>
-                        {loading ? 'Guardando...' : 'Guardar Información'}
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() => router.push(`/dashboard/projects/${projectId}/source`)}
-                        disabled={!saved}
-                    >
-                        Siguiente: Fuente de Agua →
-                    </Button>
-                </div>
-            </form>
-
-            <ModuleNavigation projectId={projectId} currentModuleKey="consumption" />
+            {/* Context Note - Compact */}
+            <div className="flex items-center gap-3 px-4 py-2 bg-slate-900/30 rounded-xl border border-white/5 max-w-fit">
+                <AlertCircle className="w-3 h-3 text-slate-500 shrink-0" />
+                <p className="text-[9px] text-slate-500 italic tracking-wide">
+                    Esta información es vital para el diseño de la capacidad de almacenamiento y horarios de operación.
+                </p>
+            </div>
         </div>
     );
 }
