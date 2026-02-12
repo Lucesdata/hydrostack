@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import Link from 'next/link';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   CRITERIOS,
   TECNOLOGIAS_DATA,
@@ -14,8 +13,8 @@ import {
   type TechKey,
   type SelectorState,
   type TecnologiaData,
-  type TechBaseScores,
 } from '@/lib/selector-engine';
+import { estimarPoblacion, estimarCapex } from '@/lib/selector-engine';
 import { useAuth } from '@/context/AuthContext';
 import {
   Plus,
@@ -26,10 +25,7 @@ import {
   Ship,
   Settings,
   Zap,
-  ShieldCheck,
-  Clock,
   AlertTriangle,
-  Activity,
   Leaf,
   Maximize,
   FileText,
@@ -37,7 +33,14 @@ import {
   Brain,
   Sparkles,
   Info,
-  LogOut
+  LogOut,
+  Clock,
+  ShieldCheck,
+  Activity,
+  XCircle,
+  Users,
+  DollarSign,
+  ArrowRight,
 } from 'lucide-react';
 
 const ORIGEN_OPTIONS: { value: OrigenAgua; label: string; icon: React.ReactNode }[] = [
@@ -64,25 +67,34 @@ export default function ProjectTechSelector({
 }: ProjectTechSelectorProps) {
   const { user, signOut: logout } = useAuth();
   const [estado, setEstado] = useState<SelectorState>({ origen: 'rio', usuario: 'rural' });
-  const [caudal, setCaudal] = useState(12.5);
-  const [turbiedad, setTurbiedad] = useState(45.0);
-  const [tecnologias, setTecnologias] = useState<Record<TechKey, TecnologiaData>>(() =>
+  const [caudal, setCaudal] = useState(5);
+  const [turbiedad, setTurbiedad] = useState(25.0);
+  const [tecnologias] = useState<Record<TechKey, TecnologiaData>>(() =>
     JSON.parse(JSON.stringify(TECNOLOGIAS_DATA))
   );
   const [projectName, setProjectName] = useState('');
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
-  const { datos, texto, tip } = useMemo(
-    () => calcularPuntajes(estado, caudal, tecnologias),
-    [estado, caudal, tecnologias]
+  const { datos, texto, tip, riskTitle, riskDescription, riskRecommendation } = useMemo(
+    () => calcularPuntajes(estado, caudal, turbiedad, tecnologias),
+    [estado, caudal, turbiedad, tecnologias]
   );
 
   const recommended = useMemo(() => getRecommendedTech(datos), [datos]);
   const activeTech = useMemo(() => recommended ? datos[recommended.key] : null, [recommended, datos]);
 
+  // Datos semilla del proyecto
+  const poblacionServida = useMemo(() => estimarPoblacion(caudal, estado.usuario), [caudal, estado.usuario]);
+  const capexRange = useMemo(() => activeTech ? estimarCapex(activeTech, caudal) : [0, 0] as [number, number], [activeTech, caudal]);
+
   const setScenario = useCallback((tipo: 'origen' | 'usuario', valor: OrigenAgua | UsuarioProyecto) => {
     setEstado((prev) => ({ ...prev, [tipo]: valor }));
   }, []);
+
+  // Count non-applicable technologies
+  const nonApplicableCount = useMemo(() =>
+    (Object.keys(datos) as TechKey[]).filter(k => !datos[k].applicable).length
+    , [datos]);
 
   const handleCreateProject = useCallback(() => {
     const name = projectName.trim();
@@ -100,12 +112,38 @@ export default function ProjectTechSelector({
         turbiedad_ntu: turbiedad,
         global_score: recommended.score,
         recommended_tech_key: recommended.key,
+        // Datos semilla calculados
+        poblacion_estimada: poblacionServida,
+        tren_tratamiento: activeTech?.trenConfig ?? 'N/A',
+        capex_min: capexRange[0],
+        capex_max: capexRange[1],
+        area_estimada: caudal * (activeTech?.factorArea ?? 0),
       },
       recommendedTech: recommended,
     });
     setCreateModalOpen(false);
     setProjectName('');
   }, [estado, caudal, turbiedad, recommended, projectName, onCreateProject]);
+
+  // Helper to get the energy label from kWh
+  const getEnergyLabel = (kwh: number): { text: string; color: string } => {
+    if (kwh === 0) return { text: 'Sin Consumo (Gravedad)', color: 'text-emerald-400' };
+    if (kwh <= 0.1) return { text: 'Muy Bajo', color: 'text-emerald-400' };
+    if (kwh <= 0.4) return { text: 'Bajo', color: 'text-sky-400' };
+    if (kwh <= 1.0) return { text: 'Medio', color: 'text-amber-400' };
+    return { text: 'Alto', color: 'text-red-400' };
+  };
+
+  const energyLabel = activeTech ? getEnergyLabel(activeTech.energyConsumptionKwh) : null;
+
+  // Get turbidity warning level
+  const getTurbidityStatus = (): { color: string; label: string } => {
+    if (turbiedad > 70) return { color: 'text-red-400', label: `${turbiedad.toFixed(0)} NTU — Fuera de rango FiME` };
+    if (turbiedad > 50) return { color: 'text-amber-400', label: `${turbiedad.toFixed(0)} NTU — Alto` };
+    if (turbiedad > 20) return { color: 'text-blue-400', label: `${turbiedad.toFixed(0)} NTU — Moderado` };
+    return { color: 'text-emerald-400', label: `${turbiedad.toFixed(0)} NTU — Favorable` };
+  };
+  const turbidityStatus = getTurbidityStatus();
 
   return (
     <div className="flex flex-col h-screen w-full bg-[#0a0c10] text-slate-300 font-sans overflow-hidden">
@@ -117,22 +155,15 @@ export default function ProjectTechSelector({
           </h1>
           <nav className="flex items-center gap-1">
             <button className="px-4 py-2 text-sm font-medium border-b-2 border-emerald-500 text-white">Diseño</button>
-            <button className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-300 transition-colors">Simulación</button>
-            <button className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-300 transition-colors">Inventario</button>
           </nav>
         </div>
         <div className="flex items-center gap-4">
-          <button className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-4 py-1.5 rounded-full text-xs font-bold text-amber-500 shadow-lg shadow-amber-950/20">
-            <Sparkles className="w-3.5 h-3.5" />
-            Modo Optimización
-          </button>
-
           <div className="flex items-center gap-3 pl-4 border-l border-white/10">
             <div className="text-right hidden sm:block">
               <p className="text-[10px] font-black text-white leading-none mb-1">
                 {user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuario'}
               </p>
-              <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Ingeniero Pro</p>
+              <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Ingeniero</p>
             </div>
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500/20 to-sky-500/20 border border-emerald-500/30 flex items-center justify-center text-xs font-black text-emerald-400 shadow-lg shadow-emerald-500/5">
               {(user?.user_metadata?.name?.[0] || user?.email?.[0] || 'U').toUpperCase()}
@@ -214,17 +245,46 @@ export default function ProjectTechSelector({
                 </div>
               </div>
 
-              {/* Restricciones Técnicas */}
+              {/* Turbiedad — input real */}
               <div className="space-y-4 pt-4 border-t border-white/5">
-                <label className="block text-xs font-bold text-slate-400 mb-1">RESTRICCIONES TÉCNICAS</label>
-                <div className="flex items-center justify-between p-3 bg-slate-900/40 border border-slate-800 rounded-xl">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Turbiedad (NTU)</span>
-                  <span className="text-sm font-bold text-blue-400">{turbiedad.toFixed(1)}</span>
+                <label className="block text-xs font-bold text-slate-400 mb-1">CALIDAD DEL AGUA CRUDA</label>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">Turbiedad (NTU)</span>
+                    <span className={`text-xs font-bold ${turbidityStatus.color}`}>{turbidityStatus.label}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="150"
+                    step="1"
+                    value={turbiedad}
+                    onChange={(e) => setTurbiedad(parseFloat(e.target.value))}
+                    className="w-full accent-emerald-500"
+                  />
+                  <div className="flex justify-between text-[8px] text-slate-600 font-bold mt-1">
+                    <span>1</span>
+                    <span>10</span>
+                    <span>50</span>
+                    <span>70</span>
+                    <span>150</span>
+                  </div>
                 </div>
+
                 <div className="flex items-center justify-between p-3 bg-slate-900/40 border border-slate-800 rounded-xl">
                   <span className="text-[10px] font-bold text-slate-500 uppercase">Consumo Energ.</span>
-                  <span className="text-xs font-bold text-emerald-400">Bajo</span>
+                  {energyLabel && <span className={`text-xs font-bold ${energyLabel.color}`}>{energyLabel.text}</span>}
                 </div>
+
+                {/* Non-applicable technologies indicator */}
+                {nonApplicableCount > 0 && (
+                  <div className="flex items-center gap-2 p-3 bg-amber-500/5 border border-amber-500/20 rounded-xl">
+                    <XCircle className="w-4 h-4 text-amber-500 shrink-0" />
+                    <span className="text-[10px] font-bold text-amber-400">
+                      {nonApplicableCount} tecnología{nonApplicableCount > 1 ? 's' : ''} no aplicable{nonApplicableCount > 1 ? 's' : ''} para este escenario
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -234,7 +294,7 @@ export default function ProjectTechSelector({
         <main className="flex-1 flex flex-col p-5 gap-5 overflow-y-auto bg-[#0a0c10] scrollbar-thin scrollbar-thumb-slate-800">
 
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            {/* Center Main Card - Optimized Selection */}
+            {/* Center Main Card - Recommended Technology */}
             <div className="xl:col-span-2 bg-gradient-to-br from-slate-900/80 to-slate-950 border border-white/5 rounded-2xl p-6 relative overflow-hidden group shadow-2xl">
               <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
                 <Brain className="w-32 h-32 text-emerald-500" />
@@ -245,10 +305,10 @@ export default function ProjectTechSelector({
                   <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
                     <Zap className="w-4 h-4 text-emerald-400" />
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400/80">Selección Optimizada</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400/80">Tecnología Recomendada</span>
                 </div>
 
-                <h2 className="text-4xl font-black text-white tracking-tight mb-4">
+                <h2 className="text-3xl font-black text-white tracking-tight mb-4">
                   {activeTech?.nombre ?? 'Calculando...'}
                 </h2>
 
@@ -258,26 +318,32 @@ export default function ProjectTechSelector({
 
                 <div className="flex items-center gap-12">
                   <div>
-                    <span className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Score General</span>
+                    <span className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Aptitud Global</span>
                     <div className="flex items-baseline gap-1">
                       <span className="text-3xl font-black text-emerald-400">{recommended?.score ?? 0}</span>
                       <span className="text-xs text-slate-600 font-bold">/ 100</span>
                     </div>
                   </div>
                   <div>
-                    <span className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Confiabilidad</span>
-                    <span className="text-3xl font-black text-blue-400">{activeTech?.reliability}</span>
+                    <span className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Complejidad Operativa</span>
+                    <span className={`text-xl font-black ${activeTech?.complejidadOperativa === 'Baja' ? 'text-emerald-400' :
+                      activeTech?.complejidadOperativa === 'Media' ? 'text-amber-400' : 'text-red-400'
+                      }`}>{activeTech?.complejidadOperativa}</span>
                   </div>
                   <div>
-                    <span className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tiempo Entrega</span>
-                    <span className="text-xl font-bold text-white uppercase">{activeTech?.deliveryTime}</span>
+                    <span className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Construcción Estimada</span>
+                    <span className="text-lg font-bold text-white uppercase">{activeTech?.tiempoConstruccion}</span>
                   </div>
                 </div>
 
-                <div className="absolute top-8 right-8 flex flex-col gap-2">
-                  <div className="bg-slate-900/80 border border-white/10 rounded-full px-3 py-1 text-[9px] font-black text-slate-400 uppercase">MODULAR</div>
-                  <div className="bg-slate-900/80 border border-white/10 rounded-full px-3 py-1 text-[9px] font-black text-slate-400 uppercase">PLUG & PLAY</div>
-                </div>
+                {/* Tags from technology data */}
+                {activeTech && activeTech.tags.length > 0 && (
+                  <div className="absolute top-8 right-8 flex flex-col gap-2">
+                    {activeTech.tags.map((tag) => (
+                      <div key={tag} className="bg-slate-900/80 border border-white/10 rounded-full px-3 py-1 text-[9px] font-black text-slate-400 uppercase">{tag}</div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Glowing Border Accent */}
@@ -292,12 +358,9 @@ export default function ProjectTechSelector({
               </div>
 
               <div>
-                <h4 className="text-xl font-bold text-white mb-2">Eventos de Turbiedad Alta</h4>
+                <h4 className="text-xl font-bold text-white mb-2">{riskTitle}</h4>
                 <p className="text-slate-400 text-sm leading-relaxed">
-                  {estado.origen === 'rio'
-                    ? `El modelo predictivo detecta una probabilidad del 85% de picos >100 NTU durante la temporada invernal para fuentes superficiales.`
-                    : `Estabilidad de turbidez detectada en fuente ${estado.origen}. Se recomienda monitoreo estacional.`
-                  }
+                  {riskDescription}
                 </p>
               </div>
 
@@ -307,10 +370,7 @@ export default function ProjectTechSelector({
                 </div>
                 <h5 className="text-[10px] font-black text-amber-500 uppercase mb-2">Recomendación</h5>
                 <p className="text-xs text-amber-200/80 leading-relaxed font-medium">
-                  {estado.origen === 'rio'
-                    ? 'Añadir módulo de pre-sedimentación activa o coagulación in-line para proteger la vida útil de la membrana.'
-                    : tip
-                  }
+                  {riskRecommendation}
                 </p>
               </div>
             </div>
@@ -321,42 +381,29 @@ export default function ProjectTechSelector({
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white">Desglose Técnico y Eficiencia</h3>
-                <p className="text-xs text-slate-500 mt-1">Simulación basada en el caudal de {caudal} L/s y perfil {estado.usuario}.</p>
+                <p className="text-xs text-slate-500 mt-1">Datos de referencia para {activeTech?.nombreCorto} a {caudal} L/s con turbiedad de {turbiedad.toFixed(0)} NTU.</p>
               </div>
-              <button className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-4 py-2 rounded-lg text-[10px] font-bold text-slate-300 transition-all">
-                <Maximize className="w-3.5 h-3.5" />
-                Ver Análisis Detallado
-              </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-12">
+              {/* Real removal efficiency */}
               <div className="space-y-2">
                 <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
-                  <span className="text-slate-400">Eficiencia de Remoción</span>
-                  <span className="text-emerald-400">99.9%</span>
+                  <span className="text-slate-400">Remoción de Turbiedad</span>
+                  <span className="text-emerald-400">{activeTech ? `${activeTech.removalEfficiency}%` : '—'}</span>
                 </div>
                 <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] transition-all duration-1000" style={{ width: '99.9%' }}></div>
+                  <div className="h-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] transition-all duration-1000" style={{ width: `${activeTech?.removalEfficiency ?? 0}%` }}></div>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
                   <span className="text-slate-400">OpEx Estimado (USD/m³)</span>
-                  <span className="text-sky-400">${activeTech?.opex.toFixed(3)}</span>
+                  <span className="text-sky-400">${activeTech?.opex.toFixed(2)}</span>
                 </div>
                 <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
-                  <div className="h-full bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,0.5)] transition-all duration-1000" style={{ width: '40%' }}></div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
-                  <span className="text-slate-400">Nivel de Automatización</span>
-                  <span className="text-white">{activeTech?.automationLevel}</span>
-                </div>
-                <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
-                  <div className="h-full bg-slate-400 transition-all duration-1000" style={{ width: activeTech?.automationLevel.includes('L4') ? '100%' : '75%' }}></div>
+                  <div className="h-full bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,0.5)] transition-all duration-1000" style={{ width: `${Math.min((activeTech?.opex ?? 0) / 0.6 * 100, 100)}%` }}></div>
                 </div>
               </div>
 
@@ -373,52 +420,69 @@ export default function ProjectTechSelector({
               <div className="space-y-2">
                 <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
                   <span className="text-slate-400">Consumo Energético</span>
-                  <span className="text-sky-400">{activeTech?.energyConsumptionKwh} kWh/m³</span>
+                  <span className={energyLabel?.color ?? 'text-sky-400'}>
+                    {activeTech?.energyConsumptionKwh === 0 ? '0 (Gravedad)' : `${activeTech?.energyConsumptionKwh} kWh/m³`}
+                  </span>
                 </div>
                 <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
-                  <div className="h-full bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,0.5)] transition-all duration-1000" style={{ width: '25%' }}></div>
+                  <div className="h-full bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,0.5)] transition-all duration-1000" style={{ width: `${Math.min((activeTech?.energyConsumptionKwh ?? 0) / 4 * 100, 100)}%` }}></div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+                  <span className="text-slate-400">Requiere Químicos</span>
+                  <span className={activeTech?.requiereQuimicos ? 'text-amber-400' : 'text-emerald-400'}>
+                    {activeTech?.requiereQuimicos ? 'Sí (coagulante + cloro)' : 'No (proceso natural)'}
+                  </span>
+                </div>
+                <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
+                  <div className={`h-full transition-all duration-1000 ${activeTech?.requiereQuimicos ? 'bg-amber-500' : 'bg-emerald-500'}`} style={{ width: activeTech?.requiereQuimicos ? '70%' : '10%' }}></div>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
                   <span className="text-slate-400">Resiliencia Operativa</span>
-                  <span className="text-white">{activeTech?.resilience}</span>
+                  <span className={`${activeTech?.resilience === 'Alta' ? 'text-emerald-400' :
+                    activeTech?.resilience === 'Media' ? 'text-amber-400' : 'text-red-400'
+                    }`}>{activeTech?.resilience}</span>
                 </div>
                 <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
-                  <div className="h-full bg-slate-400 transition-all duration-1000" style={{ width: activeTech?.resilience === 'Alta' ? '100%' : '60%' }}></div>
+                  <div className="h-full bg-slate-400 transition-all duration-1000" style={{ width: activeTech?.resilience === 'Alta' ? '100%' : activeTech?.resilience === 'Media' ? '60%' : '30%' }}></div>
                 </div>
               </div>
             </div>
 
-            {/* Bottom Metric Cards */}
+            {/* Bottom Cards: Datos Semilla del Proyecto */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-white/5">
               <div className="bg-slate-900/40 p-4 rounded-xl border border-white/5">
-                <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Huella de Carbono</span>
+                <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Tren de Tratamiento</span>
                 <div className="flex items-center gap-2">
-                  <Leaf className="w-4 h-4 text-emerald-500" />
-                  <span className="text-lg font-black text-emerald-400">{activeTech?.carbonFootprint}</span>
+                  <ArrowRight className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span className="text-sm font-black text-emerald-400 leading-tight">{activeTech?.trenConfig}</span>
                 </div>
               </div>
               <div className="bg-slate-900/40 p-4 rounded-xl border border-white/5">
-                <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Recuperación Agua</span>
+                <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Población Servida (est.)</span>
                 <div className="flex items-center gap-2">
-                  <Droplets className="w-4 h-4 text-sky-500" />
-                  <span className="text-lg font-black text-white">{activeTech?.waterRecovery}%</span>
+                  <Users className="w-4 h-4 text-sky-500" />
+                  <span className="text-lg font-black text-white">~{poblacionServida.toLocaleString()}</span>
+                  <span className="text-[9px] text-slate-500 font-bold">hab</span>
                 </div>
               </div>
               <div className="bg-slate-900/40 p-4 rounded-xl border border-white/5">
-                <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Área Requerida</span>
+                <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Área Estimada</span>
                 <div className="flex items-center gap-2">
                   <Maximize className="w-4 h-4 text-slate-400" />
                   <span className="text-lg font-black text-white">{(caudal * (activeTech?.factorArea ?? 0)).toFixed(0)} m²</span>
                 </div>
               </div>
               <div className="bg-slate-900/40 p-4 rounded-xl border border-white/5">
-                <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Vida Útil Membrana</span>
+                <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">CAPEX Estimado (USD)</span>
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-amber-500" />
-                  <span className="text-lg font-black text-white">{activeTech?.membraneLife}</span>
+                  <DollarSign className="w-4 h-4 text-amber-500" />
+                  <span className="text-sm font-black text-white">${capexRange[0].toLocaleString()} – ${capexRange[1].toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -431,7 +495,7 @@ export default function ProjectTechSelector({
         <div className="flex items-center gap-3 text-slate-500">
           <Info className="w-4 h-4" />
           <p className="text-[10px] leading-relaxed">
-            Los cálculos están basados en la normativa vigente de agua potable (Res. 0330). Diseño validado para caudales de hasta 50 L/s.
+            Selección basada en criterios de la Res. 0330/2017 y guías CINARA/UniValle. Los valores son estimaciones de pre-diseño y deben validarse con análisis de laboratorio.
           </p>
         </div>
         <div className="flex items-center gap-4">
@@ -461,7 +525,7 @@ export default function ProjectTechSelector({
                 </div>
                 <div>
                   <h3 className="text-xl font-black text-white">Nuevo Proyecto</h3>
-                  <p className="text-xs text-slate-500 uppercase tracking-widest font-bold">Configuración: {activeTech?.nombre}</p>
+                  <p className="text-xs text-slate-500 uppercase tracking-widest font-bold">{activeTech?.nombreCorto}</p>
                 </div>
               </div>
 
@@ -482,7 +546,8 @@ export default function ProjectTechSelector({
                   <ul className="text-[10px] space-y-2 text-slate-400 font-bold uppercase tracking-wider">
                     <li className="flex justify-between"><span>Fuente:</span> <span className="text-white">{estado.origen}</span></li>
                     <li className="flex justify-between"><span>Caudal:</span> <span className="text-white">{caudal} L/s</span></li>
-                    <li className="flex justify-between"><span>Normativa:</span> <span className="text-emerald-400">RES-0330</span></li>
+                    <li className="flex justify-between"><span>Turbiedad:</span> <span className="text-white">{turbiedad.toFixed(0)} NTU</span></li>
+                    <li className="flex justify-between"><span>Tecnología:</span> <span className="text-emerald-400">{activeTech?.nombreCorto}</span></li>
                   </ul>
                 </div>
               </div>
