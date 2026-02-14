@@ -23,6 +23,7 @@ import {
     Gauge,
     Droplets
 } from 'lucide-react';
+import { FimeEngine } from '@/lib/fime-engine';
 
 type DesignParams = {
     vf: number; // Velocidad de filtración (m/h) 0.1 - 0.3
@@ -78,25 +79,13 @@ export default function FlaDesign({ projectId }: { projectId: string }) {
 
     // Derived Design Results
     const results = React.useMemo(() => {
-        if (!qmd || designParams.num_units < 1) return null;
-
-        const q_total_m3h = (qmd * 3600) / 1000;
-        const area_total = q_total_m3h / designParams.vf;
-        const area_unit = area_total / designParams.num_units;
-
-        const width = Math.sqrt(area_unit / designParams.ratio_l_a);
-        const length = designParams.ratio_l_a * width;
-        const real_vf = q_total_m3h / (area_unit * designParams.num_units);
+        const dims = FimeEngine.calculateModuleDimensions(qmd, designParams.vf, designParams.num_units, designParams.ratio_l_a);
+        if (!dims) return null;
 
         return {
-            q_unit_lps: qmd / designParams.num_units,
-            q_unit_m3h: q_total_m3h / designParams.num_units,
-            area_total_m2: area_total,
-            area_unit_m2: area_unit,
-            width_a: width,
-            length_l: length,
-            real_vf,
-            is_area_safe: area_unit <= 100
+            ...dims,
+            area_total_m2: dims.area_unit_m2 * designParams.num_units,
+            is_area_safe: dims.area_unit_m2 <= 100
         };
     }, [designParams, qmd]);
 

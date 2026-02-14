@@ -87,4 +87,26 @@ export class FimeEngine {
                 : `ALERTA: Turbiedad Final ${currentTurb.toFixed(1)} UNT. Se requiere optimizar pretratamiento.`
         };
     }
+
+    static calculateModuleDimensions(qmdLps: number, vf: number, numUnits: number, ratioLA: number) {
+        if (!qmdLps || numUnits < 1) return null;
+
+        const q_total_m3h = (qmdLps * 3600) / 1000;
+        const q_unit_m3h = q_total_m3h / numUnits;
+        const area_unit = q_unit_m3h / vf;
+
+        // Math: Area = L * a, L = ratio * a => Area = ratio * a^2 => a = sqrt(Area / ratio)
+        const width = Math.sqrt(area_unit / ratioLA);
+        const length = ratioLA * width;
+        const real_vf = q_unit_m3h / (width * length);
+
+        return {
+            q_unit_lps: qmdLps / numUnits,
+            q_unit_m3h: q_unit_m3h,
+            area_unit_m2: area_unit,
+            width_a: width,
+            length_l: length,
+            real_vf: real_vf
+        };
+    }
 }

@@ -16,6 +16,7 @@ import {
 } from '@/lib/selector-engine';
 import { estimarPoblacion, estimarCapex } from '@/lib/selector-engine';
 import { useAuth } from '@/context/AuthContext';
+import NextImage from 'next/image';
 import {
   Plus,
   Minus,
@@ -43,13 +44,6 @@ import {
   ArrowRight,
 } from 'lucide-react';
 
-const ORIGEN_OPTIONS: { value: OrigenAgua; label: string; icon: React.ReactNode }[] = [
-  { value: 'rio', label: 'Río / Superficial', icon: <Waves className="w-5 h-5" /> },
-  { value: 'pozo', label: 'Pozo Profundo', icon: <Droplets className="w-5 h-5" /> },
-  { value: 'mar', label: 'Agua de Mar', icon: <Ship className="w-5 h-5" /> },
-  { value: 'lluvia', label: 'Agua de Lluvia', icon: <CloudRain className="w-5 h-5" /> },
-];
-
 interface ProjectTechSelectorProps {
   onCreateProject?: (payload: {
     name: string;
@@ -60,6 +54,13 @@ interface ProjectTechSelectorProps {
   }) => void;
   createLoading?: boolean;
 }
+
+const ORIGEN_OPTIONS: { value: OrigenAgua; label: string; icon: React.ReactNode }[] = [
+  { value: 'rio', label: 'Río / Quebrada', icon: <Waves className="w-5 h-5 text-sky-400" /> },
+  { value: 'pozo', label: 'Pozo Profundo', icon: <Droplets className="w-5 h-5 text-emerald-400" /> },
+  { value: 'lluvia', label: 'Aguas Lluvia', icon: <CloudRain className="w-5 h-5 text-blue-400" /> },
+  { value: 'mar', label: 'Agua de Mar', icon: <Ship className="w-5 h-5 text-indigo-400" /> },
+];
 
 export default function ProjectTechSelector({
   onCreateProject,
@@ -123,7 +124,7 @@ export default function ProjectTechSelector({
     });
     setCreateModalOpen(false);
     setProjectName('');
-  }, [estado, caudal, turbiedad, recommended, projectName, onCreateProject]);
+  }, [estado, caudal, turbiedad, recommended, projectName, onCreateProject, poblacionServida, activeTech, capexRange]);
 
   // Helper to get the energy label from kWh
   const getEnergyLabel = (kwh: number): { text: string; color: string } => {
@@ -294,10 +295,15 @@ export default function ProjectTechSelector({
         <main className="flex-1 flex flex-col p-5 gap-5 overflow-y-auto bg-[#0a0c10] scrollbar-thin scrollbar-thumb-slate-800">
 
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            {/* Center Main Card - Recommended Technology */}
             <div className="xl:col-span-2 bg-gradient-to-br from-slate-900/80 to-slate-950 border border-white/5 rounded-2xl p-6 relative overflow-hidden group shadow-2xl">
-              <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                <Brain className="w-32 h-32 text-emerald-500" />
+              <div className="absolute top-0 right-0 p-0 opacity-20 group-hover:opacity-30 transition-opacity pointer-events-none">
+                <NextImage
+                  src="/plants/fime-hero.png"
+                  alt="Esquema Técnico"
+                  width={320}
+                  height={320}
+                  className="object-contain mix-blend-screen"
+                />
               </div>
 
               <div className="relative z-10">
@@ -453,44 +459,42 @@ export default function ProjectTechSelector({
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Bottom Cards: Datos Semilla del Proyecto */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-white/5">
-              <div className="bg-slate-900/40 p-4 rounded-xl border border-white/5">
-                <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Tren de Tratamiento</span>
-                <div className="flex items-center gap-2">
-                  <ArrowRight className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span className="text-sm font-black text-emerald-400 leading-tight">{activeTech?.trenConfig}</span>
-                </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-white/5">
+            <div className="bg-slate-900/40 p-4 rounded-xl border border-white/5">
+              <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Tren de Tratamiento</span>
+              <div className="flex items-center gap-2">
+                <ArrowRight className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span className="text-sm font-black text-emerald-400 leading-tight">{activeTech?.trenConfig}</span>
               </div>
-              <div className="bg-slate-900/40 p-4 rounded-xl border border-white/5">
-                <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Población Servida (est.)</span>
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-sky-500" />
-                  <span className="text-lg font-black text-white">~{poblacionServida.toLocaleString()}</span>
-                  <span className="text-[9px] text-slate-500 font-bold">hab</span>
-                </div>
+            </div>
+            <div className="bg-slate-900/40 p-4 rounded-xl border border-white/5">
+              <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Población Servida (est.)</span>
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-sky-500" />
+                <span className="text-lg font-black text-white">~{poblacionServida.toLocaleString()}</span>
+                <span className="text-[9px] text-slate-500 font-bold">hab</span>
               </div>
-              <div className="bg-slate-900/40 p-4 rounded-xl border border-white/5">
-                <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Área Estimada</span>
-                <div className="flex items-center gap-2">
-                  <Maximize className="w-4 h-4 text-slate-400" />
-                  <span className="text-lg font-black text-white">{(caudal * (activeTech?.factorArea ?? 0)).toFixed(0)} m²</span>
-                </div>
+            </div>
+            <div className="bg-slate-900/40 p-4 rounded-xl border border-white/5">
+              <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Área Estimada</span>
+              <div className="flex items-center gap-2">
+                <Maximize className="w-4 h-4 text-slate-400" />
+                <span className="text-lg font-black text-white">{(caudal * (activeTech?.factorArea ?? 0)).toFixed(0)} m²</span>
               </div>
-              <div className="bg-slate-900/40 p-4 rounded-xl border border-white/5">
-                <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">CAPEX Estimado (USD)</span>
-                <div className="flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-amber-500" />
-                  <span className="text-sm font-black text-white">${capexRange[0].toLocaleString()} – ${capexRange[1].toLocaleString()}</span>
-                </div>
+            </div>
+            <div className="bg-slate-900/40 p-4 rounded-xl border border-white/5">
+              <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">CAPEX Estimado (USD)</span>
+              <div className="flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-amber-500" />
+                <span className="text-sm font-black text-white">${capexRange[0].toLocaleString()} – ${capexRange[1].toLocaleString()}</span>
               </div>
             </div>
           </div>
         </main>
       </div>
 
-      {/* Footer Bar */}
       <footer className="h-14 bg-[#080a0d] border-t border-white/5 px-8 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3 text-slate-500">
           <Info className="w-4 h-4" />

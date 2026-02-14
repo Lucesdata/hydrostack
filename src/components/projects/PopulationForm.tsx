@@ -119,7 +119,7 @@ export default function PopulationForm({ projectId, initialData }: { projectId: 
     return (
         <div className="space-y-4 animate-in fade-in duration-700">
             {/* Form Section */}
-            <div className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+            <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
                 {/* Header Style Accent */}
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500/50 via-emerald-500 to-emerald-500/50"></div>
 
@@ -137,11 +137,11 @@ export default function PopulationForm({ projectId, initialData }: { projectId: 
                     </div>
                 )}
 
-                <form onSubmit={calculateAndSave} className="space-y-8">
+                <form onSubmit={calculateAndSave} className="space-y-10">
                     {/* Compact Grid 1: Community & Census */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
-                        <div className="md:col-span-2 space-y-2">
-                            <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8 items-end">
+                        <div className="md:col-span-2 space-y-4">
+                            <label className="inline-flex items-center gap-2 bg-emerald-500 text-white px-3 py-1 rounded text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20">
                                 <Home className="w-3 h-3" /> Comunidad y Municipio *
                             </label>
                             <div className="grid grid-cols-2 gap-3">
@@ -150,7 +150,7 @@ export default function PopulationForm({ projectId, initialData }: { projectId: 
                                     value={formData.community_name}
                                     onChange={handleChange}
                                     placeholder="Nombre"
-                                    className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:border-emerald-500/50 transition-all outline-none"
+                                    className="w-full bg-slate-900/60 border-2 border-slate-700 rounded-xl px-4 py-3 text-base text-white font-bold focus:border-emerald-500 transition-all outline-none shadow-md"
                                     required
                                 />
                                 <input
@@ -158,14 +158,14 @@ export default function PopulationForm({ projectId, initialData }: { projectId: 
                                     value={formData.municipality}
                                     onChange={handleChange}
                                     placeholder="Municipio"
-                                    className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:border-emerald-500/50 transition-all outline-none"
+                                    className="w-full bg-slate-900/60 border-2 border-slate-700 rounded-xl px-4 py-3 text-base text-white font-bold focus:border-emerald-500 transition-all outline-none shadow-md"
                                     required
                                 />
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">
+                        <div className="space-y-4">
+                            <label className="inline-flex items-center gap-2 bg-emerald-500 text-white px-3 py-1 rounded text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20">
                                 Viviendas / Personas *
                             </label>
                             <div className="grid grid-cols-2 gap-3">
@@ -175,7 +175,7 @@ export default function PopulationForm({ projectId, initialData }: { projectId: 
                                     value={formData.dwellings_number}
                                     onChange={handleChange}
                                     placeholder="0"
-                                    className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:border-emerald-500/30 transition-all outline-none"
+                                    className="w-full bg-slate-950 border-2 border-slate-700 rounded-xl px-4 py-3 text-2xl text-white font-black focus:border-emerald-500 transition-all outline-none shadow-xl"
                                     required
                                 />
                                 <input
@@ -185,30 +185,32 @@ export default function PopulationForm({ projectId, initialData }: { projectId: 
                                     value={formData.people_per_dwelling}
                                     onChange={handleChange}
                                     placeholder="3.5"
-                                    className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:border-emerald-500/30 transition-all outline-none"
+                                    className="w-full bg-slate-950 border-2 border-slate-700 rounded-xl px-4 py-3 text-2xl text-white font-black focus:border-emerald-500 transition-all outline-none shadow-xl"
                                     required
                                 />
                             </div>
                         </div>
 
-                        <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl px-4 py-2.5 flex items-center justify-between">
+                        <div className="bg-emerald-600 rounded-xl p-4 flex items-center justify-between shadow-lg shadow-emerald-600/20 border-b-4 border-emerald-800">
                             <div>
-                                <p className="text-[9px] font-mono font-bold text-emerald-500 uppercase tracking-wider mb-1">Población Base</p>
-                                <div className="text-xl font-bold text-white leading-tight">
-                                    {estimatedPop} <span className="text-[10px] font-mono text-emerald-400/60 uppercase ml-1">hab</span>
+                                <p className="text-[10px] font-black text-white/80 uppercase tracking-widest mb-1">Población Base</p>
+                                <div className="text-2xl font-black text-white leading-tight">
+                                    {estimatedPop} <span className="text-xs font-bold text-white/60 ml-1">HAB</span>
                                 </div>
                             </div>
-                            <Users className="w-6 h-6 text-emerald-500/20" />
+                            <Users className="w-8 h-8 text-white/30" />
                         </div>
                     </div>
 
-                    <div className="h-px bg-white/5 w-full"></div>
+                    <div className="h-0.5 bg-white/10 w-full relative">
+                        <div className="absolute inset-0 bg-emerald-500/20 blur-sm"></div>
+                    </div>
 
                     {/* Compact Grid 2: Projections */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                                <TrendingUp className="w-3 h-3" /> Tasa (%)
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8 items-end">
+                        <div className="space-y-4">
+                            <label className="inline-flex items-center gap-2 bg-slate-700 text-white px-3 py-1 rounded text-[10px] font-black uppercase tracking-widest shadow-lg">
+                                <TrendingUp className="w-3 h-3 text-emerald-400" /> Tasa (%)
                             </label>
                             <input
                                 type="number"
@@ -216,26 +218,26 @@ export default function PopulationForm({ projectId, initialData }: { projectId: 
                                 name="growth_rate"
                                 value={formData.growth_rate}
                                 onChange={handleChange}
-                                className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500/30"
+                                className="w-full bg-slate-950 border-2 border-slate-700 rounded-xl px-4 py-3 text-2xl text-white font-black outline-none focus:border-emerald-500 transition-all shadow-xl"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">Años de Diseño</label>
+                        <div className="space-y-4">
+                            <label className="inline-flex items-center gap-2 bg-slate-700 text-white px-3 py-1 rounded text-[10px] font-black uppercase tracking-widest shadow-lg">Años de Diseño</label>
                             <input
                                 type="number"
                                 name="projection_years"
                                 value={formData.projection_years}
                                 onChange={handleChange}
-                                className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500/30"
+                                className="w-full bg-slate-950 border-2 border-slate-700 rounded-xl px-4 py-3 text-2xl text-white font-black outline-none focus:border-emerald-500 transition-all shadow-xl"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">Método RAS</label>
+                        <div className="space-y-4">
+                            <label className="inline-flex items-center gap-2 bg-slate-700 text-white px-3 py-1 rounded text-[10px] font-black uppercase tracking-widest shadow-lg">Método RAS</label>
                             <select
                                 name="projection_method"
                                 value={formData.projection_method}
                                 onChange={handleChange}
-                                className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-[11px] text-sm text-white outline-none focus:border-emerald-500/30 appearance-none cursor-pointer"
+                                className="w-full bg-slate-900/60 border-2 border-slate-700 rounded-xl px-4 py-[13px] text-base text-white font-bold outline-none focus:border-emerald-500 transition-all cursor-pointer shadow-md"
                             >
                                 <option value="Geometrico">Método Geométrico</option>
                                 <option value="Exponencial">Método Exponencial</option>
@@ -247,16 +249,16 @@ export default function PopulationForm({ projectId, initialData }: { projectId: 
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className={`flex-1 min-w-[140px] py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-lg
+                                className={`flex-1 min-w-[140px] py-4 rounded-xl text-sm font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg
                                     ${saved
-                                        ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
-                                        : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20'}`}
+                                        ? 'bg-emerald-500/10 border-2 border-emerald-500 text-emerald-400 hover:bg-emerald-500/20'
+                                        : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/40 border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1'}`}
                             >
                                 {loading ? (
                                     <span className="animate-pulse">...</span>
                                 ) : (
                                     <>
-                                        <Calculator className="w-4 h-4" />
+                                        <Calculator className="w-5 h-5" />
                                         {saved ? 'Recalcular' : 'Calcular'}
                                     </>
                                 )}
@@ -265,10 +267,10 @@ export default function PopulationForm({ projectId, initialData }: { projectId: 
                                 type="button"
                                 onClick={() => router.push(`/dashboard/projects/${projectId}/floating-population`)}
                                 disabled={!(saved || initialData?.initial_population)}
-                                className="w-10 h-10 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-xl transition-all flex items-center justify-center disabled:opacity-40"
+                                className="w-14 h-14 bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 text-white rounded-xl transition-all flex items-center justify-center disabled:opacity-40 shadow-xl"
                                 title="Siguiente"
                             >
-                                <ChevronRight className="w-5 h-5" />
+                                <ChevronRight className="w-8 h-8" />
                             </button>
                         </div>
                     </div>
@@ -276,9 +278,9 @@ export default function PopulationForm({ projectId, initialData }: { projectId: 
             </div>
 
             {/* Context Note - Compact */}
-            <div className="flex items-center gap-3 px-4 py-2 bg-slate-900/30 rounded-xl border border-white/5 max-w-fit">
-                <AlertCircle className="w-3 h-3 text-slate-500 shrink-0" />
-                <p className="text-[9px] text-slate-500 italic tracking-wide">
+            <div className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl border border-white/10 max-w-fit">
+                <AlertCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                <p className="text-[10px] text-slate-400 font-medium italic tracking-wide">
                     Cálculos basados en el Título B del RAS-2000. Recomendado: Método Geométrico para zonas rurales.
                 </p>
             </div>

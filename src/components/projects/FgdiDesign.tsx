@@ -23,6 +23,7 @@ import {
     Gauge,
     Save
 } from 'lucide-react';
+import { FimeEngine } from '@/lib/fime-engine';
 
 // Types
 type WaterQuality = {
@@ -111,21 +112,12 @@ export default function FgdiDesign({ projectId }: { projectId: string }) {
     }, [quality]);
 
     const results = React.useMemo(() => {
-        if (!qmd || designParams.num_units < 1) return null;
-
-        const q_unit_lps = qmd / designParams.num_units;
-        const q_unit_m3h = (q_unit_lps * 3600) / 1000;
-        const area = q_unit_m3h / designParams.vf;
-        const a = Math.sqrt(area / designParams.ratio_l_a);
-        const l = designParams.ratio_l_a * a;
+        const dims = FimeEngine.calculateModuleDimensions(qmd, designParams.vf, designParams.num_units, designParams.ratio_l_a);
+        if (!dims) return null;
 
         return {
-            q_unit_lps,
-            q_unit_m3h,
-            area_m2: area,
-            width_a: a,
-            length_l: l,
-            real_vf: q_unit_m3h / (a * l),
+            ...dims,
+            area_m2: dims.area_unit_m2, // Map to component expected field name
             wash_velocity_check: 0.2
         };
     }, [designParams, qmd]);
