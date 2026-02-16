@@ -370,8 +370,8 @@ export default function FgdiDesign({ projectId }: { projectId: string }) {
                                     <Waves className="w-3 h-3 text-violet-400" /> Verificación de Lavado
                                 </p>
                                 <div className="flex justify-between items-center text-[10px] font-bold">
-                                    <span className="text-slate-500 uppercase">Q Lavado Req (L/s)</span>
-                                    <span className="text-white text-xs">{(0.15 * results.area_m2 * 1000).toFixed(0)} - {(0.30 * results.area_m2 * 1000).toFixed(0)}</span>
+                                    <span className="text-slate-500 uppercase">Vel. Lavado Superficial (m/s)</span>
+                                    <span className="text-white text-xs">0.15 - 0.30</span>
                                 </div>
                                 <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
                                     <div className="w-2/3 h-full bg-violet-500"></div>
@@ -417,6 +417,6 @@ export default function FgdiDesign({ projectId }: { projectId: string }) {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

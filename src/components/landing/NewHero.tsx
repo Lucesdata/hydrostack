@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Brain, Play, Zap, Cpu } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/utils/supabase/client';
+import { useSupabase } from '@/hooks/useSupabase';
 
 const agentExamples = [
     "Dimensiona un sistema FIME para 1.200 habitantes",
@@ -14,7 +14,7 @@ const agentExamples = [
 
 export default function NewHero() {
     const router = useRouter();
-    const supabase = createClient();
+    const supabase = useSupabase();
     const [loading, setLoading] = useState(false);
     const [placeholderIndex, setPlaceholderIndex] = useState(0);
     const [displayText, setDisplayText] = useState('');
@@ -70,7 +70,6 @@ export default function NewHero() {
             // Race between sign in and timeout
             const signInPromise = supabase.auth.signInAnonymously();
 
-            // @ts-ignore
             const result = await Promise.race([signInPromise, timeoutPromise]) as { data: any, error: any };
             const { error } = result;
 
@@ -118,10 +117,10 @@ export default function NewHero() {
                 >
                     <source src="/videos/plant-hero.mp4" type="video/mp4" />
                 </video>
-                
+
                 {/* Dark Gradient Overlay for text readability */}
                 <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-900/80 to-slate-900/30"></div>
-                
+
                 {/* Grid Overlay Effect */}
                 <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:100px_100px] pointer-events-none"></div>
             </div>

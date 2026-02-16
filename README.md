@@ -12,6 +12,7 @@ HYDROSTACK es una plataforma de ingeniería avanzada diseñada para democratizar
 - **Cumplimiento Normativo Automatizado**: Motores de cálculo basados en la resolución RAS 0330.
 - **Visualización Técnica Premium**: Diagramas y esquemas de ingeniería en tiempo real.
 - **Gestión Multi-Perfil**: Flujos optimizados para comunidades, consultores y entidades gubernamentales.
+- **Modo Demo**: Generación automática de proyectos completos ("Campoalegre 2") para demostración de capacidades.
 
 ## 🛠️ Tecnologías
 
@@ -78,6 +79,13 @@ Cada proyecto en HydroStack sigue un flujo de trabajo técnico robusto, organiza
 3. **Separation of Concerns**: Perfil ≠ Dominio ≠ Contexto ≠ Flujo.
 
 ## 📚 Documentación Técnica
+
+### Nuevos Motores de Ingeniería (FIME)
+El núcleo de cálculo ha sido actualizado para incluir:
+- **`FimePipingEngine`**: Selección de diámetros y generación de listado de válvulas.
+- **`FimeHydraulicProfile`**: Cálculo de pérdidas paso a paso (RAS 0330) y perfil hidráulico.
+- **`FimeLayoutEngine`**: Dimensionamiento espacial para Planos de Implantación.
+- **`NarrativeEngine`**: Generación automática de memorias técnicas descriptivas.
 
 Para desarrolladores y contribuidores:
 

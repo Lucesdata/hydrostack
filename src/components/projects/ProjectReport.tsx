@@ -16,6 +16,26 @@
 import { Project, ProjectModuleStatus, DOMAIN_LABELS, CONTEXT_LABELS, LEVEL_LABELS, CATEGORY_LABELS } from '@/types/project';
 import Button from '@/components/ui/Button';
 import { NarrativeEngine } from '@/lib/narrative-engine';
+import { FimeEngine } from '@/lib/fime-engine';
+import { getGranulometry } from '@/lib/fime-granulometry';
+import { FimeOymEngine } from '@/lib/fime-oym-engine';
+
+// Nuevos Motores de Ingeniería de Detalle
+import { FimeLayoutEngine } from '@/lib/fime-layout-engine';
+import { FimeHydraulicProfile } from '@/lib/fime-hydraulic-profile';
+import { FimePipingEngine } from '@/lib/fime-piping-engine';
+
+// Nuevos Componentes de Reporte
+import ReportSectionLayout from './reports/ReportSectionLayout';
+import ReportSectionHydraulics from './reports/ReportSectionHydraulics';
+import ReportSectionConstruction from './reports/ReportSectionConstruction';
+import ReportSectionOandM from './reports/ReportSectionOandM';
+import ReportCover from './reports/ReportCover';
+import ReportIntroduction from './reports/ReportIntroduction';
+import ReportTableOfContents from './reports/ReportTableOfContents';
+import ReportSectionObjectives from './reports/ReportSectionObjectives';
+import ReportSectionTheoreticalFramework from './reports/ReportSectionTheoreticalFramework';
+
 
 type REPORT_DATA = {
     project: any;
@@ -73,15 +93,6 @@ export default function ProjectReport({ data }: { data: REPORT_DATA }) {
     const chlorineDailyKg = (chlorineDose * prodDiariaM3) / 1000;
     const chlorineMonthlyKg = chlorineDailyKg * 30;
 
-    // --- General Engineering Benchmark Calculations ---
-    const baseFlowRef = 6.5; // lps (Technical reference flow)
-    const currentQmdMax = calculations?.calculated_flows?.qmd_max || 0;
-    const scalingFactor = currentQmdMax / baseFlowRef;
-
-    // Benchmarks scaled from 30kg Alum / 4kg Cl for 6.5 lps
-    const alumKgBenchmark = 30 * scalingFactor;
-    const chlorineKgBenchmark = 4 * scalingFactor;
-
     // Costs (OpEx)
     const priceAlum = calculations?.project_opex?.alum_price_per_kg || 0;
     const priceCl = calculations?.project_opex?.chlorine_price_per_kg || 0;
@@ -91,161 +102,287 @@ export default function ProjectReport({ data }: { data: REPORT_DATA }) {
     const opMonthlyTotal = (alumMonthlyKg * priceAlum) + (chlorineMonthlyKg * priceCl) + salary + energy;
     const opCostPerM3 = prodMensualM3 > 0 ? opMonthlyTotal / prodMensualM3 : 0;
 
+    // --- CÁLCULOS DE INGENIERÍA DE DETALLE (NUEVO) ---
+
+    // 1. Identificar módulos activos
+    const activeModules = [];
+    if (calculations?.project_desarenador) activeModules.push('desarenador');
+    if (calculations?.project_pfd?.number_of_modules > 0) activeModules.push('pfd');
+    if (calculations?.project_filtros_gruesos?.number_of_units > 0) activeModules.push('fgac');
+    if (calculations?.project_filtros_lentos?.number_of_units > 0) activeModules.push('fla');
+
+    // 2. Generar Plan Maestro (Layout)
+    const dimensionsInput: any = {
+        'desarenador': {
+            width: Number(calculations?.project_desarenador?.width || 0),
+            length: Number(calculations?.project_desarenador?.length || 0),
+            units: 1
+        },
+        'pfd': {
+            width: 1.5, // Estimado si no hay dato detallado
+            length: 4.5,
+            units: calculations?.project_pfd?.number_of_modules || 0
+        },
+        'fgac': {
+            width: 1.5,
+            length: 4.5,
+            units: calculations?.project_filtros_gruesos?.number_of_units || 0
+        },
+        'fla': {
+            width: 3.0,
+            length: 6.0,
+            units: calculations?.project_filtros_lentos?.number_of_units || 0
+        }
+    };
+
+    const masterPlan = FimeLayoutEngine.generateMasterPlan(qmdMax, activeModules, dimensionsInput);
+
+    // 3. Generar Perfil Hidráulico
+    const hydraulicProfile = FimeHydraulicProfile.calculateSystemProfile(qmdMax, 100.0, { pipe_diameter_raw: 3 });
+
+    // 4. Generar Listado de Válvulas
+    const valveSchedule = FimePipingEngine.generateValveSchedule(activeModules, qmdMax);
+
+
+
+    // ... (existing imports)
+
+    // ... (existing logic)
 
     return (
-        <div className="report-container" style={{ maxWidth: '900px', margin: '0 auto', backgroundColor: 'white', padding: '3rem', borderRadius: 'var(--radius-lg)', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
+        <div className="report-container" style={{ maxWidth: '900px', margin: '0 auto', backgroundColor: 'white', padding: '0', borderRadius: 'var(--radius-lg)', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
 
-            {/* Print Header */}
-            <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem', paddingBottom: '1rem', borderBottom: '1px solid var(--color-gray-medium)' }}>
-                <div>
-                    <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Vista Previa del Informe</h1>
-                    <p style={{ color: 'var(--color-gray-dark)' }}>Resumen técnico avanzado conforme a RAS 0330.</p>
-                </div>
-                <Button onClick={handlePrint} variant="primary">
-                    🖨️ Imprimir / Guardar PDF
-                </Button>
-            </div>
+            {/* 0. PORTADA */}
+            <ReportCover
+                projectName={project?.name || 'PROYECTO SIN NOMBRE'}
+                location={project?.location || 'Ubicación no definida'}
+                date={new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}
+                version="1.0"
+                entityName={project?.entity || 'COMUNIDAD BENEFICIARIA'}
+            />
 
-            <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-                <h2 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--color-primary)', marginBottom: '0.5rem' }}>HYDROSTACK</h2>
-                <p style={{ fontSize: '1.2rem', fontWeight: 600, color: 'var(--color-foreground)' }}>INFORME TÉCNICO DE AUDITORÍA Y DISEÑO</p>
-                <div style={{ marginTop: '1rem', color: 'var(--color-gray-dark)', fontSize: '0.9rem' }}>
-                    <p><strong>Proyecto:</strong> {project?.name}</p>
-                    <p><strong>Comunidad:</strong> {calculations?.community_name}</p>
-                    <p><strong>Fecha:</strong> {new Date().toLocaleDateString()}</p>
-                </div>
-            </div>
+            {/* TABLA DE CONTENIDO */}
+            <ReportTableOfContents />
 
-            <div style={{
-                marginBottom: '4rem',
-                padding: '2rem',
-                backgroundColor: '#F8FAFC',
-                borderRadius: 'var(--radius-lg)',
-                borderLeft: '5px solid var(--color-primary)',
-                lineHeight: '1.8'
-            }}>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '1.5rem', color: 'var(--color-primary)', textTransform: 'uppercase' }}>
-                    Memoria Descriptiva y Justificación Técnica
-                </h3>
+            {/* 1. INTRODUCCION */}
+            <ReportIntroduction project={project} calculations={calculations} />
 
-                <p style={{ marginBottom: '1.5rem', textAlign: 'justify', fontSize: '1rem' }}>
-                    {NarrativeEngine.generateIntroduction(project)}
-                </p>
+            {/* 2. OBJETIVOS & 3. CONSIDERACIONES */}
+            <ReportSectionObjectives project={project} />
 
-                <p style={{ marginBottom: '1.5rem', textAlign: 'justify', fontSize: '1rem' }}>
-                    {NarrativeEngine.generateEngineeringDecisions(calculations?.module_statuses || [])}
-                </p>
-
-                <p style={{ marginBottom: '1.5rem', textAlign: 'justify', fontSize: '1rem' }}>
-                    {NarrativeEngine.generateDemandNarrative(calculations)}
-                </p>
-
-                <p style={{ marginBottom: '1.5rem', textAlign: 'justify', fontSize: '1rem' }}>
-                    {NarrativeEngine.generateTreatmentNarrative(calculations, project)}
-                </p>
-
-                <p style={{ textAlign: 'justify', fontSize: '1rem' }}>
-                    {NarrativeEngine.generateViabilityJustification(calculations?.project_viability)}
-                </p>
-            </div>
-
-            <Section title="Bloque A: Contexto y Localización">
-                <DataPoint label="Municipio" value={calculations?.municipality} />
-                <DataPoint label="Dominio" value={project?.project_domain ? DOMAIN_LABELS[project.project_domain as keyof typeof DOMAIN_LABELS] : ''} />
-                <DataPoint label="Contexto" value={project?.project_context ? CONTEXT_LABELS[project.project_context as keyof typeof CONTEXT_LABELS] : ''} />
-                <DataPoint label="Nivel de Alcance" value={project?.project_level ? LEVEL_LABELS[project.project_level as keyof typeof LEVEL_LABELS] : ''} />
-            </Section>
-
-            <Section title="Bloque B: Demanda y Población">
-                <DataPoint label="Población Futura" value={calculations?.calculated_flows?.final_population ? `${calculations.calculated_flows.final_population.toLocaleString()} hab.` : null} />
-                <DataPoint label="Método Proyección" value={calculations?.calculated_flows?.method || 'Geométrico'} />
-                <DataPoint label="Afluencia Estacional (Pico)" value={calculations?.project_seasonal_data?.daily_tourist_count ? `+ ${calculations.project_seasonal_data.daily_tourist_count} hab.` : 'No aplica'} />
-                <DataPoint label="Consumo Diario (Uso)" value={consumption?.daily_availability || 'Diario'} />
-            </Section>
-
-            <Section title="Bloque C: Fuente y Calidad">
-                <DataPoint label="Tipo de Fuente" value={source?.source_type} />
-                <DataPoint label="Permanencia" value={source?.is_permanent} />
-                <DataPoint label="IRCA (Estado Actual)" value={quality?.irca_score !== null ? `${quality.irca_score.toFixed(1)}%` : 'Sin datos'} />
-                <DataPoint label="Turbiedad Máxima" value={quality?.turbidity ? `${quality.turbidity} UNT` : 'No reportado'} />
-            </Section>
-
-            <div style={{ marginTop: '2rem', marginBottom: '3rem', padding: '2rem', backgroundColor: '#F0F9FF', borderRadius: 'var(--radius-md)', border: '1px solid #BAE6FD', breakInside: 'avoid' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#0369A1', marginBottom: '1.5rem', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Bloque D: RÉGIMEN HIDRÁULICO DE DISEÑO (RAS 0330)
-                </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', textAlign: 'center' }}>
-                    <div>
-                        <p style={{ fontSize: '0.65rem', color: '#0369A1', fontWeight: 700, textTransform: 'uppercase' }}>Qmd (Caudal Medio)</p>
-                        <p style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0C4A6E' }}>{calculations?.calculated_flows?.qmd || '0'} <small style={{ fontSize: '0.8rem', fontWeight: 400 }}>L/s</small></p>
-                    </div>
-                    <div>
-                        <p style={{ fontSize: '0.65rem', color: '#0369A1', fontWeight: 700, textTransform: 'uppercase' }}>QMD (Máximo Diario)</p>
-                        <p style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0369A1' }}>{qmdMax} <small style={{ fontSize: '0.8rem', fontWeight: 400 }}>L/s</small></p>
-                    </div>
-                    <div>
-                        <p style={{ fontSize: '0.65rem', color: '#0369A1', fontWeight: 700, textTransform: 'uppercase' }}>QMH (Máximo Horario)</p>
-                        <p style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0C4A6E' }}>{calculations?.calculated_flows?.qmh_max || '0'} <small style={{ fontSize: '0.8rem', fontWeight: 400 }}>L/s</small></p>
+            {/* 4. IDENTIFICACION DEL RIESGO A TRATAR */}
+            <div style={{ pageBreakAfter: 'always', padding: '3rem', backgroundColor: 'white' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem', color: '#111827', textTransform: 'uppercase' }}>4. Identificación del Riesgo a Tratar</h2>
+                <div style={{ backgroundColor: '#fef2f2', padding: '2rem', borderRadius: '8px', border: '1px solid #fee2e2' }}>
+                    <p style={{ fontSize: '1rem', lineHeight: '1.6', color: '#991b1b', textAlign: 'justify' }}>
+                        {NarrativeEngine.generateSanitaryShieldNarrative(calculations?.quality, project)}
+                    </p>
+                    <div style={{ marginTop: '1.5rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div style={{ backgroundColor: 'white', padding: '1rem', borderRadius: '6px' }}>
+                            <strong>Turbiedad:</strong> {calculations?.quality?.turbidity || 0} UNT
+                        </div>
+                        <div style={{ backgroundColor: 'white', padding: '1rem', borderRadius: '6px' }}>
+                            <strong>Coliformes Fecales:</strong> {calculations?.quality?.fecal_coliforms || 0} UFC/100ml
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <Section title="Bloque E: Ingeniería de Tratamiento">
-                <DataPoint label="Tecnología Seleccionada" value={project?.treatment_category ? CATEGORY_LABELS[project.treatment_category as keyof typeof CATEGORY_LABELS] : 'No definida'} />
-                {calculations.project_desarenador && <DataPoint label="Dimensiones Desarenador" value={`${calculations.project_desarenador.length}m x ${calculations.project_desarenador.width}m`} />}
-                {calculations.project_compact_ptap && <DataPoint label="Capacidad PTAP" value={`${qmdMax} L/s (Lamelas: ${calculations.project_compact_ptap.lamellar_area}m²)`} />}
-                {calculations.project_filtros_lentos && <DataPoint label="Unidades FLA" value={`${calculations.project_filtros_lentos.number_of_units} unidades`} />}
-                {calculations.project_jar_test && <DataPoint label="Dosis Coagulante" value={`${calculations.project_jar_test.optimal_dose_alum} mg/L`} />}
-            </Section>
-
-            <Section title="Bloque F: Evaluación de Sostenibilidad">
-                <DataPoint label="O&M m³ Producido" value={calculations?.project_opex ? `$${opCostPerM3.toFixed(2)} COP` : 'Pendiente'} />
-                <DataPoint label="Gasto Total Mensual" value={calculations?.project_opex ? `$${Math.round(opMonthlyTotal).toLocaleString()} COP` : null} />
-                <DataPoint label="Viabilidad de Sitio" value={calculations?.project_viability?.gravity_arrival ? 'Gravedad (Óptimo)' : 'Bombeo'} />
-                <DataPoint label="EPP Obligatorio" value={
-                    [
-                        calculations?.project_seasonal_data?.ppe_heavy_gloves && 'Guantes',
-                        calculations?.project_seasonal_data?.ppe_safety_boots && 'Botas',
-                        calculations?.project_seasonal_data?.ppe_goggles && 'Gafas'
-                    ].filter(Boolean).join(', ') || 'Equipos Básicos'
-                } />
-            </Section>
-
-            <div style={{ padding: '1.5rem', backgroundColor: '#FEF2F2', borderRadius: '4px', border: '1px solid #FCA5A5', fontSize: '0.85rem', marginBottom: '3rem' }}>
-                <p style={{ fontWeight: 800, color: '#991B1B', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Apéndice Técnico: Mantenimiento Crítico</p>
-                <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                    <li><strong>Mezcla Rápida:</strong> Inspección cada 30 días</li>
-                    <li><strong>Desarenador:</strong> Limpieza cada 45 días</li>
-                    <li><strong>Filtros:</strong> Lavado cada {calculations?.project_viability?.filter_cleaning_days || 15} días</li>
-                    <li><strong>Dosificación:</strong> Calibración semanal</li>
-                </ul>
-            </div>
-
-            <div style={{ marginTop: '5rem', textAlign: 'center', fontSize: '0.8rem', color: 'var(--color-gray-dark)', borderTop: '1px solid var(--color-gray-medium)', paddingTop: '2rem' }}>
-                <p>Este informe constituye un diagnóstico técnico basado en la resolución 0330 de 2017 (RAS).</p>
-                <p>Generado por HydroStack v1.0 Professional Audit Module.</p>
-            </div>
-
-            <div style={{ marginTop: '4rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', padding: '0 2rem' }}>
-                <div style={{ textAlign: 'center' }}>
-                    <div style={{ borderBottom: '1px solid black', marginBottom: '0.5rem' }}></div>
-                    <p style={{ fontSize: '0.8rem', fontWeight: 700 }}>INGENIERO PROYECTISTA</p>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                    <div style={{ borderBottom: '1px solid black', marginBottom: '0.5rem' }}></div>
-                    <p style={{ fontSize: '0.8rem', fontWeight: 700 }}>CONTROL DE CALIDAD / REVISOR</p>
+            {/* 5. SELECCIÓN Y JUSTIFICACION DE ETAPAS DE TRATAMIENTO */}
+            <div style={{ pageBreakAfter: 'always', padding: '3rem', backgroundColor: 'white' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem', color: '#111827', textTransform: 'uppercase' }}>5. Selección y Justificación de Etapas de Tratamiento</h2>
+                <div style={{ fontSize: '1.0rem', lineHeight: '1.6', color: '#374151', textAlign: 'justify' }}>
+                    <p style={{ marginBottom: '1.5rem' }}>
+                        {NarrativeEngine.generateTreatmentNarrative(calculations, project)}
+                    </p>
+                    <p>
+                        {NarrativeEngine.generateEngineeringDecisions(project?.module_statuses)}
+                    </p>
                 </div>
             </div>
 
+            {/* 6. FIME TECH & 7. URBANO */}
+            <ReportSectionTheoreticalFramework />
+
+            {/* 8. CAUDALES DE DISEÑO */}
+            <div style={{ pageBreakAfter: 'always', padding: '3rem', backgroundColor: 'white' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem', color: '#111827', textTransform: 'uppercase' }}>8. Caudales de Diseño</h2>
+                <div style={{ marginBottom: '2rem' }}>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '1rem', color: '#374151' }}>8.1. Caudal Medio y Máximo de Agua Potable</h3>
+                    <p style={{ fontSize: '1rem', lineHeight: '1.6', color: '#374151', marginBottom: '1.5rem' }}>
+                        {NarrativeEngine.generateDemandNarrative(calculations)}
+                    </p>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
+                        <DataPoint label="Población Diseño" value={`${calculations?.calculated_flows?.final_population?.toLocaleString()} hab.`} />
+                        <DataPoint label="QMD (Diseño)" value={`${qmdMax.toFixed(2)} L/s`} />
+                        <DataPoint label="QMH (Redes)" value={`${calculations?.calculated_flows?.qmh_max?.toFixed(2)} L/s`} />
+                    </div>
+                </div>
+            </div>
+
+            {/* 9. CALCULO HIDRAULICO DE UNIDADES DE TRATAMIENTO */}
+            <div style={{ pageBreakAfter: 'always', padding: '3rem', backgroundColor: 'white' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem', color: '#111827', textTransform: 'uppercase' }}>9. Cálculo Hidráulico de Unidades de Tratamiento</h2>
+                <p style={{ marginBottom: '2rem', color: '#4b5563' }}>
+                    A continuación, se presentan los parámetros de diseño, dimensionamiento y verificación hidráulica de cada unidad del sistema, conforme al RAS 0330.
+                </p>
+
+                {/* MEMORIA DE CÁLCULO DETALLADA INTEGRADA EN CAPITULO 9 */}
+                {[
+                    { key: 'pfd', title: '9.1. Filtración Gruesa Dinámica (FGDi) y Desarenador', method: FimeEngine.calculatePFDMemoria, params: [qmdMax, { turbidity: quality?.turbidity || 0 }] },
+                    {
+                        key: 'fgac',
+                        title: '9.2. Pérdidas Hidráulicas (FGAC - Interconexión)', // Mapping loosely to TOC structure
+                        method: FimeEngine.calculateFGACMemoria,
+                        params: [qmdMax, { turbidity: quality?.turbidity || 0 }, {
+                            vf: calculations.project_filtros_gruesos?.filtration_velocity || 0.6,
+                            num_units: calculations.project_filtros_gruesos?.number_of_units || 2,
+                            ratio_l_a: 4
+                        }]
+                    },
+                    {
+                        key: 'fla',
+                        title: '9.3. Filtración Lenta en Arena (FLA)',
+                        method: FimeEngine.calculateFLAMemoria,
+                        params: [qmdMax, {
+                            vf: calculations.project_filtros_lentos?.filtration_velocity || 0.15,
+                            num_units: calculations.project_filtros_lentos?.number_of_units || 3,
+                            ratio_l_a: 2
+                        }]
+                    }
+                ].map((mod) => {
+                    const memoria = mod.method(...(mod.params as [any, any, any]));
+                    return (
+                        <div key={mod.key} style={{ marginBottom: '3rem', breakInside: 'avoid' }}>
+                            <h4 style={{ fontSize: '1.1rem', fontWeight: 700, backgroundColor: '#F1F5F9', padding: '0.5rem 1rem', borderRadius: '4px', marginBottom: '1rem' }}>
+                                {mod.title}
+                            </h4>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                                <thead>
+                                    <tr style={{ borderBottom: '2px solid #E2E8F0', textAlign: 'left' }}>
+                                        <th style={{ padding: '0.5rem' }}>Variable / Componente</th>
+                                        <th style={{ padding: '0.5rem' }}>Criterio RAS</th>
+                                        <th style={{ padding: '0.5rem' }}>Valor de Diseño</th>
+                                        <th style={{ padding: '0.5rem' }}>Resultado</th>
+                                        <th style={{ padding: '0.5rem' }}>Unidad</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {memoria.steps.map((step, idx) => (
+                                        <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                                            <td style={{ padding: '0.5rem', fontWeight: 600 }}>{step.variable}</td>
+                                            <td style={{ padding: '0.5rem', fontStyle: 'italic', color: '#64748B' }}>{step.formula}</td>
+                                            <td style={{ padding: '0.5rem' }}>{step.substitution}</td>
+                                            <td style={{ padding: '0.5rem', fontWeight: 700 }}>{step.result}</td>
+                                            <td style={{ padding: '0.5rem' }}>{step.unit}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* 10. DESINFECCION */}
+            <div style={{ pageBreakAfter: 'always', padding: '3rem', backgroundColor: 'white' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem', color: '#111827', textTransform: 'uppercase' }}>10. Desinfección</h2>
+                <p style={{ marginBottom: '2rem', color: '#4b5563' }}>
+                    El sistema de desinfección garantiza la inactivación de patógenos remanentes mediante cloración.
+                </p>
+                {/* Calculate Disinfection and Render */}
+                {(() => {
+                    const disMemoria = FimeEngine.calculateDisinfectionMemoria(qmdMax, calculations?.calculated_flows?.final_population || 1000, {
+                        contact_time: calculations.project_disinfection?.contact_time || 30,
+                        chlorine_dose: calculations.project_disinfection?.chlorine_dose || 2.0,
+                        chlorine_concentration: 65
+                    });
+                    return (
+                        <>
+                            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '1rem', color: '#374151' }}>10.1 y 10.2 Dosificación y Contacto</h3>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                                <tbody>
+                                    {disMemoria.steps.map((step, idx) => (
+                                        <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                                            <td style={{ padding: '0.5rem', fontWeight: 600 }}>{step.variable}</td>
+                                            <td style={{ padding: '0.5rem' }}>{step.substitution}</td>
+                                            <td style={{ padding: '0.5rem', fontWeight: 700 }}>{step.result} {step.unit}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </>
+                    )
+                })()}
+            </div>
+
+            {/* 12. MANUAL DE O&M */}
+            <div style={{ pageBreakAfter: 'always', marginTop: '0' }}>
+                <ReportSectionOandM valves={valveSchedule} activeModules={activeModules} />
+            </div>
+
+            {/* 13. ANEXOS (PLANOS Y ESPECIFICACIONES) */}
+            <div style={{ pageBreakAfter: 'always', padding: '3rem', backgroundColor: 'white' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem', color: '#111827', textTransform: 'uppercase' }}>13. Anexos</h2>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '1rem', color: '#374151' }}>A. Perfil Hidráulico</h3>
+                <ReportSectionHydraulics profile={hydraulicProfile} />
+
+                <div style={{ marginTop: '4rem', breakBefore: 'page' }}>
+                    <ReportSectionLayout plan={masterPlan} />
+                </div>
+                <div style={{ marginTop: '3rem' }}></div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '1rem', color: '#374151' }}>C. Especificaciones Constructivas</h3>
+                <ReportSectionConstruction />
+            </div>
+
+            {/* Print Styles */}
             <style jsx global>{`
                 @media print {
-                    .no-print { display: none !important; }
-                    body { background-color: white !important; }
-                    .report-container { box-shadow: none !important; padding: 0 !important; }
-                    aside { display: none !important; }
-                    nav { display: none !important; }
+                    /* Hide UI elements */
+                    .no-print, nav, footer, aside, .btn { 
+                        display: none !important; 
+                    }
+
+                    /* Reset Page Layout for Print */
+                    body, html {
+                        background-color: white !important;
+                        height: auto !important;
+                        width: 100% !important;
+                        overflow: visible !important;
+                        display: block !important; /* Override flex on body */
+                    }
+                    
+                    main {
+                        display: block !important; /* Override flex: 1 */
+                        height: auto !important;
+                        overflow: visible !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                    }
+
+                    /* Report Container Reset */
+                    .report-container { 
+                        box-shadow: none !important; 
+                        padding: 0 !important; 
+                        margin: 0 !important; 
+                        width: 100% !important; 
+                        max-width: none !important; 
+                        border-radius: 0 !important;
+                        position: static !important;
+                    }
+
+                    /* Page Breaks */
+                    h1, h2, h3 { 
+                        break-after: avoid; 
+                        page-break-after: avoid;
+                    }
+                    
+                    table, figure, .break-inside-avoid {
+                        break-inside: avoid;
+                        page-break-inside: avoid;
+                    }
                 }
             `}</style>
-        </div >
+        </div>
     );
 }

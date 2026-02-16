@@ -4,10 +4,13 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
-import { createClient } from '@/utils/supabase/client';
+import { useSupabase } from '@/hooks/useSupabase';
 import Link from 'next/link';
 import ProjectCard from '@/components/projects/ProjectCard';
 import { Project, ProjectModuleStatus } from '@/types/project';
+import { seedDemoProject } from '@/app/actions/demo';
+import { Sparkles, RefreshCw } from 'lucide-react';
+
 
 
 export default function DashboardPage() {
@@ -16,7 +19,27 @@ export default function DashboardPage() {
     const [projects, setProjects] = useState<Project[]>([]);
     const [moduleStatuses, setModuleStatuses] = useState<ProjectModuleStatus[]>([]);
     const [loadingProjects, setLoadingProjects] = useState(true);
-    const supabase = createClient();
+    const [seeding, setSeeding] = useState(false);
+    const supabase = useSupabase();
+
+    const handleSeedDemo = async () => {
+        setSeeding(true);
+        try {
+            const result = await seedDemoProject();
+            if (result.success) {
+                // Refresh list not needed if using router.refresh() inside action or here
+                window.location.reload(); // Force reload to fetch new data
+            } else {
+                alert(result.message);
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error al generar demo');
+        } finally {
+            setSeeding(false);
+        }
+    };
+
 
     useEffect(() => {
         if (!loading && !user) {
@@ -29,8 +52,9 @@ export default function DashboardPage() {
             const fetchProjects = async () => {
                 const { data: projectsData, error: projectsError } = await supabase
                     .from('projects')
-                    .select('*')
-                    .order('created_at', { ascending: false });
+                    .select('id, name, description, location, project_domain, project_context, project_level, treatment_category, status, created_at, updated_at')
+                    .order('created_at', { ascending: false })
+                    .limit(50);
 
                 if (!projectsError && projectsData) {
                     setProjects(projectsData as Project[]);
@@ -79,6 +103,15 @@ export default function DashboardPage() {
                             ← Volver al inicio
                         </button>
                     </Link>
+                    <button
+                        onClick={handleSeedDemo}
+                        disabled={seeding}
+                        className="ml-4 flex items-center gap-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 px-4 py-2 rounded-lg text-sm font-bold transition-all"
+                    >
+                        {seeding ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                        Restaurar Demo
+                    </button>
+
                 </div>
 
                 {loadingProjects ? (

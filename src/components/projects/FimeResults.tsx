@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/utils/supabase/client';
+import { useSupabase } from '@/hooks/useSupabase';
 import {
     Activity,
     Target,
@@ -36,8 +36,30 @@ type ProjectCalculations = {
     };
 };
 
+const SummaryCard = ({ title, icon: Icon, color, children }: any) => (
+    <div className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-2xl p-5 shadow-2xl relative overflow-hidden group">
+        <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${color}`}></div>
+        <h3 className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+            {Icon && <Icon className="w-4 h-4 opacity-50" />}
+            {title}
+        </h3>
+        {children}
+    </div>
+);
+
+const Metric = ({ label, value, unit, sublabel }: any) => (
+    <div className="flex flex-col">
+        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">{label}</span>
+        <div className="flex items-baseline gap-1.5">
+            <span className="text-xl font-black text-white tracking-tight">{value}</span>
+            <span className="text-[9px] font-bold text-slate-500 uppercase">{unit}</span>
+        </div>
+        {sublabel && <span className="text-[8px] font-bold text-slate-600 uppercase mt-1">{sublabel}</span>}
+    </div>
+);
+
 export default function FimeResults({ projectId }: { projectId: string }) {
-    const supabase = createClient();
+    const supabase = useSupabase();
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<ProjectCalculations | null>(null);
 
@@ -68,28 +90,6 @@ export default function FimeResults({ projectId }: { projectId: string }) {
         <div className="bg-slate-950/40 border border-red-500/20 rounded-2xl p-12 text-center backdrop-blur-xl">
             <p className="text-red-400 font-black uppercase tracking-widest text-xs">Error de Integración</p>
             <p className="text-slate-500 text-sm mt-2">No se encontraron datos de diseño para este proyecto.</p>
-        </div>
-    );
-
-    const SummaryCard = ({ title, icon: Icon, color, children }: any) => (
-        <div className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-2xl p-5 shadow-2xl relative overflow-hidden group">
-            <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${color}`}></div>
-            <h3 className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                {Icon && <Icon className="w-4 h-4 opacity-50" />}
-                {title}
-            </h3>
-            {children}
-        </div>
-    );
-
-    const Metric = ({ label, value, unit, sublabel }: any) => (
-        <div className="flex flex-col">
-            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">{label}</span>
-            <div className="flex items-baseline gap-1.5">
-                <span className="text-xl font-black text-white tracking-tight">{value}</span>
-                <span className="text-[9px] font-bold text-slate-500 uppercase">{unit}</span>
-            </div>
-            {sublabel && <span className="text-[8px] font-bold text-slate-600 uppercase mt-1">{sublabel}</span>}
         </div>
     );
 

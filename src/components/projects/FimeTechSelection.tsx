@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/utils/supabase/client';
+import { useSupabase } from '@/hooks/useSupabase';
 import {
     Activity,
     Settings2,
@@ -29,7 +29,7 @@ type WaterQuality = {
     alkalinity: number | null;
 };
 
-// Perfil Estándar (Quebrada La Olga)
+// Perfil Estándar (Agua Superficial Buena Calidad)
 const STANDARD_PROFILE = {
     turbidity: 4.1,
     color: 10.0,
@@ -38,9 +38,19 @@ const STANDARD_PROFILE = {
     alkalinity: 150
 };
 
+const MetricBox = ({ label, value, unit }: { label: string; value: any; unit?: string }) => (
+    <div className="bg-slate-950/40 border border-white/5 p-4 rounded-xl flex flex-col items-center justify-center gap-1 group transition-all hover:bg-slate-950/60">
+        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{label}</span>
+        <div className="flex items-baseline gap-1">
+            <span className="text-xl font-black text-white group-hover:text-emerald-400 transition-colors tracking-tight">{value}</span>
+            {unit && <span className="text-[9px] font-bold text-slate-600 uppercase">{unit}</span>}
+        </div>
+    </div>
+);
+
 export default function FimeTechSelection({ projectId }: { projectId: string }) {
     const router = useRouter();
-    const supabase = createClient();
+    const supabase = useSupabase();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [quality, setQuality] = useState<WaterQuality>({ turbidity: null, color: null, fecal_coliforms: null, ph: null, alkalinity: null });
@@ -163,16 +173,6 @@ export default function FimeTechSelection({ projectId }: { projectId: string }) 
         </div>
     );
 
-    const MetricBox = ({ label, value, unit }: { label: string; value: any; unit?: string }) => (
-        <div className="bg-slate-950/40 border border-white/5 p-4 rounded-xl flex flex-col items-center justify-center gap-1 group transition-all hover:bg-slate-950/60">
-            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{label}</span>
-            <div className="flex items-baseline gap-1">
-                <span className="text-xl font-black text-white group-hover:text-emerald-400 transition-colors tracking-tight">{value}</span>
-                {unit && <span className="text-[9px] font-bold text-slate-600 uppercase">{unit}</span>}
-            </div>
-        </div>
-    );
-
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-700">
 
@@ -189,7 +189,7 @@ export default function FimeTechSelection({ projectId }: { projectId: string }) 
                             </div>
                             <h2 className="text-3xl font-black text-white tracking-tight">Perfil de Calidad de Entrada</h2>
                             <p className="text-slate-400 text-sm leading-relaxed excerpt">
-                                Para agilizar su pre-informe, hemos cargado un <span className="text-emerald-400 font-semibold tracking-wide">Perfil Estándar de Agua Superficial</span> basado en fuentes de buena calidad técnica (Referencia: <span className="italic">Quebrada La Olga</span>).
+                                Para agilizar su pre-informe, hemos cargado un <span className="text-emerald-400 font-semibold tracking-wide">Perfil Estándar de Agua Superficial</span> basado en fuentes de buena calidad técnica (Referencia: <span className="italic">Normativa CINARA</span>).
                             </p>
                         </div>
 
