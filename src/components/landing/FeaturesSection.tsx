@@ -5,18 +5,18 @@ import { Check, Brain, Sparkles } from 'lucide-react';
 
 // Agent code lines with typing animation
 const agentCodeLines = [
-    { type: 'comment', text: '// 🧠 Agente HYDROSTACK analizando...' },
+    { type: 'comment', text: '// 🧠 Motor IGST evaluando tecnologías...' },
     { type: 'blank', text: '' },
-    { type: 'keyword', prefix: 'async ', name: 'function ', value: 'dimensionarFIME', suffix: '(proyecto) {' },
-    { type: 'code', prefix: '  const ', name: 'poblacion', value: ' = await calcularProyeccion(2045);' },
-    { type: 'code', prefix: '  const ', name: 'QMD', value: ' = poblacion * dotacion * K1;' },
+    { type: 'keyword', prefix: 'async ', name: 'function ', value: 'evaluarIGST', suffix: '(proyecto) {' },
+    { type: 'code', prefix: '  const ', name: 'fuente', value: ' = analizarFuente(tipo, calidad);' },
+    { type: 'code', prefix: '  const ', name: 'viable', value: ' = filtrarViabilidad(energia, operador);' },
     { type: 'blank', text: '' },
-    { type: 'comment', text: '  // Validando normativa RAS-2000...' },
-    { type: 'code', prefix: '  const ', name: 'fgdi', value: ' = diseñarFiltroGrueso(QMD);' },
-    { type: 'code', prefix: '  const ', name: 'fla', value: ' = diseñarFiltroLento(QMD);' },
+    { type: 'comment', text: '  // Calculando 4 dimensiones IGST...' },
+    { type: 'code', prefix: '  const ', name: 'scores', value: ' = calcularIGST(social, econ, amb, tec);' },
+    { type: 'code', prefix: '  const ', name: 'ranking', value: ' = ordenarPorScore(viable, scores);' },
     { type: 'blank', text: '' },
-    { type: 'validation', prefix: '  if (', condition: 'cumpleNormativa(fgdi, fla)', suffix: ') {' },
-    { type: 'success', text: '    return generarGemeloDigital();' },
+    { type: 'validation', prefix: '  if (', condition: 'ranking[0].igst > 80', suffix: ') {' },
+    { type: 'success', text: '    return generarInforme(ranking[0]);' },
     { type: 'close', text: '  }' },
     { type: 'close', text: '}' },
 ];
@@ -127,12 +127,12 @@ export default function FeaturesSection() {
 
                     <div className="space-y-5">
                         <div className="flex items-start gap-4">
-                            <div className="bg-emerald-500 rounded-lg p-1.5 mt-1">
+                            <div className="bg-amber-500 rounded-lg p-1.5 mt-1">
                                 <Check className="w-3.5 h-3.5 text-white stroke-[3]" />
                             </div>
                             <div>
-                                <span className="text-lg text-slate-900 font-medium block">Matriz de Selección FIME</span>
-                                <span className="text-sm text-slate-500">Algoritmo de decisión basado en turbiedad, color y coliformes para sugerir la tecnología óptima.</span>
+                                <span className="text-lg text-slate-900 font-medium block">Motor IGST Multicriterio</span>
+                                <span className="text-sm text-slate-500">Evalúa 7 tecnologías en 4 dimensiones: Sociocultural, Económica, Ambiental y Tecnológica.</span>
                             </div>
                         </div>
                         <div className="flex items-start gap-4">
@@ -140,8 +140,8 @@ export default function FeaturesSection() {
                                 <Check className="w-3.5 h-3.5 text-white stroke-[3]" />
                             </div>
                             <div>
-                                <span className="text-lg text-slate-900 font-medium block">Gemelos Digitales</span>
-                                <span className="text-sm text-slate-500">Modelos virtuales de plantas reales para simulación y optimización continua.</span>
+                                <span className="text-lg text-slate-900 font-medium block">Informe Técnico Automático</span>
+                                <span className="text-sm text-slate-500">Documento normativo completo con memorias de cálculo, granulometría y protocolos O&M.</span>
                             </div>
                         </div>
                         <div className="flex items-start gap-4">
@@ -188,13 +188,13 @@ export default function FeaturesSection() {
 
                         {/* Status Badges */}
                         <div className={`px-6 pb-6 flex gap-3 transition-opacity duration-500 ${showBadges ? 'opacity-100' : 'opacity-0'}`}>
-                            <span className="bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5">
+                            <span className="bg-amber-500/20 text-amber-400 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5">
                                 <Check className="w-3.5 h-3.5" />
-                                CUMPLE RAS-2000
+                                IGST SCORE: 93
                             </span>
-                            <span className="bg-sky-500/20 text-sky-400 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5">
+                            <span className="bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5">
                                 <Sparkles className="w-3.5 h-3.5" />
-                                GEMELO GENERADO
+                                INFORME GENERADO
                             </span>
                         </div>
                     </div>

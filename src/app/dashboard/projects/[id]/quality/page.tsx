@@ -34,10 +34,10 @@ export default async function QualityPage({ params }: { params: Promise<{ id: st
                         <ChevronRight className="w-3 h-3 translate-y-[0.5px]" />
                         <span className="text-emerald-400/80 truncate max-w-[150px]">{project.name}</span>
                     </div>
-                    <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
+                    <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-3 italic">
                         Calidad del Agua
                         <div className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] text-emerald-400 font-mono hidden sm:block">
-                            Modulo 3
+                            Fase 1
                         </div>
                     </h1>
                 </div>

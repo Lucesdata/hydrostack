@@ -247,7 +247,7 @@ export default function QualityAnalysisForm({
                     <div className="flex justify-end pt-2">
                         <button
                             type="button"
-                            onClick={() => router.push(`/dashboard/projects/${projectId}/caudales`)}
+                            onClick={() => router.push(`/dashboard/projects/${projectId}/population`)}
                             className="w-full flex items-center justify-between py-2.5 px-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all group"
                         >
                             Pasar a Caudales

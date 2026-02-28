@@ -13,7 +13,9 @@ import {
     Box,
     Activity,
     Compass,
-    ArrowRight
+    ArrowRight,
+    FileText,
+    ArrowLeft
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -25,12 +27,12 @@ export default function Navbar() {
     const isAuth = pathname === '/login' || pathname === '/register';
     const isDashboard = pathname?.startsWith('/dashboard');
     const isProjectDashboard = pathname?.includes('/dashboard/projects/');
-    const isDashboardSelector = pathname === '/dashboard/new/selector';
+    const isDashboardIntroduction = pathname === '/dashboard/new/introduction';
 
     // Industrial dark theme is forced on landing, auth, and all dashboard pages
     const isDarkTheme = isHome || isAuth || isDashboard;
 
-    if (isDashboardSelector) return null;
+    if (isDashboardIntroduction) return null;
 
     return (
         <nav className={`
@@ -76,6 +78,36 @@ export default function Navbar() {
                     <div className="flex items-center gap-3">
                         {user ? (
                             <div className="flex items-center gap-2">
+                                {isProjectDashboard && (
+                                    pathname.endsWith('/report') ? (
+                                        <button
+                                            onClick={() => router.back()}
+                                            className={`
+                                                flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all
+                                                ${isDarkTheme
+                                                    ? 'bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700'
+                                                    : 'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200'}
+                                            `}
+                                        >
+                                            <ArrowLeft className="w-3.5 h-3.5" />
+                                            <span className="hidden sm:inline">Volver al Diseño</span>
+                                        </button>
+                                    ) : (
+                                        <Link
+                                            href={`/dashboard/projects/${pathname.split('/')[3]}/report`}
+                                            className={`
+                                                flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all
+                                                ${isDarkTheme
+                                                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
+                                                    : 'bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100'}
+                                            `}
+                                        >
+                                            <FileText className="w-3.5 h-3.5" />
+                                            <span className="hidden sm:inline">Ver Informe</span>
+                                        </Link>
+                                    )
+                                )}
+
                                 <Link
                                     href="/dashboard/new"
                                     className={`

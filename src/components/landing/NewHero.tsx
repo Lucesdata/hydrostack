@@ -6,10 +6,10 @@ import { useRouter } from 'next/navigation';
 import { useSupabase } from '@/hooks/useSupabase';
 
 const agentExamples = [
+    "Selecciona la tecnología óptima para tu comunidad",
+    "Genera un informe técnico normativo RAS-2000",
     "Dimensiona un sistema FIME para 1.200 habitantes",
-    "Optimiza un filtro lento según RAS-2000",
-    "Convierte este diseño en un gemelo digital",
-    "Evalúa riesgos de calidad de agua cruda"
+    "Evalúa 7 tecnologías con el motor IGST"
 ];
 
 export default function NewHero() {
@@ -221,19 +221,19 @@ export default function NewHero() {
             <div className="absolute bottom-0 left-0 w-full bg-slate-950 py-4 border-y border-white/5 overflow-hidden z-20">
                 <div className="flex animate-marquee">
                     <div className="flex items-center gap-16 text-slate-400 font-mono text-sm tracking-widest uppercase whitespace-nowrap shrink-0">
+                        <span className="flex items-center gap-2"><span className="w-2 h-2 bg-amber-500 rounded-full"></span> Selector Tecnológico IGST</span>
+                        <span className="flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> Informe Técnico Automático</span>
                         <span className="flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> Proyección Poblacional</span>
-                        <span className="flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> Selección FIME</span>
                         <span className="flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> Gemelos Digitales</span>
-                        <span className="flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> Validación Normativa</span>
-                        <span className="flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> RAS-2000</span>
+                        <span className="flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> Validación RAS-2000</span>
                         <span className="flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> CINARA</span>
                     </div>
                     <div className="flex items-center gap-16 text-slate-400 font-mono text-sm tracking-widest uppercase whitespace-nowrap shrink-0 ml-16">
+                        <span className="flex items-center gap-2"><span className="w-2 h-2 bg-amber-500 rounded-full"></span> Selector Tecnológico IGST</span>
+                        <span className="flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> Informe Técnico Automático</span>
                         <span className="flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> Proyección Poblacional</span>
-                        <span className="flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> Selección FIME</span>
                         <span className="flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> Gemelos Digitales</span>
-                        <span className="flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> Validación Normativa</span>
-                        <span className="flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> RAS-2000</span>
+                        <span className="flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> Validación RAS-2000</span>
                         <span className="flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> CINARA</span>
                     </div>
                 </div>

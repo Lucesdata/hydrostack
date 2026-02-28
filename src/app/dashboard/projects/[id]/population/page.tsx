@@ -10,7 +10,7 @@ export default async function PopulationPage({ params }: { params: Promise<{ id:
 
     const { data: project, error } = await supabase
         .from('projects')
-        .select('id, name')
+        .select('id, name, location')
         .eq('id', id)
         .single();
 
@@ -34,10 +34,10 @@ export default async function PopulationPage({ params }: { params: Promise<{ id:
                         <ChevronRight className="w-3 h-3 translate-y-[0.5px]" />
                         <span className="text-emerald-400/80 truncate max-w-[150px]">{project.name}</span>
                     </div>
-                    <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
+                    <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-3 italic">
                         Población y Demanda
                         <div className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] text-emerald-400 font-mono hidden sm:block">
-                            Bloque B
+                            Fase 2
                         </div>
                     </h1>
                 </div>
@@ -46,7 +46,11 @@ export default async function PopulationPage({ params }: { params: Promise<{ id:
                 </p>
             </div>
 
-            <PopulationForm projectId={id} initialData={calculations} />
+            <PopulationForm
+                projectId={id}
+                initialData={calculations}
+                projectMetadata={{ name: project.name, location: project.location }}
+            />
         </div>
     );
 }

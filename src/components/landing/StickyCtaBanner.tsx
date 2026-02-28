@@ -12,7 +12,7 @@ export default function StickyCtaBanner() {
     useEffect(() => {
         const handleScroll = () => {
             const scrollPercent = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
-            
+
             // Show after 30% scroll
             if (scrollPercent > 30 && !isDismissed) {
                 setIsVisible(true);
@@ -31,7 +31,7 @@ export default function StickyCtaBanner() {
     };
 
     const handleCta = () => {
-        router.push('/dashboard/new/selector');
+        router.push('/dashboard/new/introduction');
     };
 
     if (!isVisible || isDismissed) return null;

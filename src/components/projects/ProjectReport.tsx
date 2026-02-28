@@ -35,6 +35,8 @@ import ReportIntroduction from './reports/ReportIntroduction';
 import ReportTableOfContents from './reports/ReportTableOfContents';
 import ReportSectionObjectives from './reports/ReportSectionObjectives';
 import ReportSectionTheoreticalFramework from './reports/ReportSectionTheoreticalFramework';
+import ReportSectionRisk from './reports/ReportSectionRisk';
+import ReportSectionWaterQuality from './reports/ReportSectionWaterQuality';
 
 
 type REPORT_DATA = {
@@ -105,7 +107,7 @@ export default function ProjectReport({ data }: { data: REPORT_DATA }) {
     // --- CÁLCULOS DE INGENIERÍA DE DETALLE (NUEVO) ---
 
     // 1. Identificar módulos activos
-    const activeModules = [];
+    const activeModules: string[] = [];
     if (calculations?.project_desarenador) activeModules.push('desarenador');
     if (calculations?.project_pfd?.number_of_modules > 0) activeModules.push('pfd');
     if (calculations?.project_filtros_gruesos?.number_of_units > 0) activeModules.push('fgac');
@@ -167,173 +169,171 @@ export default function ProjectReport({ data }: { data: REPORT_DATA }) {
             {/* 1. INTRODUCCION */}
             <ReportIntroduction project={project} calculations={calculations} />
 
-            {/* 2. OBJETIVOS & 3. CONSIDERACIONES */}
+            {/* 2. OBJETIVOS */}
             <ReportSectionObjectives project={project} />
 
-            {/* 4. IDENTIFICACION DEL RIESGO A TRATAR */}
-            <div style={{ pageBreakAfter: 'always', padding: '3rem', backgroundColor: 'white' }}>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem', color: '#111827', textTransform: 'uppercase' }}>4. Identificación del Riesgo a Tratar</h2>
-                <div style={{ backgroundColor: '#fef2f2', padding: '2rem', borderRadius: '8px', border: '1px solid #fee2e2' }}>
-                    <p style={{ fontSize: '1rem', lineHeight: '1.6', color: '#991b1b', textAlign: 'justify' }}>
-                        {NarrativeEngine.generateSanitaryShieldNarrative(calculations?.quality, project)}
-                    </p>
-                    <div style={{ marginTop: '1.5rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <div style={{ backgroundColor: 'white', padding: '1rem', borderRadius: '6px' }}>
-                            <strong>Turbiedad:</strong> {calculations?.quality?.turbidity || 0} UNT
-                        </div>
-                        <div style={{ backgroundColor: 'white', padding: '1rem', borderRadius: '6px' }}>
-                            <strong>Coliformes Fecales:</strong> {calculations?.quality?.fecal_coliforms || 0} UFC/100ml
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {/* 3. CONSIDERACIONES & 4. IDENTIFICACION DEL RIESGO A TRATAR */}
+            <ReportSectionRisk project={project} />
+
+            {/* TABLA DE CARACTERIZACION E INTERPRETACION (PAGINA 9) */}
+            <ReportSectionWaterQuality project={project} />
 
             {/* 5. SELECCIÓN Y JUSTIFICACION DE ETAPAS DE TRATAMIENTO */}
-            <div style={{ pageBreakAfter: 'always', padding: '3rem', backgroundColor: 'white' }}>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem', color: '#111827', textTransform: 'uppercase' }}>5. Selección y Justificación de Etapas de Tratamiento</h2>
-                <div style={{ fontSize: '1.0rem', lineHeight: '1.6', color: '#374151', textAlign: 'justify' }}>
-                    <p style={{ marginBottom: '1.5rem' }}>
-                        {NarrativeEngine.generateTreatmentNarrative(calculations, project)}
-                    </p>
-                    <p>
-                        {NarrativeEngine.generateEngineeringDecisions(project?.module_statuses)}
-                    </p>
-                </div>
-            </div>
-
-            {/* 6. FIME TECH & 7. URBANO */}
-            <ReportSectionTheoreticalFramework />
-
-            {/* 8. CAUDALES DE DISEÑO */}
-            <div style={{ pageBreakAfter: 'always', padding: '3rem', backgroundColor: 'white' }}>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem', color: '#111827', textTransform: 'uppercase' }}>8. Caudales de Diseño</h2>
-                <div style={{ marginBottom: '2rem' }}>
-                    <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '1rem', color: '#374151' }}>8.1. Caudal Medio y Máximo de Agua Potable</h3>
-                    <p style={{ fontSize: '1rem', lineHeight: '1.6', color: '#374151', marginBottom: '1.5rem' }}>
-                        {NarrativeEngine.generateDemandNarrative(calculations)}
-                    </p>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
-                        <DataPoint label="Población Diseño" value={`${calculations?.calculated_flows?.final_population?.toLocaleString()} hab.`} />
-                        <DataPoint label="QMD (Diseño)" value={`${qmdMax.toFixed(2)} L/s`} />
-                        <DataPoint label="QMH (Redes)" value={`${calculations?.calculated_flows?.qmh_max?.toFixed(2)} L/s`} />
+            {project?.treatment_category && (
+                <div style={{ pageBreakAfter: 'always', padding: '3rem', backgroundColor: 'white' }}>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem', color: '#111827', textTransform: 'uppercase' }}>5. Selección y Justificación de Etapas de Tratamiento</h2>
+                    <div style={{ fontSize: '1.0rem', lineHeight: '1.6', color: '#374151', textAlign: 'justify' }}>
+                        <p style={{ marginBottom: '1.5rem' }}>
+                            {NarrativeEngine.generateTreatmentNarrative(calculations, project)}
+                        </p>
+                        <p>
+                            {NarrativeEngine.generateEngineeringDecisions(project?.module_statuses)}
+                        </p>
                     </div>
                 </div>
-            </div>
+            )}
+
+            {/* 6. FIME TECH & 7. URBANO */}
+            {project?.treatment_category === 'fime' && <ReportSectionTheoreticalFramework />}
+
+            {/* 8. CAUDALES DE DISEÑO */}
+            {qmdMax > 0 && (
+                <div style={{ pageBreakAfter: 'always', padding: '3rem', backgroundColor: 'white' }}>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem', color: '#111827', textTransform: 'uppercase' }}>8. Caudales de Diseño</h2>
+                    <div style={{ marginBottom: '2rem' }}>
+                        <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '1rem', color: '#374151' }}>8.1. Caudal Medio y Máximo de Agua Potable</h3>
+                        <p style={{ fontSize: '1rem', lineHeight: '1.6', color: '#374151', marginBottom: '1.5rem' }}>
+                            {NarrativeEngine.generateDemandNarrative(calculations)}
+                        </p>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
+                            <DataPoint label="Población Diseño" value={`${calculations?.calculated_flows?.final_population?.toLocaleString() || 0} hab.`} />
+                            <DataPoint label="QMD (Diseño)" value={`${qmdMax.toFixed(2)} L/s`} />
+                            <DataPoint label="QMH (Redes)" value={`${calculations?.calculated_flows?.qmh_max?.toFixed(2) || 0} L/s`} />
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* 9. CALCULO HIDRAULICO DE UNIDADES DE TRATAMIENTO */}
-            <div style={{ pageBreakAfter: 'always', padding: '3rem', backgroundColor: 'white' }}>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem', color: '#111827', textTransform: 'uppercase' }}>9. Cálculo Hidráulico de Unidades de Tratamiento</h2>
-                <p style={{ marginBottom: '2rem', color: '#4b5563' }}>
-                    A continuación, se presentan los parámetros de diseño, dimensionamiento y verificación hidráulica de cada unidad del sistema, conforme al RAS 0330.
-                </p>
+            {activeModules.length > 0 && qmdMax > 0 && (
+                <div style={{ pageBreakAfter: 'always', padding: '3rem', backgroundColor: 'white' }}>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem', color: '#111827', textTransform: 'uppercase' }}>9. Cálculo Hidráulico de Unidades de Tratamiento</h2>
+                    <p style={{ marginBottom: '2rem', color: '#4b5563' }}>
+                        A continuación, se presentan los parámetros de diseño, dimensionamiento y verificación hidráulica de cada unidad del sistema, conforme al RAS 0330.
+                    </p>
 
-                {/* MEMORIA DE CÁLCULO DETALLADA INTEGRADA EN CAPITULO 9 */}
-                {[
-                    { key: 'pfd', title: '9.1. Filtración Gruesa Dinámica (FGDi) y Desarenador', method: FimeEngine.calculatePFDMemoria, params: [qmdMax, { turbidity: quality?.turbidity || 0 }] },
-                    {
-                        key: 'fgac',
-                        title: '9.2. Pérdidas Hidráulicas (FGAC - Interconexión)', // Mapping loosely to TOC structure
-                        method: FimeEngine.calculateFGACMemoria,
-                        params: [qmdMax, { turbidity: quality?.turbidity || 0 }, {
-                            vf: calculations.project_filtros_gruesos?.filtration_velocity || 0.6,
-                            num_units: calculations.project_filtros_gruesos?.number_of_units || 2,
-                            ratio_l_a: 4
-                        }]
-                    },
-                    {
-                        key: 'fla',
-                        title: '9.3. Filtración Lenta en Arena (FLA)',
-                        method: FimeEngine.calculateFLAMemoria,
-                        params: [qmdMax, {
-                            vf: calculations.project_filtros_lentos?.filtration_velocity || 0.15,
-                            num_units: calculations.project_filtros_lentos?.number_of_units || 3,
-                            ratio_l_a: 2
-                        }]
-                    }
-                ].map((mod) => {
-                    const memoria = mod.method(...(mod.params as [any, any, any]));
-                    return (
-                        <div key={mod.key} style={{ marginBottom: '3rem', breakInside: 'avoid' }}>
-                            <h4 style={{ fontSize: '1.1rem', fontWeight: 700, backgroundColor: '#F1F5F9', padding: '0.5rem 1rem', borderRadius: '4px', marginBottom: '1rem' }}>
-                                {mod.title}
-                            </h4>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-                                <thead>
-                                    <tr style={{ borderBottom: '2px solid #E2E8F0', textAlign: 'left' }}>
-                                        <th style={{ padding: '0.5rem' }}>Variable / Componente</th>
-                                        <th style={{ padding: '0.5rem' }}>Criterio RAS</th>
-                                        <th style={{ padding: '0.5rem' }}>Valor de Diseño</th>
-                                        <th style={{ padding: '0.5rem' }}>Resultado</th>
-                                        <th style={{ padding: '0.5rem' }}>Unidad</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {memoria.steps.map((step, idx) => (
-                                        <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                                            <td style={{ padding: '0.5rem', fontWeight: 600 }}>{step.variable}</td>
-                                            <td style={{ padding: '0.5rem', fontStyle: 'italic', color: '#64748B' }}>{step.formula}</td>
-                                            <td style={{ padding: '0.5rem' }}>{step.substitution}</td>
-                                            <td style={{ padding: '0.5rem', fontWeight: 700 }}>{step.result}</td>
-                                            <td style={{ padding: '0.5rem' }}>{step.unit}</td>
+                    {[
+                        { key: 'pfd', title: '9.1. Filtración Gruesa Dinámica (FGDi) y Desarenador', method: FimeEngine.calculatePFDMemoria, params: [qmdMax, { turbidity: quality?.turbidity || 0 }] },
+                        {
+                            key: 'fgac',
+                            title: '9.2. Pérdidas Hidráulicas (FGAC - Interconexión)',
+                            method: FimeEngine.calculateFGACMemoria,
+                            params: [qmdMax, { turbidity: quality?.turbidity || 0 }, {
+                                vf: calculations.project_filtros_gruesos?.filtration_velocity || 0.6,
+                                num_units: calculations.project_filtros_gruesos?.number_of_units || 2,
+                                ratio_l_a: 4
+                            }]
+                        },
+                        {
+                            key: 'fla',
+                            title: '9.3. Filtración Lenta en Arena (FLA)',
+                            method: FimeEngine.calculateFLAMemoria,
+                            params: [qmdMax, {
+                                vf: calculations.project_filtros_lentos?.filtration_velocity || 0.15,
+                                num_units: calculations.project_filtros_lentos?.number_of_units || 3,
+                                ratio_l_a: 2
+                            }]
+                        }
+                    ].filter(mod => activeModules.includes(mod.key)).map((mod) => {
+                        const memoria = mod.method(...(mod.params as [any, any, any]));
+                        return (
+                            <div key={mod.key} style={{ marginBottom: '3rem', breakInside: 'avoid' }}>
+                                <h4 style={{ fontSize: '1.1rem', fontWeight: 700, backgroundColor: '#F1F5F9', padding: '0.5rem 1rem', borderRadius: '4px', marginBottom: '1rem' }}>
+                                    {mod.title}
+                                </h4>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                                    <thead>
+                                        <tr style={{ borderBottom: '2px solid #E2E8F0', textAlign: 'left' }}>
+                                            <th style={{ padding: '0.5rem' }}>Variable / Componente</th>
+                                            <th style={{ padding: '0.5rem' }}>Criterio RAS</th>
+                                            <th style={{ padding: '0.5rem' }}>Valor de Diseño</th>
+                                            <th style={{ padding: '0.5rem' }}>Resultado</th>
+                                            <th style={{ padding: '0.5rem' }}>Unidad</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    );
-                })}
-            </div>
+                                    </thead>
+                                    <tbody>
+                                        {memoria.steps.map((step, idx) => (
+                                            <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                                                <td style={{ padding: '0.5rem', fontWeight: 600 }}>{step.variable}</td>
+                                                <td style={{ padding: '0.5rem', fontStyle: 'italic', color: '#64748B' }}>{step.formula}</td>
+                                                <td style={{ padding: '0.5rem' }}>{step.substitution}</td>
+                                                <td style={{ padding: '0.5rem', fontWeight: 700 }}>{step.result}</td>
+                                                <td style={{ padding: '0.5rem' }}>{step.unit}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
 
             {/* 10. DESINFECCION */}
-            <div style={{ pageBreakAfter: 'always', padding: '3rem', backgroundColor: 'white' }}>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem', color: '#111827', textTransform: 'uppercase' }}>10. Desinfección</h2>
-                <p style={{ marginBottom: '2rem', color: '#4b5563' }}>
-                    El sistema de desinfección garantiza la inactivación de patógenos remanentes mediante cloración.
-                </p>
-                {/* Calculate Disinfection and Render */}
-                {(() => {
-                    const disMemoria = FimeEngine.calculateDisinfectionMemoria(qmdMax, calculations?.calculated_flows?.final_population || 1000, {
-                        contact_time: calculations.project_disinfection?.contact_time || 30,
-                        chlorine_dose: calculations.project_disinfection?.chlorine_dose || 2.0,
-                        chlorine_concentration: 65
-                    });
-                    return (
-                        <>
-                            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '1rem', color: '#374151' }}>10.1 y 10.2 Dosificación y Contacto</h3>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-                                <tbody>
-                                    {disMemoria.steps.map((step, idx) => (
-                                        <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                                            <td style={{ padding: '0.5rem', fontWeight: 600 }}>{step.variable}</td>
-                                            <td style={{ padding: '0.5rem' }}>{step.substitution}</td>
-                                            <td style={{ padding: '0.5rem', fontWeight: 700 }}>{step.result} {step.unit}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </>
-                    )
-                })()}
-            </div>
+            {calculations.project_disinfection && qmdMax > 0 && (
+                <div style={{ pageBreakAfter: 'always', padding: '3rem', backgroundColor: 'white' }}>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem', color: '#111827', textTransform: 'uppercase' }}>10. Desinfección</h2>
+                    <p style={{ marginBottom: '2rem', color: '#4b5563' }}>
+                        El sistema de desinfección garantiza la inactivación de patógenos remanentes mediante cloración.
+                    </p>
+                    {(() => {
+                        const disMemoria = FimeEngine.calculateDisinfectionMemoria(qmdMax, calculations?.calculated_flows?.final_population || 1000, {
+                            contact_time: calculations.project_disinfection?.contact_time || 30,
+                            chlorine_dose: calculations.project_disinfection?.chlorine_dose || 2.0,
+                            chlorine_concentration: 65
+                        });
+                        return (
+                            <>
+                                <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '1rem', color: '#374151' }}>10.1 y 10.2 Dosificación y Contacto</h3>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                                    <tbody>
+                                        {disMemoria.steps.map((step, idx) => (
+                                            <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                                                <td style={{ padding: '0.5rem', fontWeight: 600 }}>{step.variable}</td>
+                                                <td style={{ padding: '0.5rem' }}>{step.substitution}</td>
+                                                <td style={{ padding: '0.5rem', fontWeight: 700 }}>{step.result} {step.unit}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </>
+                        )
+                    })()}
+                </div>
+            )}
 
             {/* 12. MANUAL DE O&M */}
-            <div style={{ pageBreakAfter: 'always', marginTop: '0' }}>
-                <ReportSectionOandM valves={valveSchedule} activeModules={activeModules} />
-            </div>
+            {activeModules.length > 0 && (
+                <div style={{ pageBreakAfter: 'always', marginTop: '0' }}>
+                    <ReportSectionOandM valves={valveSchedule} activeModules={activeModules} />
+                </div>
+            )}
 
             {/* 13. ANEXOS (PLANOS Y ESPECIFICACIONES) */}
-            <div style={{ pageBreakAfter: 'always', padding: '3rem', backgroundColor: 'white' }}>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem', color: '#111827', textTransform: 'uppercase' }}>13. Anexos</h2>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '1rem', color: '#374151' }}>A. Perfil Hidráulico</h3>
-                <ReportSectionHydraulics profile={hydraulicProfile} />
+            {activeModules.length > 0 && (
+                <div style={{ pageBreakAfter: 'always', padding: '3rem', backgroundColor: 'white' }}>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem', color: '#111827', textTransform: 'uppercase' }}>13. Anexos</h2>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '1rem', color: '#374151' }}>A. Perfil Hidráulico</h3>
+                    <ReportSectionHydraulics profile={hydraulicProfile} />
 
-                <div style={{ marginTop: '4rem', breakBefore: 'page' }}>
-                    <ReportSectionLayout plan={masterPlan} />
+                    <div style={{ marginTop: '4rem', breakBefore: 'page' }}>
+                        <ReportSectionLayout plan={masterPlan} />
+                    </div>
+                    <div style={{ marginTop: '3rem' }}></div>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '1rem', color: '#374151' }}>C. Especificaciones Constructivas</h3>
+                    <ReportSectionConstruction />
                 </div>
-                <div style={{ marginTop: '3rem' }}></div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '1rem', color: '#374151' }}>C. Especificaciones Constructivas</h3>
-                <ReportSectionConstruction />
-            </div>
+            )}
 
             {/* Print Styles */}
             <style jsx global>{`

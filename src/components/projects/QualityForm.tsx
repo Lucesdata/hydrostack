@@ -251,7 +251,7 @@ export default function QualityForm({ projectId, initialData }: { projectId: str
                 <div className="flex justify-end pt-4">
                     <button
                         type="button"
-                        onClick={() => router.push(`/dashboard/projects/${projectId}/caudales`)}
+                        onClick={() => router.push(`/dashboard/projects/${projectId}/population`)}
                         disabled={!saved && !initialData}
                         className="px-6 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-40"
                     >

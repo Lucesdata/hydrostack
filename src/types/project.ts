@@ -198,7 +198,11 @@ export interface Project {
     project_context: ProjectContext;
     project_level: ProjectLevel;
     treatment_category: TreatmentCategory | null;
-    decision_metadata: Record<string, any>;
+    decision_metadata: {
+        wizard_completed_at?: string;
+        sourceType?: 'surface' | 'groundwater' | 'rainwater' | 'seawater';
+        [key: string]: any;
+    };
 
     // Campo legacy (mantener por compatibilidad temporal)
     project_type?: string | null;

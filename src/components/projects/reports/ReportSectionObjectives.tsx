@@ -1,96 +1,110 @@
-
-import React from 'react';
+import React, { useMemo } from 'react';
+import { Project } from '@/types/project';
+import { NarrativeEngine } from '@/lib/narrative-engine';
 
 interface ReportSectionObjectivesProps {
-    project: any;
+    project: Project;
 }
 
 export default function ReportSectionObjectives({ project }: ReportSectionObjectivesProps) {
+    const objectives = useMemo(() => NarrativeEngine.generateObjectives(project), [project]);
+
     return (
         <div style={{
             pageBreakAfter: 'always',
-            padding: '3rem',
-            backgroundColor: 'white'
+            padding: '4rem 5rem',
+            backgroundColor: 'white',
+            minHeight: '297mm', // A4 height
+            position: 'relative',
+            fontFamily: '"Times New Roman", Times, serif'
         }}>
-            {/* 2. OBJETIVOS */}
-            <div style={{ marginBottom: '4rem' }}>
-                <h2 style={{
-                    fontSize: '1.5rem',
-                    fontWeight: 800,
-                    marginBottom: '1.5rem',
-                    color: '#111827',
-                    textTransform: 'uppercase'
-                }}>2. Objetivos</h2>
+            {/* Header placeholder (similar to image) */}
+            <div style={{
+                position: 'absolute',
+                top: '2rem',
+                right: '5rem',
+                textAlign: 'right',
+                borderBottom: '1px solid #e5e7eb',
+                width: 'calc(100% - 10rem)',
+                paddingBottom: '0.5rem',
+                marginBottom: '4rem'
+            }}>
+                <div style={{ fontSize: '0.75rem', fontStyle: 'italic', color: '#9ca3af' }}>
+                    Planta de Potabilización {project?.name || 'XXXX'}
+                </div>
+                <div style={{ fontSize: '0.75rem', fontStyle: 'italic', color: '#9ca3af' }}>
+                    Secretaría de Salud Municipal de {project?.location || 'XXXX'}
+                </div>
+            </div>
 
-                <div style={{ marginBottom: '2rem' }}>
-                    <h3 style={{
-                        fontSize: '1.2rem',
-                        fontWeight: 700,
-                        marginBottom: '1rem',
-                        color: '#374151'
-                    }}>2.1. General</h3>
+            <div style={{ marginTop: '6rem' }}>
+                {/* 2. OBJETIVOS */}
+                <h2 style={{
+                    fontSize: '1.4rem',
+                    fontWeight: 700,
+                    marginBottom: '2.5rem',
+                    color: '#000',
+                    textAlign: 'center'
+                }}>2. OBJETIVOS</h2>
+
+                {/* 2.1 GENERAL */}
+                <div style={{ marginBottom: '3rem' }}>
+                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', color: '#000' }}>
+                        <span style={{ fontWeight: 700 }}>2.1.</span>
+                        <span style={{ fontWeight: 700, textTransform: 'uppercase' }}>GENERAL</span>
+                    </div>
                     <p style={{
-                        fontSize: '1rem',
+                        fontSize: '1.05rem',
                         lineHeight: '1.6',
                         textAlign: 'justify',
-                        color: '#4b5563'
+                        color: '#000',
+                        marginLeft: '3rem'
                     }}>
-                        Realizar los estudios y diseños definitivos para la construcción del sistema de potabilización de agua del {project?.name || 'proyecto'}, garantizando el suministro de agua potable en cantidad y calidad, conforme a la normatividad vigente (RAS 2017 y Resolución 2115 de 2007).
+                        {objectives.general}
                     </p>
                 </div>
 
+                {/* 2.2 ESPECIFICOS */}
                 <div>
-                    <h3 style={{
-                        fontSize: '1.2rem',
-                        fontWeight: 700,
-                        marginBottom: '1rem',
-                        color: '#374151'
-                    }}>2.2. Específicos</h3>
+                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', color: '#000' }}>
+                        <span style={{ fontWeight: 700 }}>2.2.</span>
+                        <span style={{ fontWeight: 700, textTransform: 'uppercase' }}>ESPECIFICOS</span>
+                    </div>
                     <ul style={{
                         listStyleType: 'disc',
-                        paddingLeft: '1.5rem',
-                        fontSize: '1rem',
-                        lineHeight: '1.6',
-                        color: '#4b5563',
+                        marginLeft: '5rem',
+                        fontSize: '1.05rem',
+                        lineHeight: '1.8',
+                        color: '#000',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '0.5rem'
+                        gap: '1rem'
                     }}>
-                        <li>Analizar la información básica disponible, incluyendo topografía, calidad de agua y censo poblacional.</li>
-                        <li>Calcular la población de diseño y la demanda hídrica proyectada para el horizonte del proyecto.</li>
-                        <li>Seleccionar y justificar técnicamente la tecnología de tratamiento más adecuada para las condiciones locales.</li>
-                        <li>Diseñar hidráulicamente las unidades de tratamiento (Filtración en Múltiples Etapas).</li>
-                        <li>Elaborar el presupuesto de obras y el manual de operación y mantenimiento del sistema.</li>
+                        {objectives.specifics.map((obj, index) => (
+                            <li key={index} style={{ textAlign: 'justify' }}>
+                                {obj}
+                            </li>
+                        ))}
                     </ul>
                 </div>
             </div>
 
-            {/* 3. CONSIDERACIONES GENERALES */}
-            <div style={{ marginBottom: '4rem' }}>
-                <h2 style={{
-                    fontSize: '1.5rem',
-                    fontWeight: 800,
-                    marginBottom: '1.5rem',
-                    color: '#111827',
-                    textTransform: 'uppercase'
-                }}>3. Consideraciones Generales</h2>
-                <p style={{
-                    fontSize: '1rem',
-                    lineHeight: '1.6',
-                    textAlign: 'justify',
-                    color: '#4b5563',
-                    marginBottom: '1rem'
-                }}>
-                    El presente estudio se enmarca dentro de las políticas nacionales de saneamiento básico y agua potable. Se ha considerado la ubicación geográfica del proyecto en {project?.location || 'la zona de estudio'}, evaluando factores climáticos, topográficos y socioeconómicos que influyen en la sostenibilidad de la infraestructura.
-                </p>
-                <p style={{
-                    fontSize: '1rem',
-                    lineHeight: '1.6',
-                    textAlign: 'justify',
-                    color: '#4b5563'
-                }}>
-                    El diseño se rige por el Reglamento Técnico del Sector de Agua Potable y Saneamiento Básico (RAS 2017), adoptando criterios de eficiencia costos y facilidad operativa, esenciales para la viabilidad a largo plazo en contextos rurales o periurbanos.
-                </p>
+            {/* Footer placeholder (similar to image) */}
+            <div style={{
+                position: 'absolute',
+                bottom: '3rem',
+                left: '5rem',
+                right: '5rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                fontSize: '0.75rem',
+                color: '#9ca3af',
+                borderTop: '1px solid #e5e7eb',
+                paddingTop: '0.5rem'
+            }}>
+                <div style={{ fontStyle: 'italic' }}>Ing. Gilberto PARRA B</div>
+                <div>7</div>
+                <div style={{ fontStyle: 'italic' }}>Informe Final STAP {project?.name || 'XXXX'}</div>
             </div>
         </div>
     );

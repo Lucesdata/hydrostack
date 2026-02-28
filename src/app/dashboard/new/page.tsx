@@ -20,7 +20,12 @@ import {
     Brain,
     Activity,
     Shield,
-    Workflow
+    Workflow,
+    Droplets,
+    Trees,
+    CloudRain,
+    Waves,
+    TestTube2
 } from 'lucide-react';
 import {
     ProjectDomain,
@@ -36,6 +41,37 @@ import {
 } from '@/types/project';
 import { RecommendationEngine } from '@/lib/recommendation-engine';
 import { ViabilityEngine } from '@/lib/viability-engine';
+
+const SOURCE_DEFAULTS: Record<string, { label: string; icon: any; color: string; desc: string; params: { turbidity: number; tds: number; iron: number; fecal_coliforms: number; nitrates: number } }> = {
+    surface: {
+        label: 'Superficial',
+        desc: 'Ríos, Quebradas o Embalses',
+        icon: Trees,
+        color: 'emerald',
+        params: { turbidity: 50, tds: 150, iron: 0.1, fecal_coliforms: 1000, nitrates: 5 }
+    },
+    groundwater: {
+        label: 'Subterránea',
+        desc: 'Pozos profundos o Aljibes',
+        icon: Droplets,
+        color: 'blue',
+        params: { turbidity: 5, tds: 400, iron: 0.8, fecal_coliforms: 0, nitrates: 15 }
+    },
+    rainwater: {
+        label: 'Lluvia',
+        desc: 'Captación en cubiertas',
+        icon: CloudRain,
+        color: 'sky',
+        params: { turbidity: 2, tds: 20, iron: 0.0, fecal_coliforms: 10, nitrates: 2 }
+    },
+    seawater: {
+        label: 'Agua de Mar',
+        desc: 'Océano o pozos costeros salobres',
+        icon: Waves,
+        color: 'teal',
+        params: { turbidity: 10, tds: 35000, iron: 0.0, fecal_coliforms: 50, nitrates: 5 }
+    },
+};
 
 export default function NewProjectPage() {
     const [flowStage, setFlowStage] = useState(0); // 0: Intent, 1: Domain, 2: Wizard
@@ -61,7 +97,9 @@ export default function NewProjectPage() {
         project_horizon: 20,
         source_quality: 'fair' as ViabilityMatrixInputs['source_quality'],
         climate_variability: 'medium' as ViabilityMatrixInputs['climate_variability'],
-        environmental_sensitivity: 'medium' as ViabilityMatrixInputs['environmental_sensitivity']
+        environmental_sensitivity: 'medium' as ViabilityMatrixInputs['environmental_sensitivity'],
+        // Source selection
+        source_type: 'surface' as 'surface' | 'groundwater' | 'rainwater' | 'seawater'
     });
 
     const [loading, setLoading] = useState(false);
@@ -134,7 +172,8 @@ export default function NewProjectPage() {
                         project_level: formData.project_level,
                         treatment_category: formData.treatment_category,
                         decision_metadata: {
-                            wizard_completed_at: new Date().toISOString()
+                            wizard_completed_at: new Date().toISOString(),
+                            sourceType: formData.source_type
                         },
                         status: 'Borrador'
                     }
@@ -186,7 +225,19 @@ export default function NewProjectPage() {
 
                 if (calcError) console.error('Error al inicializar cálculos:', calcError);
 
-                router.push(`/dashboard/projects/${project.id}/general`);
+                // 5. Initialize Pre-defined Water Quality parameters based on Source Type
+                const defaultQuality = SOURCE_DEFAULTS[formData.source_type]?.params || SOURCE_DEFAULTS.surface.params;
+
+                await supabase.from('project_water_quality').insert({
+                    project_id: project.id,
+                    turbidity: defaultQuality.turbidity,
+                    tds: defaultQuality.tds,
+                    iron: defaultQuality.iron,
+                    fecal_coliforms: defaultQuality.fecal_coliforms,
+                    updated_at: new Date().toISOString()
+                });
+
+                router.push(`/dashboard/projects/${project.id}/quality`);
             }
             router.refresh();
         } catch (err: any) {
@@ -220,7 +271,7 @@ export default function NewProjectPage() {
                             title="Nuevo Proyecto"
                             description="Inicia tu diseño técnico desde cero con asistencia paso a paso y validación normativa."
                             buttonText="Iniciar proyecto"
-                            onClick={() => router.push('/dashboard/new/selector')}
+                            onClick={() => router.push('/dashboard/new/introduction')}
                             primary
                             icon={PlusCircle}
                         />
@@ -532,19 +583,85 @@ function StepSocialTechnical({ formData, onChange }: any) {
 }
 
 function StepEconomicEnvironmental({ formData, onChange }: any) {
+    const selectedSource = SOURCE_DEFAULTS[formData.source_type];
+
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
             <h2 className="text-sm font-mono font-medium text-emerald-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                 <Activity className="w-4 h-4" />
-                4. Viabilidad Económica y Ambiental
+                4. Entorno de Ingeniería y Captación
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            {/* Fuente de agua destacada */}
+            <div className="space-y-4">
+                <label className="text-xs font-mono font-medium text-slate-500 uppercase tracking-widest block mb-2">
+                    Fuente de Agua Cruda
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {Object.entries(SOURCE_DEFAULTS).map(([key, source]) => (
+                        <div
+                            key={key}
+                            onClick={() => onChange('source_type', key)}
+                            className={`
+                                cursor-pointer flex flex-col items-center gap-3 p-4 rounded-xl border text-center transition-all 
+                                ${formData.source_type === key
+                                    ? `bg-${source.color}-500/10 border-${source.color}-500/40 shadow-lg shadow-${source.color}-500/5`
+                                    : 'bg-white/5 border-white/5 hover:bg-white/10 opacity-60'}
+                            `}
+                        >
+                            <source.icon className={`w-8 h-8 ${formData.source_type === key ? `text-${source.color}-400` : 'text-slate-400'}`} />
+                            <div>
+                                <h4 className={`text-sm font-bold ${formData.source_type === key ? 'text-white' : 'text-slate-300'}`}>{source.label}</h4>
+                                <p className="text-[10px] text-slate-500 leading-tight mt-1">{source.desc}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Parámetros de calidad típicos */}
+                <div className="mt-4 p-5 rounded-xl bg-slate-900/60 border border-slate-700 flex flex-col sm:flex-row gap-6 items-start sm:items-center">
+                    <div className="flex items-center gap-3 w-full sm:w-auto shrink-0">
+                        <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                            <TestTube2 className="w-5 h-5 text-blue-400" />
+                        </div>
+                        <div>
+                            <h4 className="text-xs font-mono font-bold text-blue-400 uppercase tracking-wider">Parámetros Estimados</h4>
+                            <p className="text-[10px] text-slate-500">Valores típicos para origen {selectedSource.label.toLowerCase()}</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:flex sm:flex-1 gap-4 sm:gap-6 sm:justify-end w-full">
+                        <div className="space-y-1 text-center sm:text-right">
+                            <span className="text-[10px] font-mono text-slate-500 block">Turbiedad</span>
+                            <span className="text-sm font-black text-white">{selectedSource.params.turbidity} <span className="text-[10px] text-slate-600 font-normal">NTU</span></span>
+                        </div>
+                        <div className="space-y-1 text-center sm:text-right">
+                            <span className="text-[10px] font-mono text-slate-500 block">TDS</span>
+                            <span className="text-sm font-black text-white">{selectedSource.params.tds} <span className="text-[10px] text-slate-600 font-normal">mg/L</span></span>
+                        </div>
+                        <div className="space-y-1 text-center sm:text-right">
+                            <span className="text-[10px] font-mono text-slate-500 block">Hierro</span>
+                            <span className="text-sm font-black text-white">{selectedSource.params.iron} <span className="text-[10px] text-slate-600 font-normal">mg/L</span></span>
+                        </div>
+                        <div className="space-y-1 text-center sm:text-right">
+                            <span className="text-[10px] font-mono text-slate-500 block">Coliformes</span>
+                            <span className="text-sm font-black text-white">{selectedSource.params.fecal_coliforms} <span className="text-[10px] text-slate-600 font-normal">NMP</span></span>
+                        </div>
+                        <div className="space-y-1 text-center sm:text-right">
+                            <span className="text-[10px] font-mono text-slate-500 block">Nitratos</span>
+                            <span className="text-sm font-black text-white">{selectedSource.params.nitrates} <span className="text-[10px] text-slate-600 font-normal">mg/L</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-white/5">
                 <SelectField label="Tolerancia Costos Operación (OpEx)" name="opex_tolerance" value={formData.opex_tolerance} onChange={onChange} options={[
                     { value: 'low', label: 'Baja' },
                     { value: 'medium', label: 'Media' },
                     { value: 'high', label: 'Alta' }
                 ]} />
-                <SelectField label="Calidad de la Fuente" name="source_quality" value={formData.source_quality} onChange={onChange} options={[
+                <SelectField label="Calidad de la Fuente (Global)" name="source_quality" value={formData.source_quality} onChange={onChange} options={[
                     { value: 'good', label: 'Buena' },
                     { value: 'fair', label: 'Regular' },
                     { value: 'poor', label: 'Mala' }
@@ -560,7 +677,7 @@ function StepEconomicEnvironmental({ formData, onChange }: any) {
                     </label>
                     <input
                         type="number"
-                        className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all outline-none"
+                        className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all outline-none"
                         value={formData.project_horizon}
                         onChange={(e) => onChange('project_horizon', parseInt(e.target.value))}
                     />

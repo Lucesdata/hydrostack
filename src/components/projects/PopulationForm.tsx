@@ -16,7 +16,8 @@ import {
     ChevronRight,
     Save,
     AlertCircle,
-    CheckCircle2
+    CheckCircle2,
+    Compass
 } from 'lucide-react';
 
 type CENSUS_DATA = {
@@ -31,10 +32,18 @@ type CENSUS_DATA = {
     calculated_flows?: any;
 };
 
-export default function PopulationForm({ projectId, initialData }: { projectId: string; initialData: CENSUS_DATA | null }) {
+export default function PopulationForm({
+    projectId,
+    initialData,
+    projectMetadata
+}: {
+    projectId: string;
+    initialData: CENSUS_DATA | null;
+    projectMetadata?: { name: string; location: string };
+}) {
     const [formData, setFormData] = useState({
-        community_name: initialData?.community_name ?? '',
-        municipality: initialData?.municipality ?? '',
+        community_name: initialData?.community_name ?? projectMetadata?.name ?? '',
+        municipality: initialData?.municipality ?? projectMetadata?.location ?? '',
         dwellings_number: initialData?.dwellings_number ?? '',
         people_per_dwelling: initialData?.people_per_dwelling ?? '',
         growth_rate: initialData?.growth_rate ?? 1.5,
@@ -141,26 +150,18 @@ export default function PopulationForm({ projectId, initialData }: { projectId: 
                     {/* Compact Grid 1: Community & Census */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-8 items-end">
                         <div className="md:col-span-2 space-y-4">
-                            <label className="inline-flex items-center gap-2 bg-emerald-500 text-white px-3 py-1 rounded text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20">
-                                <Home className="w-3 h-3" /> Comunidad y Municipio *
+                            <label className="inline-flex items-center gap-2 bg-slate-800 text-slate-400 px-3 py-1 rounded text-[10px] font-black uppercase tracking-widest border border-white/5">
+                                <Home className="w-3 h-3 text-emerald-500" /> Datos Heredados (Fase 0)
                             </label>
-                            <div className="grid grid-cols-2 gap-3">
-                                <input
-                                    name="community_name"
-                                    value={formData.community_name}
-                                    onChange={handleChange}
-                                    placeholder="Nombre"
-                                    className="w-full bg-slate-900/60 border-2 border-slate-700 rounded-xl px-4 py-3 text-base text-white font-bold focus:border-emerald-500 transition-all outline-none shadow-md"
-                                    required
-                                />
-                                <input
-                                    name="municipality"
-                                    value={formData.municipality}
-                                    onChange={handleChange}
-                                    placeholder="Municipio"
-                                    className="w-full bg-slate-900/60 border-2 border-slate-700 rounded-xl px-4 py-3 text-base text-white font-bold focus:border-emerald-500 transition-all outline-none shadow-md"
-                                    required
-                                />
+                            <div className="grid grid-cols-2 gap-3 uppercase tracking-tighter">
+                                <div className="bg-slate-950/50 border border-white/5 rounded-xl px-4 py-2.5">
+                                    <p className="text-[8px] font-bold text-slate-600 uppercase tracking-widest mb-1">Comunidad</p>
+                                    <p className="text-xs font-black text-white/40 italic truncate">{formData.community_name}</p>
+                                </div>
+                                <div className="bg-slate-950/50 border border-white/5 rounded-xl px-4 py-2.5">
+                                    <p className="text-[8px] font-bold text-slate-600 uppercase tracking-widest mb-1">Localidad/Municipio</p>
+                                    <p className="text-xs font-black text-white/40 italic truncate">{formData.municipality}</p>
+                                </div>
                             </div>
                         </div>
 
@@ -245,7 +246,7 @@ export default function PopulationForm({ projectId, initialData }: { projectId: 
                         </div>
 
                         {/* Actions */}
-                        <div className="flex gap-2">
+                        <div className="flex flex-col gap-2">
                             <button
                                 type="submit"
                                 disabled={loading}
@@ -263,15 +264,17 @@ export default function PopulationForm({ projectId, initialData }: { projectId: 
                                     </>
                                 )}
                             </button>
-                            <button
-                                type="button"
-                                onClick={() => router.push(`/dashboard/projects/${projectId}/floating-population`)}
-                                disabled={!(saved || initialData?.initial_population)}
-                                className="w-14 h-14 bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 text-white rounded-xl transition-all flex items-center justify-center disabled:opacity-40 shadow-xl"
-                                title="Siguiente"
-                            >
-                                <ChevronRight className="w-8 h-8" />
-                            </button>
+                            {(saved || initialData?.initial_population) && (
+                                <button
+                                    type="button"
+                                    onClick={() => router.push(`/dashboard/projects/${projectId}/selector`)}
+                                    className="flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all bg-amber-500/15 border border-amber-500/30 text-amber-400 hover:bg-amber-500/25 hover:border-amber-500/50 shadow-lg shadow-amber-500/10 animate-in fade-in slide-in-from-bottom-2 duration-500"
+                                >
+                                    <Compass className="w-4 h-4" />
+                                    Selector Tecnológico
+                                    <ChevronRight className="w-3.5 h-3.5" />
+                                </button>
+                            )}
                         </div>
                     </div>
                 </form>

@@ -51,22 +51,137 @@ export class NarrativeEngine {
      * BLOQUE A: Introducción y Contextualización
      */
     static generateIntroduction(project: Project): string {
-        const domain = DOMAIN_LABELS[project.project_domain];
-        const context = CONTEXT_LABELS[project.project_context];
-        const level = LEVEL_LABELS[project.project_level];
-        const category = project.treatment_category ? CATEGORY_LABELS[project.treatment_category] : 'No definida';
-        const isRural = project.project_context === 'rural';
+        const contextType = project.project_context || 'comunidad';
+        const projectName = project.name || 'XXXX';
+        const waterSource = project.decision_metadata?.selector_origin || 'rio';
+        const sourceName = project.decision_metadata?.source_name;
+        const location = project.location || 'XXXX';
+        const latitude = project.decision_metadata?.latitude;
+        const longitude = project.decision_metadata?.longitude;
 
-        let introduction = `El presente documento constituye la memoria descriptiva técnica del proyecto "${project.name}", integrado en el dominio de ${domain}. 
-        Bajo un contexto de implementación ${context}, el sistema se ha dimensionado para un alcance de ${level}. `;
+        const sourceLabels: Record<string, string> = {
+            rio: 'fuentes superficiales (Río/Quebrada)',
+            pozo: 'fuentes subterráneas (Pozo/Nacimiento)',
+            mar: 'fuente marina (Desalinización)',
+            lluvia: 'fuentes pluviales (Aguas Lluvia)'
+        };
 
-        if (isRural) {
-            introduction += `La ingeniería propuesta adopta una filosofía de diseño centrada en la sostenibilidad en el tiempo y la resiliencia operativa. Se prioriza un esquema de barreras múltiples de fácil operación, reconociendo las limitaciones de personal calificado y logística de insumos propias del entorno rural. `;
+        const contextLabels: Record<string, string> = {
+            rural: 'comunidad',
+            urban: 'ciudad',
+            industrial: 'centro industrial',
+            residential: 'hotel / conjunto residencial',
+            desalination: 'zona costera'
+        };
+
+        const selectedContext = contextLabels[contextType] || contextType;
+        const selectedSource = sourceName || sourceLabels[waterSource] || waterSource;
+
+        let locationText = `en la ${selectedContext} de ${projectName}, ubicada en ${location}.`;
+        if (latitude && longitude) {
+            locationText = `en la ${selectedContext} de ${projectName}, ubicada en ${location}, con coordenadas geográficas de referencia ${latitude} de latitud y ${longitude} de longitud.`;
         }
 
-        introduction += `La selección tecnológica se ha centrado en el modelo de "${category}", buscando un equilibrio entre eficiencia hidráulica, simplicidad de mantenimiento y cumplimiento riguroso de la normativa técnica vigente.`;
+        return `El agua es una de las sustancias químicas más importantes y uno de los principales constituyentes de la materia viva y del medio en que se vive, y su abastecimiento con excelente calidad y en cantidad suficiente es reconocido actualmente como una condición esencial para posibilitar el bienestar y el desarrollo de los asentamientos humanos.
 
-        return introduction;
+En la naturaleza el agua no se encuentra en estado puro pues en su contacto con la atmósfera y los suelos arrastra diversas sustancias en forma de gases disueltos, sólidos en suspensión y disueltos, y microorganismos, algunos de los cuales se consideran impurezas para el uso del agua en el consumo humano. Precisamente, el agua con impurezas es convertida a agua potable a través de un tratamiento que provoca cambios físicos, químicos y biológicos en ella. Ese tratamiento se selecciona conociendo la calidad de la fuente de abasto y el uso a que se le destine después de tratada.
+Los métodos de tratamiento de las aguas pueden ser sencillos como la sedimentación y la filtración o llevar consigo cambios físicos y químicos más complejos como la coagulación y la floculación.
+
+La decisión de realizar una construcción del sistema de potabilización ${locationText} busca cumplir con el objetivo de tener agua de excelente calidad en sus hogares. Ante esta iniciativa se realiza entonces este informe, cuyo objetivo primordial es presentar el diseño de la planta de potabilización de agua para dicho sector. Este trabajo reviste una gran importancia porque permitirá realizar cambios positivos en la zona, no solo en el área de salud pública sino también en la parte social. Además generará una activación relevante de la economía, y en consecuencia, un mayor desarrollo para la población en estudio y el país en general. Las fuentes de agua identificadas para el abastecimiento del sistema corresponden a ${selectedSource}, las cuales han sido previamente caracterizadas para el presente estudio.
+
+Se presenta además el cálculo del sistema de desinfección para el acueducto ${projectName}, el cual consta de dosificador de cabeza constante y tanque de almacenamiento.
+
+Para este trabajo se utilizaron métodos tan importantes como la revisión bibliográfica, visitas técnicas al lugar, reuniones con la comunidad y modelaciones hidráulicas, entre otros.`;
+    }
+
+    /**
+     * BLOQUE A.2: Objetivos del Proyecto
+     */
+    static generateObjectives(project: Project): { general: string; specifics: string[] } {
+        const projectName = project.name || 'XXXX';
+        const location = project.location || 'XXXX';
+        const contextType = project.project_context || 'rural';
+
+        const contextLabels: Record<string, string> = {
+            rural: 'corregimiento',
+            urban: 'municipio',
+            industrial: 'sector industrial',
+            residential: 'sector residencial',
+            desalination: 'sector costero'
+        };
+
+        const selectedContext = contextLabels[contextType] || 'sector';
+
+        return {
+            general: `Realizar el diseño del sistema de potabilización de agua para el abastecimiento del ${selectedContext} de ${projectName}, municipio de ${location}.`,
+            specifics: [
+                `Mejorar las condiciones de salubridad en la comunidad de ${projectName}.`,
+                `Diseñar un sistema que permita generar empleo y capacitación a los habitantes de la población, para un mayor desarrollo de la misma.`,
+                `Contribuir con el incremento de información y experiencia en cuanto al desempeño de plantas FIME en nuestro país.`,
+                `Permitir la ejecución de un sistema que sea viable para la comunidad tanto técnica como económica y ambientalmente.`
+            ]
+        };
+    }
+
+    /**
+     * BLOQUE A.3: Consideraciones Generales
+     */
+    static generateGeneralConsiderations(project: Project): string {
+        const sourceName = project.decision_metadata?.source_name || 'la fuente identificada';
+        const waterSource = project.decision_metadata?.selector_origin || 'rio';
+
+        const sourceLabels: Record<string, string> = {
+            rio: 'fuentes superficiales (Río/Quebrada)',
+            pozo: 'fuentes subterráneas (Pozo/Nacimiento)',
+            mar: 'fuente marina (Desalinización)',
+            lluvia: 'fuentes pluviales (Aguas Lluvia)'
+        };
+
+        const selectedSourceType = sourceLabels[waterSource] || 'la fuente hídrica';
+
+        return `Las posibles fuentes hídricas para el abastecimiento de la población corresponden a ${selectedSourceType} identificadas como ${sourceName}, la cual presenta condiciones adecuadas para su potabilización. En el presente diseño se ha priorizado el uso de esta fuente para abastecer a la totalidad de la población beneficiaria, garantizando el suministro de agua apta para consumo humano bajo los parámetros de calidad del RAS 0330.`;
+    }
+
+    /**
+     * BLOQUE A.4: Identificación del Riesgo a Tratar
+     */
+    static generateRiskIdentification(project: Project): string[] {
+        const sourceName = project.decision_metadata?.source_name || 'la fuente';
+
+        return [
+            `Un buen servicio de abastecimiento de Agua es esencial para la vida y la productividad en los asentamientos humanos. La protección de las fuentes es siempre la primera manera de contribuir a la seguridad de este servicio. En efecto, el mayor impacto de las aguas residuales sobre la salud pública sucede a través de los sistemas de abastecimiento de Agua, cuyas cuencas están siendo degradadas con descargas que incluyen desechos domésticos, escorrentía superficial de aguas lluvias, excedentes de sistemas de riego y desechos del procesamiento de alimentos y en algunas circunstancias, hasta efluentes de procesos industriales.`,
+            `La contaminación con excretas de humanos y animales contribuye con gran variedad de virus, bacterias, protozoarios y helmintos. Fallas en la protección de las fuentes o en el tratamiento del agua captada pone a la comunidad en riesgo de sufrir enfermedades transmisibles, particularmente los niños, ancianos o, en general, la población con deficiencias en su sistema inmunológico. Para ellos las dosis infectivas son significativamente más bajas que para el resto de la población. Los riesgos asociados a la contaminación microbiológica, son pues de tal importancia, que su control debe ser considerado con prioridad.`,
+            `El principal riesgo a intervenir para la calidad de Agua de las fuentes de abastecimiento es entonces el microbiológico, pues a pesar de que los niveles de contaminación fecal son relativamente bajos, es importante tener en cuenta que las enfermedades asociadas con este tipo de contaminación son tan importantes que su control debe ser siempre una prioridad. En la siguiente tabla se muestra el resultado de la caracterización fisicoquímica y bacteriológica realizada al agua de la captación del acueducto ${sourceName}.`
+        ];
+    }
+
+    /**
+     * BLOQUE A.4.1: Caracterización de la Fuente (Valores Promedio)
+     */
+    static getAverageWaterQuality() {
+        return [
+            { parameter: 'TURBIEDAD (UNT)', min: '3.5', med: '4.1', max: '175', var: '7.8' },
+            { parameter: 'COLOR (UPC)', min: '5.8', med: '10.0', max: '16.2', var: '10.9' },
+            { parameter: 'Coliformes fecales (UFC/100mL)', min: '24', med: '56', max: '78', var: '61.5' },
+            { parameter: 'Coliformes totales (UFC/100mL)', min: '35', med: '73', max: '99', var: '86.2' },
+            { parameter: 'pH (Un)', min: '7.1', med: '7.37', max: '7.5', var: '7.4' },
+            { parameter: 'ALC. (mg/l CaCO3)', min: '120.3', med: '150', max: '170.6', var: '151.1' },
+            { parameter: 'Dureza total (mg/l CaCO3)', min: '43.1', med: '80.0', max: '87.6', var: '71.4' },
+            { parameter: 'Mn (mg/L)', min: '-', med: 'ND', max: '-', var: '-' },
+            { parameter: 'Fe (mg/L)', min: '-', med: 'ND', max: '-', var: '-' },
+            { parameter: 'OTROS', min: '', med: 'Picos de corta duración T<24H', max: '', var: '' }
+        ];
+    }
+
+    /**
+     * BLOQUE A.4.2: Narrativa de Cierre de Riesgo Químico
+     */
+    static generateRiskConcludingNarrative(project: Project): string[] {
+        const projectName = project.name || 'XXXX';
+        return [
+            `Hay en la fuente pocos contaminantes de naturaleza química que pueden dar lugar a riesgos agudos de salud pública. La buena calidad de la fuente de agua y el sencillo tratamiento que requiere, reduce las dosis necesarias de Cloro, como también la posible formación de subproductos, haciendo más eficiente la desinfección.`,
+            `En este caso, se cuenta con una fuente bastante aceptable en términos fisicoquímicos, y en consecuencia, el diseño de la planta debe garantizar un efluente de excelente calidad a la comunidad del Corregimiento ${projectName}.`
+        ];
     }
 
     /**
