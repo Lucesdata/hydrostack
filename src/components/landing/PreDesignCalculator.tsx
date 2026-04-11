@@ -4,7 +4,6 @@ import React, { useState, useMemo } from 'react';
 import { Compass, Users, Zap, Wrench, ArrowRight, CheckCircle, FileText, Droplets, Sun, BatteryCharging, Mountain } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-// Technology database matching the real IGST engine
 const TECHNOLOGIES = [
     { name: 'FLA', label: 'Filtración Lenta en Arena', scores: { social: 95, economic: 90, environmental: 95, technical: 80 } },
     { name: 'FIME', label: 'Filtración en Múltiples Etapas', scores: { social: 85, economic: 75, environmental: 90, technical: 90 } },
@@ -19,7 +18,6 @@ type SourceType = 'superficial' | 'subterranea' | 'lluvia';
 type EnergyType = 'red' | 'solar' | 'ninguna';
 type OperatorLevel = 'basico' | 'intermedio' | 'avanzado';
 
-// Inline SVG radar chart
 const RadarChart = ({ scores }: { scores: { social: number; economic: number; environmental: number; technical: number } }) => {
     const size = 140;
     const cx = size / 2;
@@ -36,51 +34,35 @@ const RadarChart = ({ scores }: { scores: { social: number; economic: number; en
     const toXY = (angle: number, value: number) => {
         const rad = (angle * Math.PI) / 180;
         const ratio = value / 100;
-        return {
-            x: cx + r * ratio * Math.cos(rad),
-            y: cy + r * ratio * Math.sin(rad),
-        };
+        return { x: cx + r * ratio * Math.cos(rad), y: cy + r * ratio * Math.sin(rad) };
     };
 
-    const dataPoints = labels.map(l => {
-        const val = scores[l.key as keyof typeof scores];
-        return toXY(l.angle, val);
-    });
-
+    const dataPoints = labels.map(l => toXY(l.angle, scores[l.key as keyof typeof scores]));
     const dataPath = dataPoints.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ') + 'Z';
-
-    // Grid rings
     const rings = [25, 50, 75, 100];
 
     return (
         <svg viewBox={`0 0 ${size} ${size}`} className="w-full h-full">
-            {/* Grid */}
             {rings.map(ring => {
-                const rPoints = labels.map(l => toXY(l.angle, ring));
-                const rPath = rPoints.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ') + 'Z';
-                return <path key={ring} d={rPath} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" />;
+                const rPath = labels.map((l, i) => {
+                    const p = toXY(l.angle, ring);
+                    return `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`;
+                }).join(' ') + 'Z';
+                return <path key={ring} d={rPath} fill="none" stroke="rgba(0,200,168,0.12)" strokeWidth="0.5" />;
             })}
-
-            {/* Axes */}
             {labels.map(l => {
                 const end = toXY(l.angle, 100);
-                return <line key={l.key} x1={cx} y1={cy} x2={end.x} y2={end.y} stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />;
+                return <line key={l.key} x1={cx} y1={cy} x2={end.x} y2={end.y} stroke="rgba(0,200,168,0.15)" strokeWidth="0.5" />;
             })}
-
-            {/* Data polygon */}
-            <path d={dataPath} fill="rgba(245, 158, 11, 0.15)" stroke="rgb(245, 158, 11)" strokeWidth="1.5" />
-
-            {/* Data points */}
+            <path d={dataPath} fill="rgba(240,168,50,0.12)" stroke="rgb(240,168,50)" strokeWidth="1.5" />
             {dataPoints.map((p, i) => (
-                <circle key={i} cx={p.x} cy={p.y} r="2.5" fill="rgb(245, 158, 11)" />
+                <circle key={i} cx={p.x} cy={p.y} r="2.5" fill="rgb(240,168,50)" />
             ))}
-
-            {/* Labels */}
             {labels.map(l => {
                 const labelPos = toXY(l.angle, 125);
-                const val = scores[l.key as keyof typeof scores];
                 return (
-                    <text key={l.key} x={labelPos.x} y={labelPos.y} textAnchor="middle" dominantBaseline="middle" className="text-[7px] fill-slate-400 font-mono font-bold">
+                    <text key={l.key} x={labelPos.x} y={labelPos.y} textAnchor="middle" dominantBaseline="middle"
+                        style={{ fontSize: '7px', fill: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
                         {l.label}
                     </text>
                 );
@@ -97,154 +79,155 @@ export default function PreDesignCalculator() {
     const [operator, setOperator] = useState<OperatorLevel>('basico');
     const [showResults, setShowResults] = useState(false);
 
-    // IGST-like scoring engine (simplified for landing)
     const result = useMemo(() => {
-        // Apply modifiers based on inputs
-        const modifiers = {
-            social: 0,
-            economic: 0,
-            environmental: 0,
-            technical: 0,
-        };
+        const mod = { social: 0, economic: 0, environmental: 0, technical: 0 };
+        if (source === 'subterranea') { mod.environmental += 10; mod.technical -= 5; }
+        else if (source === 'lluvia') { mod.social += 5; mod.environmental += 15; mod.economic += 10; }
+        if (population > 5000) { mod.technical += 10; mod.economic -= 15; mod.social -= 10; }
+        else if (population > 2000) { mod.technical += 5; mod.economic -= 5; }
+        if (energy === 'ninguna') { mod.social += 15; mod.environmental += 10; mod.economic += 20; }
+        else if (energy === 'solar') { mod.environmental += 10; mod.economic += 5; }
+        if (operator === 'basico') { mod.social += 10; mod.technical -= 10; }
+        else if (operator === 'avanzado') { mod.technical += 15; mod.social -= 5; }
 
-        // Source modifiers
-        if (source === 'subterranea') {
-            modifiers.environmental += 10;
-            modifiers.technical -= 5;
-        } else if (source === 'lluvia') {
-            modifiers.social += 5;
-            modifiers.environmental += 15;
-            modifiers.economic += 10;
-        }
-
-        // Population modifiers (larger = more complex)
-        if (population > 5000) {
-            modifiers.technical += 10;
-            modifiers.economic -= 15;
-            modifiers.social -= 10;
-        } else if (population > 2000) {
-            modifiers.technical += 5;
-            modifiers.economic -= 5;
-        }
-
-        // Energy modifiers
-        if (energy === 'ninguna') {
-            modifiers.social += 15;
-            modifiers.environmental += 10;
-            modifiers.economic += 20;
-        } else if (energy === 'solar') {
-            modifiers.environmental += 10;
-            modifiers.economic += 5;
-        }
-
-        // Operator modifiers
-        if (operator === 'basico') {
-            modifiers.social += 10;
-            modifiers.technical -= 10;
-        } else if (operator === 'avanzado') {
-            modifiers.technical += 15;
-            modifiers.social -= 5;
-        }
-
-        // Score each technology
         const scored = TECHNOLOGIES.map(tech => {
             const s = {
-                social: Math.min(100, Math.max(0, tech.scores.social + modifiers.social)),
-                economic: Math.min(100, Math.max(0, tech.scores.economic + modifiers.economic)),
-                environmental: Math.min(100, Math.max(0, tech.scores.environmental + modifiers.environmental)),
-                technical: Math.min(100, Math.max(0, tech.scores.technical + modifiers.technical)),
+                social: Math.min(100, Math.max(0, tech.scores.social + mod.social)),
+                economic: Math.min(100, Math.max(0, tech.scores.economic + mod.economic)),
+                environmental: Math.min(100, Math.max(0, tech.scores.environmental + mod.environmental)),
+                technical: Math.min(100, Math.max(0, tech.scores.technical + mod.technical)),
             };
-            const igst = Math.round((s.social + s.economic + s.environmental + s.technical) / 4);
-            return { ...tech, finalScores: s, igst };
+            return { ...tech, finalScores: s, igst: Math.round((s.social + s.economic + s.environmental + s.technical) / 4) };
         });
-
         scored.sort((a, b) => b.igst - a.igst);
         return scored[0];
     }, [source, population, energy, operator]);
 
-    const handleCalculate = () => {
-        setShowResults(true);
-    };
+    const handleStartProject = () => router.push('/dashboard/new/introduction');
 
-    const handleStartProject = () => {
-        router.push('/dashboard/new/introduction');
-    };
+    const selBtn = (active: boolean) => ({
+        padding: '10px 8px',
+        borderRadius: '0.6rem',
+        fontSize: '0.7rem',
+        fontWeight: 700,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase' as const,
+        display: 'flex',
+        flexDirection: 'column' as const,
+        alignItems: 'center',
+        gap: '6px',
+        transition: 'all 0.2s',
+        border: active ? '1px solid rgba(240,168,50,0.5)' : '1px solid rgba(0,200,168,0.1)',
+        background: active ? 'rgba(240,168,50,0.1)' : 'rgba(0,200,168,0.03)',
+        color: active ? 'var(--amber-400)' : 'var(--text-muted)',
+        cursor: 'pointer',
+    });
 
     return (
-        <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-24 relative overflow-hidden">
-            {/* Animated Grid Background */}
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:80px_80px] pointer-events-none animate-grid-flow"></div>
-
-            {/* Radial Gradient Accent */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-amber-500/5 rounded-full blur-3xl pointer-events-none"></div>
+        <section
+            className="relative py-28 overflow-hidden"
+            style={{ background: 'var(--ocean-900)' }}
+        >
+            {/* Background */}
+            <div className="absolute inset-0 bg-grid-ocean pointer-events-none" />
+            <div
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] pointer-events-none"
+                style={{ background: 'radial-gradient(circle, rgba(240,168,50,0.04) 0%, transparent 65%)', borderRadius: '50%', filter: 'blur(40px)' }}
+            />
+            <div
+                className="absolute top-0 left-0 right-0 h-px"
+                style={{ background: 'linear-gradient(90deg, transparent, rgba(0,200,168,0.2), transparent)' }}
+            />
 
             <div className="max-w-7xl mx-auto px-6 relative z-10">
-                <div className="grid lg:grid-cols-2 gap-12 items-center">
+                <div className="grid lg:grid-cols-2 gap-14 items-center">
 
-                    {/* Left: Info */}
+                    {/* Left info */}
                     <div>
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 text-xs font-mono font-medium tracking-wide uppercase mb-6">
-                            <Compass className="w-3 h-3" />
+                        <div
+                            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono tracking-widest uppercase mb-8"
+                            style={{
+                                border: '1px solid rgba(240,168,50,0.25)',
+                                background: 'rgba(240,168,50,0.06)',
+                                color: 'var(--amber-400)',
+                            }}
+                        >
+                            <Compass className="w-3.5 h-3.5" />
                             Motor IGST Multicriterio
                         </div>
 
-                        <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-tight mb-6">
-                            ¿Qué tecnología necesita tu comunidad?
+                        <h2
+                            className="font-display font-bold leading-tight mb-6"
+                            style={{
+                                fontSize: 'clamp(2rem, 3.5vw, 3rem)',
+                                color: 'var(--text-primary)',
+                                letterSpacing: '-0.02em',
+                            }}
+                        >
+                            ¿Qué tecnología<br />
+                            necesita tu{' '}
+                            <em style={{ color: 'var(--amber-400)', fontStyle: 'italic' }}>comunidad?</em>
                         </h2>
 
-                        <p className="text-lg text-slate-300 leading-relaxed mb-8">
-                            El motor de selección IGST evalúa <span className="text-amber-400 font-semibold">7 tecnologías</span> en 4 dimensiones para encontrar la solución óptima.
-                            Pruébalo ahora y obtén un informe técnico completo.
+                        <p
+                            className="text-base leading-relaxed mb-10"
+                            style={{ color: 'var(--text-secondary)', maxWidth: '42ch' }}
+                        >
+                            El motor de selección IGST evalúa{' '}
+                            <span style={{ color: 'var(--amber-400)', fontWeight: 600 }}>7 tecnologías</span>{' '}
+                            en 4 dimensiones para encontrar la solución óptima.
                         </p>
 
-                        <div className="space-y-4">
-                            <div className="flex items-start gap-3">
-                                <div className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                                    <CheckCircle className="w-4 h-4 text-amber-400" />
+                        <div className="space-y-5">
+                            {[
+                                { icon: CheckCircle, color: 'var(--amber-400)', title: 'Motor IGST multicriterio', sub: '4 dimensiones: Sociocultural, Económica, Ambiental, Tecnológica' },
+                                { icon: CheckCircle, color: 'var(--teal-500)', title: 'Informe técnico automático', sub: 'Documento normativo RAS-2000 generado al instante' },
+                                { icon: CheckCircle, color: 'var(--sky-400)', title: 'Sin registro', sub: 'Prueba el selector gratis, sin compromiso' },
+                            ].map((item, i) => (
+                                <div key={i} className="flex items-start gap-4">
+                                    <div
+                                        className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+                                        style={{ background: `${item.color}12`, border: `1px solid ${item.color}30` }}
+                                    >
+                                        <item.icon className="w-4 h-4" style={{ color: item.color }} />
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{item.title}</p>
+                                        <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{item.sub}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="text-white font-medium">Motor IGST multicriterio</p>
-                                    <p className="text-sm text-slate-400">4 dimensiones: Sociocultural, Económica, Ambiental, Tecnológica</p>
-                                </div>
-                            </div>
-                            <div className="flex items-start gap-3">
-                                <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                                    <CheckCircle className="w-4 h-4 text-emerald-400" />
-                                </div>
-                                <div>
-                                    <p className="text-white font-medium">Informe técnico automático</p>
-                                    <p className="text-sm text-slate-400">Documento normativo RAS-2000 generado al instante</p>
-                                </div>
-                            </div>
-                            <div className="flex items-start gap-3">
-                                <div className="w-6 h-6 rounded-full bg-sky-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                                    <CheckCircle className="w-4 h-4 text-sky-400" />
-                                </div>
-                                <div>
-                                    <p className="text-white font-medium">Sin registro</p>
-                                    <p className="text-sm text-slate-400">Prueba el selector gratis, sin compromiso</p>
-                                </div>
-                            </div>
+                            ))}
                         </div>
                     </div>
 
-                    {/* Right: Mini Selector Card */}
-                    <div className="bg-slate-950/80 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
-                        <div className="flex items-center gap-3 mb-8">
-                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center">
-                                <Compass className="w-6 h-6 text-white" />
+                    {/* Right: Selector card */}
+                    <div
+                        className="rounded-2xl p-7"
+                        style={{
+                            background: 'var(--ocean-950)',
+                            border: '1px solid rgba(0,200,168,0.12)',
+                            boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
+                        }}
+                    >
+                        {/* Card header */}
+                        <div className="flex items-center gap-3 mb-7">
+                            <div
+                                className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                                style={{ background: 'rgba(240,168,50,0.12)', border: '1px solid rgba(240,168,50,0.25)' }}
+                            >
+                                <Compass className="w-5 h-5" style={{ color: 'var(--amber-400)' }} />
                             </div>
                             <div>
-                                <h3 className="text-xl font-black text-white">Selector IGST Rápido</h3>
-                                <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Evaluación instantánea</p>
+                                <h3 className="font-semibold text-base" style={{ color: 'var(--text-primary)' }}>Selector IGST Rápido</h3>
+                                <p className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>// evaluación instantánea</p>
                             </div>
                         </div>
 
                         <div className="space-y-5">
                             {/* Source Type */}
                             <div>
-                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-2.5">
-                                    <Droplets className="w-3.5 h-3.5 text-sky-400" />
+                                <label className="flex items-center gap-2 text-xs font-mono tracking-widest uppercase mb-2.5" style={{ color: 'var(--text-muted)' }}>
+                                    <Droplets className="w-3.5 h-3.5" style={{ color: 'var(--sky-400)' }} />
                                     Tipo de Fuente
                                 </label>
                                 <div className="grid grid-cols-3 gap-2">
@@ -253,14 +236,7 @@ export default function PreDesignCalculator() {
                                         { value: 'subterranea' as SourceType, label: 'Subterránea', icon: Droplets },
                                         { value: 'lluvia' as SourceType, label: 'Lluvia', icon: Sun },
                                     ]).map(opt => (
-                                        <button
-                                            key={opt.value}
-                                            onClick={() => setSource(opt.value)}
-                                            className={`py-2.5 px-2 rounded-xl text-xs font-bold uppercase tracking-wider flex flex-col items-center gap-1.5 transition-all border ${source === opt.value
-                                                ? 'bg-amber-500/15 border-amber-500/40 text-amber-400 shadow-lg shadow-amber-500/10'
-                                                : 'bg-slate-800/50 border-white/5 text-slate-500 hover:border-white/10 hover:text-slate-300'
-                                                }`}
-                                        >
+                                        <button key={opt.value} onClick={() => setSource(opt.value)} style={selBtn(source === opt.value)}>
                                             <opt.icon className="w-4 h-4" />
                                             {opt.label}
                                         </button>
@@ -271,33 +247,29 @@ export default function PreDesignCalculator() {
                             {/* Population */}
                             <div>
                                 <div className="flex items-center justify-between mb-2.5">
-                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                                        <Users className="w-3.5 h-3.5 text-emerald-400" />
+                                    <label className="flex items-center gap-2 text-xs font-mono tracking-widest uppercase" style={{ color: 'var(--text-muted)' }}>
+                                        <Users className="w-3.5 h-3.5" style={{ color: 'var(--teal-400)' }} />
                                         Población
                                     </label>
-                                    <span className="text-xl font-black text-white">{population.toLocaleString()} <span className="text-xs text-slate-500">hab</span></span>
+                                    <span className="font-display font-bold text-lg" style={{ color: 'var(--text-primary)' }}>
+                                        {population.toLocaleString()} <span className="text-xs font-sans" style={{ color: 'var(--text-muted)' }}>hab</span>
+                                    </span>
                                 </div>
                                 <input
-                                    type="range"
-                                    min="100"
-                                    max="10000"
-                                    step="100"
-                                    value={population}
-                                    onChange={(e) => setPopulation(parseInt(e.target.value))}
-                                    className="w-full h-2 bg-slate-800 rounded-full appearance-none cursor-pointer accent-emerald-500"
+                                    type="range" min="100" max="10000" step="100" value={population}
+                                    onChange={e => setPopulation(parseInt(e.target.value))}
+                                    className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
+                                    style={{ background: `linear-gradient(to right, var(--teal-500) ${(population / 10000) * 100}%, rgba(0,200,168,0.12) 0%)`, accentColor: 'var(--teal-500)' }}
                                 />
-                                <div className="flex justify-between text-xs text-slate-600 font-medium mt-1.5">
-                                    <span>100</span>
-                                    <span>2,500</span>
-                                    <span>5,000</span>
-                                    <span>10,000</span>
+                                <div className="flex justify-between text-xs mt-1.5" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                                    <span>100</span><span>2,500</span><span>5,000</span><span>10,000</span>
                                 </div>
                             </div>
 
                             {/* Energy */}
                             <div>
-                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-2.5">
-                                    <BatteryCharging className="w-3.5 h-3.5 text-yellow-400" />
+                                <label className="flex items-center gap-2 text-xs font-mono tracking-widest uppercase mb-2.5" style={{ color: 'var(--text-muted)' }}>
+                                    <BatteryCharging className="w-3.5 h-3.5" style={{ color: 'var(--amber-400)' }} />
                                     Energía Disponible
                                 </label>
                                 <div className="grid grid-cols-3 gap-2">
@@ -306,24 +278,18 @@ export default function PreDesignCalculator() {
                                         { value: 'solar' as EnergyType, label: 'Solar' },
                                         { value: 'ninguna' as EnergyType, label: 'Sin energía' },
                                     ]).map(opt => (
-                                        <button
-                                            key={opt.value}
-                                            onClick={() => setEnergy(opt.value)}
-                                            className={`py-2 px-2 rounded-xl text-xs font-bold uppercase tracking-wider text-center transition-all border ${energy === opt.value
-                                                ? 'bg-amber-500/15 border-amber-500/40 text-amber-400'
-                                                : 'bg-slate-800/50 border-white/5 text-slate-500 hover:border-white/10 hover:text-slate-300'
-                                                }`}
-                                        >
+                                        <button key={opt.value} onClick={() => setEnergy(opt.value)}
+                                            style={{ ...selBtn(energy === opt.value), flexDirection: 'row', justifyContent: 'center' }}>
                                             {opt.label}
                                         </button>
                                     ))}
                                 </div>
                             </div>
 
-                            {/* Operator Level */}
+                            {/* Operator */}
                             <div>
-                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-2.5">
-                                    <Wrench className="w-3.5 h-3.5 text-slate-400" />
+                                <label className="flex items-center gap-2 text-xs font-mono tracking-widest uppercase mb-2.5" style={{ color: 'var(--text-muted)' }}>
+                                    <Wrench className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />
                                     Nivel del Operador
                                 </label>
                                 <div className="grid grid-cols-3 gap-2">
@@ -332,78 +298,92 @@ export default function PreDesignCalculator() {
                                         { value: 'intermedio' as OperatorLevel, label: 'Intermedio' },
                                         { value: 'avanzado' as OperatorLevel, label: 'Avanzado' },
                                     ]).map(opt => (
-                                        <button
-                                            key={opt.value}
-                                            onClick={() => setOperator(opt.value)}
-                                            className={`py-2 px-2 rounded-xl text-xs font-bold uppercase tracking-wider text-center transition-all border ${operator === opt.value
-                                                ? 'bg-amber-500/15 border-amber-500/40 text-amber-400'
-                                                : 'bg-slate-800/50 border-white/5 text-slate-500 hover:border-white/10 hover:text-slate-300'
-                                                }`}
-                                        >
+                                        <button key={opt.value} onClick={() => setOperator(opt.value)}
+                                            style={{ ...selBtn(operator === opt.value), flexDirection: 'row', justifyContent: 'center' }}>
                                             {opt.label}
                                         </button>
                                     ))}
                                 </div>
                             </div>
 
-                            {/* Calculate */}
+                            {/* Evaluate */}
                             <button
-                                onClick={handleCalculate}
-                                className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white font-black py-4 rounded-xl shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2 group"
+                                onClick={() => setShowResults(true)}
+                                className="w-full py-4 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all duration-200 hover:-translate-y-0.5 group"
+                                style={{
+                                    background: 'var(--amber-500)',
+                                    color: 'var(--ocean-950)',
+                                    boxShadow: '0 4px 20px rgba(240,168,50,0.25)',
+                                }}
                             >
-                                <Zap className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                                <Zap className="w-4 h-4 group-hover:scale-110 transition-transform" />
                                 Evaluar Tecnología
                             </button>
 
                             {/* Results */}
                             {showResults && (
-                                <div className="pt-5 border-t border-white/10 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-5">
-                                        <div className="flex items-center justify-between mb-1">
-                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Tecnología Recomendada</span>
-                                            <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">IGST v2.0</span>
+                                <div
+                                    className="pt-5 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500"
+                                    style={{ borderTop: '1px solid rgba(0,200,168,0.1)' }}
+                                >
+                                    <div
+                                        className="rounded-xl p-5"
+                                        style={{
+                                            background: 'rgba(240,168,50,0.05)',
+                                            border: '1px solid rgba(240,168,50,0.2)',
+                                        }}
+                                    >
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-xs font-mono tracking-widest uppercase" style={{ color: 'var(--text-muted)' }}>
+                                                Tecnología Recomendada
+                                            </span>
+                                            <span
+                                                className="text-xs font-mono px-2 py-0.5 rounded-full"
+                                                style={{ background: 'rgba(240,168,50,0.1)', color: 'var(--amber-400)', border: '1px solid rgba(240,168,50,0.2)' }}
+                                            >
+                                                IGST v2.0
+                                            </span>
                                         </div>
-                                        <h4 className="text-xl font-black text-amber-400 mb-0.5">
+                                        <h4
+                                            className="font-display font-bold text-xl mb-0.5"
+                                            style={{ color: 'var(--amber-400)' }}
+                                        >
                                             {result.label}
                                         </h4>
-                                        <p className="text-xs text-slate-500 mb-4 font-mono">{result.name}</p>
+                                        <p className="text-xs font-mono mb-4" style={{ color: 'var(--text-muted)' }}>{result.name}</p>
 
                                         <div className="grid grid-cols-2 gap-4 items-center">
-                                            {/* Score */}
                                             <div className="space-y-3">
                                                 <div>
                                                     <div className="flex items-center justify-between mb-1">
-                                                        <span className="text-[10px] text-slate-500 font-mono">IGST Score</span>
-                                                        <span className="text-lg font-black text-white">{result.igst}</span>
+                                                        <span className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>IGST Score</span>
+                                                        <span className="font-display font-bold text-lg" style={{ color: 'var(--text-primary)' }}>{result.igst}</span>
                                                     </div>
-                                                    <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                                                    <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(0,200,168,0.1)' }}>
                                                         <div
-                                                            className="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all duration-700"
-                                                            style={{ width: `${result.igst}%` }}
+                                                            className="h-full rounded-full transition-all duration-700"
+                                                            style={{ width: `${result.igst}%`, background: 'linear-gradient(90deg, var(--amber-500), var(--amber-400))' }}
                                                         />
                                                     </div>
                                                 </div>
-                                                <div className="grid grid-cols-2 gap-1.5 text-[10px]">
-                                                    <div className="flex items-center justify-between bg-slate-900/60 rounded px-2 py-1">
-                                                        <span className="text-slate-500">SOC</span>
-                                                        <span className="text-white font-bold">{result.finalScores.social}</span>
-                                                    </div>
-                                                    <div className="flex items-center justify-between bg-slate-900/60 rounded px-2 py-1">
-                                                        <span className="text-slate-500">ECO</span>
-                                                        <span className="text-white font-bold">{result.finalScores.economic}</span>
-                                                    </div>
-                                                    <div className="flex items-center justify-between bg-slate-900/60 rounded px-2 py-1">
-                                                        <span className="text-slate-500">AMB</span>
-                                                        <span className="text-white font-bold">{result.finalScores.environmental}</span>
-                                                    </div>
-                                                    <div className="flex items-center justify-between bg-slate-900/60 rounded px-2 py-1">
-                                                        <span className="text-slate-500">TEC</span>
-                                                        <span className="text-white font-bold">{result.finalScores.technical}</span>
-                                                    </div>
+                                                <div className="grid grid-cols-2 gap-1.5 text-xs">
+                                                    {[
+                                                        ['SOC', result.finalScores.social],
+                                                        ['ECO', result.finalScores.economic],
+                                                        ['AMB', result.finalScores.environmental],
+                                                        ['TEC', result.finalScores.technical],
+                                                    ].map(([label, val]) => (
+                                                        <div
+                                                            key={label as string}
+                                                            className="flex items-center justify-between px-2 py-1 rounded"
+                                                            style={{ background: 'rgba(0,200,168,0.04)', border: '1px solid rgba(0,200,168,0.08)' }}
+                                                        >
+                                                            <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{label}</span>
+                                                            <span className="font-bold" style={{ color: 'var(--text-primary)' }}>{val}</span>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             </div>
-
-                                            {/* Radar */}
                                             <div className="w-full aspect-square">
                                                 <RadarChart scores={result.finalScores} />
                                             </div>
@@ -412,7 +392,8 @@ export default function PreDesignCalculator() {
                                         <div className="grid grid-cols-2 gap-2 mt-4">
                                             <button
                                                 onClick={handleStartProject}
-                                                className="bg-amber-500 hover:bg-amber-400 text-white font-bold py-2.5 rounded-lg transition-all flex items-center justify-center gap-1.5 text-xs group"
+                                                className="py-2.5 rounded-lg font-semibold text-xs flex items-center justify-center gap-1.5 transition-all group"
+                                                style={{ background: 'var(--amber-500)', color: 'var(--ocean-950)' }}
                                             >
                                                 <Compass className="w-3.5 h-3.5" />
                                                 Selector Completo
@@ -420,7 +401,12 @@ export default function PreDesignCalculator() {
                                             </button>
                                             <button
                                                 onClick={handleStartProject}
-                                                className="bg-white/10 hover:bg-white/15 text-slate-200 font-bold py-2.5 rounded-lg transition-all flex items-center justify-center gap-1.5 text-xs border border-white/10 group"
+                                                className="py-2.5 rounded-lg font-semibold text-xs flex items-center justify-center gap-1.5 transition-all group"
+                                                style={{
+                                                    background: 'rgba(0,200,168,0.05)',
+                                                    border: '1px solid rgba(0,200,168,0.15)',
+                                                    color: 'var(--text-secondary)',
+                                                }}
                                             >
                                                 <FileText className="w-3.5 h-3.5" />
                                                 Ver Informe
