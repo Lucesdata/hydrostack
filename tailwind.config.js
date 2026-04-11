@@ -23,7 +23,9 @@ module.exports = {
                 }
             },
             fontFamily: {
-                sans: ['var(--font-inter)', 'sans-serif'],
+                display: ['var(--font-fraunces)', 'Georgia', 'serif'],
+                sans: ['var(--font-jakarta)', 'system-ui', 'sans-serif'],
+                mono: ['var(--font-mono)', 'Menlo', 'monospace'],
             },
             animation: {
                 "accordion-down": "accordion-down 0.2s ease-out",
