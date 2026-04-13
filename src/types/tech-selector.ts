@@ -90,7 +90,7 @@ export type TechnologyId =
     | 'ultrafiltration'
     | 'reverse_osmosis'
     | 'package_plant'
-    | 'mbr_mbbr';
+    | 'iron_removal';
 
 /**
  * Removal efficiency profile per technology

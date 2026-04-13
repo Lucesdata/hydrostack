@@ -601,7 +601,7 @@ function StepEconomicEnvironmental({ formData, onChange }: any) {
                     {Object.entries(SOURCE_DEFAULTS).map(([key, source]) => (
                         <div
                             key={key}
-                            onClick={() => onChange('source_type', key)}
+                            onClick={() => onChange({ target: { name: 'source_type', value: key } } as any)}
                             className={`
                                 cursor-pointer flex flex-col items-center gap-3 p-4 rounded-xl border text-center transition-all 
                                 ${formData.source_type === key

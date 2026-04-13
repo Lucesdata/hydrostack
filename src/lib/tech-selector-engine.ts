@@ -37,7 +37,7 @@ export const TECHNOLOGIES: Record<TechnologyId, TechnologyProfile> = {
         removalEfficiency: {
             turbidity: 95,
             tds: 5,
-            ironManganese: 70,
+            ironManganese: 40,
             nitrates: 10,
             microbiological: 3,
         },
@@ -71,20 +71,20 @@ export const TECHNOLOGIES: Record<TechnologyId, TechnologyProfile> = {
             microbiological: 4,
         },
         flowRange: [5, 500],
-        areaFactor: 60,
-        energyDemand: 'medium',
-        energyKwhPerM3: 0.35,
+        areaFactor: 12,
+        energyDemand: 'high',
+        energyKwhPerM3: 0.50,
         operationalComplexity: 'high',
         maintenanceDifficulty: 'medium',
         capexRange: [6000, 12000],
         opexPerM3: 0.18,
         typicalContext: 'Plantas municipales urbanas de mediana/gran escala',
-        description: 'Tren completo: Coagulación → Floculación → Sedimentación → Filtración Rápida → Desinfección. Requiere operador capacitado y suministro constante de chemicals.',
+        description: 'Tren completo: Coagulación → Floculación → Sedimentación → Filtración Rápida → Desinfección. Requiere operador capacitado y suministro constante de químicos.',
         treatmentTrain: ['Captación', 'Coagulación', 'Floculación', 'Sedimentación', 'Filtración Rápida', 'Desinfección', 'Almacenamiento'],
         requiresEnergy: true,
         requiresChemicals: true,
-        requiresSpareParts: false,
-        minSpaceRequired: 'high',
+        requiresSpareParts: true,
+        minSpaceRequired: 'medium',
     },
     compact_clarification: {
         id: 'compact_clarification',
@@ -124,7 +124,7 @@ export const TECHNOLOGIES: Record<TechnologyId, TechnologyProfile> = {
         removalEfficiency: {
             turbidity: 99.9,
             tds: 5,
-            ironManganese: 90,
+            ironManganese: 30,
             nitrates: 5,
             microbiological: 5,
         },
@@ -153,7 +153,7 @@ export const TECHNOLOGIES: Record<TechnologyId, TechnologyProfile> = {
         removalEfficiency: {
             turbidity: 99.99,
             tds: 99,
-            ironManganese: 98,
+            ironManganese: 50,
             nitrates: 95,
             microbiological: 7,
         },
@@ -184,7 +184,7 @@ export const TECHNOLOGIES: Record<TechnologyId, TechnologyProfile> = {
             tds: 5,
             ironManganese: 65,
             nitrates: 10,
-            microbiological: 3,
+            microbiological: 2,
         },
         flowRange: [0.2, 15],
         areaFactor: 2.5,
@@ -202,33 +202,34 @@ export const TECHNOLOGIES: Record<TechnologyId, TechnologyProfile> = {
         requiresSpareParts: true,
         minSpaceRequired: 'low',
     },
-    mbr_mbbr: {
-        id: 'mbr_mbbr',
-        name: 'Sistema Híbrido MBR/MBBR',
-        shortName: 'MBR/MBBR',
-        color: '#ec4899',
-        icon: 'Cog',
+
+    iron_removal: {
+        id: 'iron_removal',
+        name: 'Remoción de Hierro y Manganeso',
+        shortName: 'Fe/Mn Removal',
+        color: '#d97706',
+        icon: 'Wind',
         removalEfficiency: {
-            turbidity: 99.5,
-            tds: 15,
-            ironManganese: 85,
-            nitrates: 80,
-            microbiological: 5,
+            turbidity: 85,
+            tds: 10,
+            ironManganese: 95,
+            nitrates: 10,
+            microbiological: 2,
         },
-        flowRange: [1, 50],
-        areaFactor: 4,
-        energyDemand: 'high',
-        energyKwhPerM3: 0.8,
-        operationalComplexity: 'high',
-        maintenanceDifficulty: 'high',
-        capexRange: [12000, 25000],
-        opexPerM3: 0.35,
-        typicalContext: 'Reuso de agua, zonas con restricciones de espacio y alta calidad requerida',
-        description: 'Bioreactor con membranas integradas (MBR) o lecho móvil de biopelícula (MBBR). Combina tratamiento biológico avanzado con barrera de membrana para máxima calidad de efluente. Ideal para reuso.',
-        treatmentTrain: ['Captación', 'Pre-tratamiento', 'Reactor Biológico', 'Membrana MBR', 'Desinfección', 'Almacenamiento'],
+        flowRange: [0.5, 50],
+        areaFactor: 8,
+        energyDemand: 'low',
+        energyKwhPerM3: 0.10,
+        operationalComplexity: 'medium',
+        maintenanceDifficulty: 'low',
+        capexRange: [3000, 6000],
+        opexPerM3: 0.06,
+        typicalContext: 'Agua subterránea con hierro, manganeso y dureza elevada',
+        description: 'Tren de oxidación-filtración para agua subterránea: Aireación (cascada/bandeja) → Sedimentación → Filtración Rápida Descendente → Desinfección. Oxida Fe²⁺/Mn²⁺ y los retiene en el lecho filtrante.',
+        treatmentTrain: ['Captación (Pozo)', 'Aireación (Cascada)', 'Sedimentación', 'Filtración Rápida', 'Desinfección', 'Almacenamiento'],
         requiresEnergy: true,
-        requiresChemicals: true,
-        requiresSpareParts: true,
+        requiresChemicals: false,
+        requiresSpareParts: false,
         minSpaceRequired: 'medium',
     },
 };
@@ -242,6 +243,8 @@ function evaluateHardFilters(
     inputs: SelectorInputs
 ): ViabilityFilter[] {
     const filters: ViabilityFilter[] = [];
+    const src = inputs.source;
+    const pop = inputs.design.population;
 
     // 1. Energy filter
     filters.push({
@@ -281,6 +284,48 @@ function evaluateHardFilters(
             ? `${tech.shortName} requiere gran superficie, incompatible con contexto urbano denso`
             : 'Espacio disponible compatible',
     });
+
+    // 5. Source-type compatibility filter (CINARA diagram)
+    if (src.sourceType === 'seawater') {
+        // Seawater: ONLY reverse_osmosis is viable
+        const isRO = tech.id === 'reverse_osmosis';
+        filters.push({
+            name: 'Compatibilidad con Agua de Mar',
+            passed: isRO,
+            reason: isRO
+                ? 'Ósmosis Inversa es la única tecnología viable para desalinización'
+                : `${tech.shortName} no puede remover sales disueltas del agua de mar`,
+        });
+    } else if (src.sourceType === 'groundwater') {
+        // Groundwater: FiME is not viable (cannot treat minerals/hardness)
+        if (tech.id === 'slow_sand') {
+            filters.push({
+                name: 'Compatibilidad con Agua Subterránea',
+                passed: false,
+                reason: 'FiME está diseñada para agua superficial. El agua subterránea requiere oxidación (aireación) y filtración rápida para remover hierro, manganeso y dureza',
+            });
+        }
+        // iron_removal is designed for groundwater — no filter needed
+        // Others (conventional, compact, etc.) can work with groundwater too
+    } else if (src.sourceType === 'surface' || src.sourceType === 'rainwater') {
+        // Surface/Rain: iron_removal is not designed for these sources
+        if (tech.id === 'iron_removal') {
+            filters.push({
+                name: 'Compatibilidad con Fuente',
+                passed: false,
+                reason: 'Remoción de Fe/Mn está diseñada para agua subterránea, no para agua superficial o lluvia',
+            });
+        }
+    }
+
+    // 6. Population-based filter for FiME (space/retention time limits)
+    if (tech.id === 'slow_sand' && pop > 25000) {
+        filters.push({
+            name: 'Escala Poblacional',
+            passed: false,
+            reason: `FiME requiere ${tech.areaFactor} m²/L/s, inviable para poblaciones >25,000 hab. Se requiere planta convencional de filtración rápida`,
+        });
+    }
 
     return filters;
 }
@@ -335,6 +380,11 @@ function scoreSociocultural(tech: TechnologyProfile, inputs: SelectorInputs): nu
     if (inputs.context.settlementType === 'rural' && complexity === 'low') score += 10;
     if (inputs.context.settlementType === 'urban' && complexity === 'high') score += 5;
 
+    // Population limit for low-complexity (operator burden)
+    if (inputs.design.population > 10000 && tech.id === 'slow_sand') {
+        score -= 15; // Unmanageable manual labor for sand washing at this scale
+    }
+
     return clamp(score);
 }
 
@@ -379,6 +429,21 @@ function scoreEconomic(tech: TechnologyProfile, inputs: SelectorInputs): number 
     if (flow < tech.flowRange[0]) score -= 15;
     else if (flow > tech.flowRange[1]) score -= 20;
 
+    // Population-based economic adjustment
+    // FiME scales poorly for large populations (25 m²/L/s = huge land cost)
+    const pop = inputs.design.population;
+    if (pop > 10000) {
+        if (tech.id === 'slow_sand') score -= 20; // Land acquisition costs explode
+        if (tech.id === 'rapid_sand' || tech.id === 'compact_clarification') score += 10; // Economies of scale
+    }
+
+    // Source-type economic adjustment
+    // iron_removal is purpose-built for GW (optimized OPEX), package_plant is generic
+    if (inputs.source.sourceType === 'groundwater') {
+        if (tech.id === 'iron_removal') score += 10; // Lower lifecycle cost for Fe/Mn-specific design
+        if (tech.id === 'package_plant') score -= 5;  // Not optimized for mineral water
+    }
+
     return clamp(score);
 }
 
@@ -413,6 +478,11 @@ function scoreEnvironmental(tech: TechnologyProfile, inputs: SelectorInputs): nu
     // Space efficiency (urban benefit for compact)
     if (tech.areaFactor <= 5 && inputs.context.settlementType === 'urban') score += 10;
 
+    // Massive land footprint penalty for FiME at large scale
+    if (inputs.design.population > 10000 && tech.id === 'slow_sand') {
+        score -= 15; // Environmental impact of extensive land use
+    }
+
     return clamp(score);
 }
 
@@ -424,8 +494,9 @@ function scoreTechnological(tech: TechnologyProfile, inputs: SelectorInputs): nu
     let score = 55; // base
 
     const src = inputs.source;
+    const pop = inputs.design.population;
 
-    // Turbidity handling
+    // ── Turbidity handling ──
     if (src.turbidity <= 20) {
         score += 15; // Most techs handle low turbidity
     } else if (src.turbidity <= 70) {
@@ -435,16 +506,14 @@ function scoreTechnological(tech: TechnologyProfile, inputs: SelectorInputs): nu
     } else if (src.turbidity <= 200) {
         if (tech.removalEfficiency.turbidity >= 97) score += 10;
         else score -= 20;
-        // FiME hard limit
         if (tech.id === 'slow_sand') score -= 30;
     } else {
-        // Very high turbidity
         if (tech.removalEfficiency.turbidity >= 99) score += 5;
         else score -= 30;
         if (tech.id === 'slow_sand') score -= 40;
     }
 
-    // TDS handling
+    // ── TDS handling ──
     if (src.tds > 1000) {
         if (tech.removalEfficiency.tds >= 90) score += 20;
         else score -= 25;
@@ -453,43 +522,80 @@ function scoreTechnological(tech: TechnologyProfile, inputs: SelectorInputs): nu
         else score -= 10;
     }
 
-    // Iron/Manganese
+    // ── Iron/Manganese ──
     if (src.ironManganese > 0.5) {
-        if (tech.removalEfficiency.ironManganese >= 80) score += 10;
+        if (tech.removalEfficiency.ironManganese >= 90) score += 15;
+        else if (tech.removalEfficiency.ironManganese >= 80) score += 5;
         else if (tech.removalEfficiency.ironManganese < 50) score -= 15;
     }
 
-    // Nitrates
+    // ── Nitrates ──
     if (src.nitrates > 45) {
         if (tech.removalEfficiency.nitrates >= 80) score += 15;
         else score -= 20;
     }
 
-    // Microbiological
+    // ── Microbiological ──
     if (src.microbiologicalContamination) {
         if (tech.removalEfficiency.microbiological >= 4) score += 15;
         else if (tech.removalEfficiency.microbiological >= 3) score += 5;
         else score -= 15;
     }
 
-    // Source type compatibility
+    // ── Source type compatibility (CINARA routing) ──
     if (src.sourceType === 'seawater') {
         if (tech.id === 'reverse_osmosis') score += 25;
         else score -= 40;
     } else if (src.sourceType === 'groundwater') {
-        if (tech.id === 'slow_sand') score -= 20; // Not designed for GW
+        // iron_removal is the ideal technology for groundwater
+        if (tech.id === 'iron_removal') score += 25;
+        // Conventional/compact can handle GW with chemicals
+        else if (tech.id === 'rapid_sand') score += 10;
+        else if (tech.id === 'compact_clarification') score += 5;
+        // FiME cannot treat minerals/hardness (hard filter blocks it, but score too)
+        else if (tech.id === 'slow_sand') score -= 40;
+    } else if (src.sourceType === 'surface') {
+        // FiME is ideal for surface water with low turbidity
+        if (tech.id === 'slow_sand' && src.turbidity <= 70) score += 15;
+        // iron_removal is not for surface water (hard filter blocks it, but score too)
+        if (tech.id === 'iron_removal') score -= 30;
     } else if (src.sourceType === 'rainwater') {
         if (tech.id === 'rapid_sand') score -= 15; // Overkill
         if (tech.id === 'reverse_osmosis') score -= 20;
+        if (tech.id === 'iron_removal') score -= 30;
     }
 
-    // Seasonal variability resilience
+    // ── Population-based adjustments ──
+    if (pop > 10000) {
+        // Large populations: FiME is impractical (too much space, long retention)
+        if (tech.id === 'slow_sand') score -= 30;
+        // Conventional and compact are better suited for scale
+        if (tech.id === 'rapid_sand') score += 15;
+        if (tech.id === 'compact_clarification') score += 10;
+    } else if (pop <= 5000) {
+        // Small communities: FiME and package plants excel
+        if (tech.id === 'slow_sand') score += 10;
+        if (tech.id === 'package_plant') score += 10;
+    }
+
+    // ── Seasonal variability resilience ──
     if (src.seasonalVariability === 'high') {
         if (tech.operationalComplexity === 'low') score += 5;
         else if (tech.id === 'ultrafiltration') score -= 10;
     }
 
-    // Flow range fit
+    // ── Quality Target Alignment (WHO vs National) ──
+    const target = inputs.design.qualityTarget;
+    if (target === 'who') {
+        // WHO has strict microbiological targets (requires multi-barrier or absolute barrier)
+        if (tech.removalEfficiency.microbiological >= 4) score += 10;
+        else if (tech.removalEfficiency.microbiological <= 2) score -= 15;
+    } else if (target === 'national') {
+        // Standard national regulations (e.g., Res 0330)
+        if (tech.removalEfficiency.microbiological >= 3) score += 5;
+    }
+
+    // ── Flow range fit ──
     const flow = inputs.design.flowRate;
     if (flow >= tech.flowRange[0] && flow <= tech.flowRange[1]) score += 10;
     else score -= 15;
@@ -543,11 +649,13 @@ function generateJustification(
 function generateTreatmentTrain(tech: TechnologyProfile): TreatmentTrainStep[] {
     const typeMap: Record<string, TreatmentTrainStep['type']> = {
         'Captación': 'source',
+        'Captación (Pozo)': 'source',
         'Pre-filtro': 'pretreatment',
         'Pre-tratamiento': 'pretreatment',
         'FGDi': 'pretreatment',
         'FGAC': 'filtration',
         'FLA': 'filtration',
+        'Aireación (Cascada)': 'pretreatment',
         'Coag-Floc Integrado': 'clarification',
         'Coagulación': 'clarification',
         'Floculación': 'clarification',
@@ -560,8 +668,6 @@ function generateTreatmentTrain(tech: TechnologyProfile): TreatmentTrainStep[] {
         'Bomba HP': 'pretreatment',
         'Módulos RO': 'filtration',
         'Post-tratamiento': 'disinfection',
-        'Reactor Biológico': 'clarification',
-        'Membrana MBR': 'filtration',
         'Desinfección': 'disinfection',
         'Desinfección UV/Cl₂': 'disinfection',
         'Almacenamiento': 'storage',
@@ -598,34 +704,35 @@ function calculateDynamicWeights(inputs: SelectorInputs): IgstWeights {
 
     // 1. Source Type Adjustments
     if (inputs.source.sourceType === 'seawater') {
-        // High technological complexity and environmental impact (brine), lower economic sensitivity
         t += 0.15;
         a += 0.05;
         s -= 0.10;
         e -= 0.10;
     } else if (inputs.source.sourceType === 'groundwater' || inputs.source.ironManganese > 0.5) {
-        // Hardness/minerals require reliable technology
         t += 0.05;
         s -= 0.05;
     }
 
     // 2. Budget / Capital Source Adjustments
     if (inputs.context.budgetRange === 'high') {
-        // Private capital: Focus on technical excellence over initial cost
         t += 0.10;
         e -= 0.10;
     } else if (inputs.context.budgetRange === 'low' || inputs.context.budgetRange === 'very_low') {
-        // Community/Government: Cost and operability are paramount
         e += 0.10;
         t -= 0.10;
-
-        // Boost sociocultural (operability) if very low budget
         if (inputs.context.budgetRange === 'very_low') {
             s += 0.05;
             e += 0.05;
             t -= 0.05;
             a -= 0.05;
         }
+    }
+
+    // 3. Population-based adjustments
+    // Large populations: technological fit and economics matter more
+    if (inputs.design.population > 10000) {
+        t += 0.05;
+        a -= 0.05;
     }
 
     // Ensure weights don't drop below 0.05 and normalize to exactly 1.0
