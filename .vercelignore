@@ -1,0 +1,19 @@
+# Exclude Next.js app — deploy only the static HTML portfolio
+node_modules/
+src/
+public/
+middleware.ts
+next.config.ts
+package.json
+package-lock.json
+postcss.config.js
+tailwind.config.js
+tsconfig.json
+tsconfig.tsbuildinfo
+vitest.config.ts
+next-env.d.ts
+eslint.config.mjs
+migrations/
+docs/
+.claude/
+*.md

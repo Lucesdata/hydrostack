@@ -1,9 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Droplets, Settings, MapPin, Leaf, ArrowRight, ArrowLeft, Sparkles } from 'lucide-react';
+import { Settings, MapPin, Leaf, ArrowRight, ArrowLeft, Sparkles } from 'lucide-react';
 import type { SelectorInputs, SourceInputs, DesignInputs, ContextInputs, EnvironmentInputs } from '@/types/tech-selector';
-import SelectorStepSource from './SelectorStepSource';
 import SelectorStepDesign from './SelectorStepDesign';
 import SelectorStepContext from './SelectorStepContext';
 import SelectorStepEnvironment from './SelectorStepEnvironment';
@@ -12,10 +11,9 @@ import { runSelector } from '@/lib/tech-selector-engine';
 import type { SelectorResult } from '@/types/tech-selector';
 
 const STEPS = [
-    { id: 0, label: 'Fuente', icon: Droplets, description: 'Caracterización del agua cruda' },
-    { id: 1, label: 'Diseño', icon: Settings, description: 'Parámetros de diseño hidráulico' },
-    { id: 2, label: 'Contexto', icon: MapPin, description: 'Restricciones operativas y presupuestales' },
-    { id: 3, label: 'Entorno', icon: Leaf, description: 'Factores ambientales y sociales' },
+    { id: 0, label: 'Diseño', icon: Settings, description: 'Parámetros de diseño hidráulico' },
+    { id: 1, label: 'Contexto', icon: MapPin, description: 'Restricciones operativas y presupuestales' },
+    { id: 2, label: 'Entorno', icon: Leaf, description: 'Factores ambientales y sociales' },
 ];
 
 const DEFAULT_DESIGN: DesignInputs = {
@@ -45,7 +43,6 @@ interface TechSelectorWizardProps {
 
 export default function TechSelectorWizard({ initialSourceData }: TechSelectorWizardProps) {
     const [step, setStep] = useState(0);
-    const [source, setSource] = useState<SourceInputs>(initialSourceData);
     const [design, setDesign] = useState<DesignInputs>(DEFAULT_DESIGN);
     const [context, setContext] = useState<ContextInputs>(DEFAULT_CONTEXT);
     const [environment, setEnvironment] = useState<EnvironmentInputs>(DEFAULT_ENVIRONMENT);
@@ -53,7 +50,7 @@ export default function TechSelectorWizard({ initialSourceData }: TechSelectorWi
     const [showResults, setShowResults] = useState(false);
 
     const handleRunSelector = () => {
-        const inputs: SelectorInputs = { source, design, context, environment };
+        const inputs: SelectorInputs = { source: initialSourceData, design, context, environment };
         const selectorResult = runSelector(inputs);
         setResult(selectorResult);
         setShowResults(true);
@@ -114,10 +111,9 @@ export default function TechSelectorWizard({ initialSourceData }: TechSelectorWi
 
             {/* Step Content */}
             <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-5 sm:p-6">
-                {step === 0 && <SelectorStepSource data={source} onChange={setSource} />}
-                {step === 1 && <SelectorStepDesign data={design} onChange={setDesign} />}
-                {step === 2 && <SelectorStepContext data={context} onChange={setContext} />}
-                {step === 3 && <SelectorStepEnvironment data={environment} onChange={setEnvironment} />}
+                {step === 0 && <SelectorStepDesign data={design} onChange={setDesign} />}
+                {step === 1 && <SelectorStepContext data={context} onChange={setContext} />}
+                {step === 2 && <SelectorStepEnvironment data={environment} onChange={setEnvironment} />}
             </div>
 
             {/* Navigation */}
